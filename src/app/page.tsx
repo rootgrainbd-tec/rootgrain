@@ -77,7 +77,7 @@ function Navigation() {
                 <span className={`text-[10px] tracking-[0.3em] uppercase ${
                   isScrolled ? "text-[var(--walnut-light)]" : "text-[var(--ivory)]/70"
                 }`}>
-                  Heritage Furniture
+                  Artisan Furniture
                 </span>
               </div>
             </a>
@@ -968,7 +968,7 @@ function Footer() {
               <div>
                 <span className="font-serif text-xl tracking-wide block">ROOTGRAIN</span>
                 <span className="text-[10px] tracking-[0.3em] uppercase text-[var(--ivory)]/60">
-                  Heritage Furniture
+                  Artisan Furniture
                 </span>
               </div>
             </div>
