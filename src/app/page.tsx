@@ -57,25 +57,25 @@ function Navigation() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex items-center justify-between h-52">
+          <div className="flex items-center justify-between h-20">
             {/* Logo */}
-            <a href="#" className="flex items-center gap-5 group">
-              <div className="relative w-48 h-48">
+            <a href="#" className="flex items-center gap-2.5 group">
+              <div className="relative w-11 h-11">
                 <Image
-                  src="/images/logo-crest.png?v=14"
+                  src="/images/logo-crest.png?v=15"
                   alt="RootGrain Logo"
                   fill
                   className="object-contain"
                   unoptimized
                 />
               </div>
-              <div className="flex flex-col">
-                <span className={`font-serif text-xl font-semibold tracking-wide ${
+              <div className="flex flex-col justify-center -space-y-0.5">
+                <span className={`font-serif text-lg font-semibold tracking-wide leading-none ${
                   isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
                 }`}>
                   ROOTGRAIN
                 </span>
-                <span className={`text-[10px] tracking-[0.3em] uppercase ${
+                <span className={`text-[9px] tracking-[0.25em] uppercase leading-none ${
                   isScrolled ? "text-[var(--walnut-light)]" : "text-[var(--ivory)]/70"
                 }`}>
                   Artisan Furniture
@@ -957,19 +957,19 @@ function Footer() {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="relative w-56 h-56">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="relative w-12 h-12">
                 <Image
-                  src="/images/logo-crest.png?v=14"
+                  src="/images/logo-crest.png?v=15"
                   alt="RootGrain Logo"
                   fill
                   className="object-contain"
                   unoptimized
                 />
               </div>
-              <div>
-                <span className="font-serif text-xl tracking-wide block">ROOTGRAIN</span>
-                <span className="text-[10px] tracking-[0.3em] uppercase text-[var(--ivory)]/60">
+              <div className="flex flex-col justify-center -space-y-0.5">
+                <span className="font-serif text-lg font-semibold tracking-wide leading-none text-[var(--ivory)]">ROOTGRAIN</span>
+                <span className="text-[9px] tracking-[0.25em] uppercase leading-none text-[var(--ivory)]/60">
                   Artisan Furniture
                 </span>
               </div>
