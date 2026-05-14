@@ -62,10 +62,11 @@ function Navigation() {
             <a href="#" className="flex items-center gap-3 group">
               <div className="relative w-10 h-10">
                 <Image
-                  src="/images/logo-crest.png"
+                  src="/images/logo-crest.png?v=2"
                   alt="RootGrain Logo"
                   fill
                   className="object-contain"
+                  unoptimized
                 />
               </div>
               <div className="flex flex-col">
@@ -959,10 +960,11 @@ function Footer() {
             <div className="flex items-center gap-3 mb-6">
               <div className="relative w-12 h-12">
                 <Image
-                  src="/images/logo-crest.png"
+                  src="/images/logo-crest.png?v=2"
                   alt="RootGrain Logo"
                   fill
                   className="object-contain"
+                  unoptimized
                 />
               </div>
               <div>
