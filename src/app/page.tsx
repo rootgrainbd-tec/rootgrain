@@ -57,12 +57,12 @@ function Navigation() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex items-center justify-between h-24">
+          <div className="flex items-center justify-between h-32">
             {/* Logo */}
-            <a href="#" className="flex items-center gap-3 group">
-              <div className="relative w-16 h-16">
+            <a href="#" className="flex items-center gap-4 group">
+              <div className="relative w-24 h-24">
                 <Image
-                  src="/images/logo-crest.png?v=11"
+                  src="/images/logo-crest.png?v=12"
                   alt="RootGrain Logo"
                   fill
                   className="object-contain"
@@ -958,9 +958,9 @@ function Footer() {
           {/* Brand */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-3 mb-6">
-              <div className="relative w-20 h-20">
+              <div className="relative w-32 h-32">
                 <Image
-                  src="/images/logo-crest.png?v=11"
+                  src="/images/logo-crest.png?v=12"
                   alt="RootGrain Logo"
                   fill
                   className="object-contain"
