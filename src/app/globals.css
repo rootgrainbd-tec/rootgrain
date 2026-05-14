@@ -1,0 +1,331 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* RootGrain Heritage Artisan Luxury Brand Colors */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+  
+  /* RootGrain Brand Colors */
+  --color-walnut: var(--walnut);
+  --color-walnut-light: var(--walnut-light);
+  --color-walnut-dark: var(--walnut-dark);
+  --color-espresso: var(--espresso);
+  --color-oxblood: var(--oxblood);
+  --color-umber: var(--umber);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-ivory: var(--ivory);
+  --color-parchment: var(--parchment);
+  --color-cream: var(--cream);
+  
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.25rem;
+  
+  /* RootGrain Heritage Palette */
+  --walnut: #4A3728;
+  --walnut-light: #6B5344;
+  --walnut-dark: #2E241B;
+  --espresso: #3C2415;
+  --oxblood: #6B2D3C;
+  --umber: #6E4C1E;
+  --gold: #B8860B;
+  --gold-light: #D4A84B;
+  --ivory: #FFFFF0;
+  --parchment: #F5E6D3;
+  --cream: #FAF7F2;
+  
+  /* Semantic Colors */
+  --background: #FAF7F2;
+  --foreground: #2E241B;
+  --card: #FFFFF0;
+  --card-foreground: #2E241B;
+  --popover: #FFFFF0;
+  --popover-foreground: #2E241B;
+  --primary: #4A3728;
+  --primary-foreground: #FFFFF0;
+  --secondary: #F5E6D3;
+  --secondary-foreground: #4A3728;
+  --muted: #EDE8E0;
+  --muted-foreground: #6B5344;
+  --accent: #6B2D3C;
+  --accent-foreground: #FFFFF0;
+  --destructive: #8B3A3A;
+  --border: #D4C4B0;
+  --input: #D4C4B0;
+  --ring: #B8860B;
+  
+  /* Chart Colors */
+  --chart-1: #4A3728;
+  --chart-2: #6B2D3C;
+  --chart-3: #6E4C1E;
+  --chart-4: #B8860B;
+  --chart-5: #6B5344;
+  
+  /* Sidebar */
+  --sidebar: #FFFFF0;
+  --sidebar-foreground: #2E241B;
+  --sidebar-primary: #4A3728;
+  --sidebar-primary-foreground: #FFFFF0;
+  --sidebar-accent: #F5E6D3;
+  --sidebar-accent-foreground: #4A3728;
+  --sidebar-border: #D4C4B0;
+  --sidebar-ring: #B8860B;
+}
+
+.dark {
+  --background: #1A1612;
+  --foreground: #F5E6D3;
+  --card: #2E241B;
+  --card-foreground: #F5E6D3;
+  --popover: #2E241B;
+  --popover-foreground: #F5E6D3;
+  --primary: #D4A84B;
+  --primary-foreground: #1A1612;
+  --secondary: #3C2415;
+  --secondary-foreground: #D4A84B;
+  --muted: #3C2415;
+  --muted-foreground: #A89080;
+  --accent: #6B2D3C;
+  --accent-foreground: #F5E6D3;
+  --destructive: #8B3A3A;
+  --border: #4A3728;
+  --input: #4A3728;
+  --ring: #D4A84B;
+  
+  --chart-1: #D4A84B;
+  --chart-2: #B8860B;
+  --chart-3: #6E4C1E;
+  --chart-4: #6B2D3C;
+  --chart-5: #A89080;
+  
+  --sidebar: #2E241B;
+  --sidebar-foreground: #F5E6D3;
+  --sidebar-primary: #D4A84B;
+  --sidebar-primary-foreground: #1A1612;
+  --sidebar-accent: #3C2415;
+  --sidebar-accent-foreground: #D4A84B;
+  --sidebar-border: #4A3728;
+  --sidebar-ring: #D4A84B;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* RootGrain Custom Typography */
+.font-serif {
+  font-family: var(--font-serif), "Cormorant Garamond", "Libre Baskerville", Georgia, serif;
+}
+
+.font-sans {
+  font-family: var(--font-sans), "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Heritage Grain Texture Overlay */
+.grain-overlay {
+  position: relative;
+}
+
+.grain-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+/* Premium Hover Effects */
+.hover-lift {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -12px rgba(46, 36, 27, 0.15);
+}
+
+/* Elegant Fade Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Stagger Animation Delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-600 { animation-delay: 600ms; }
+.delay-700 { animation-delay: 700ms; }
+.delay-800 { animation-delay: 800ms; }
+
+/* Artisan Border Accent */
+.artisan-border {
+  position: relative;
+}
+
+.artisan-border::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+/* Heritage Section Divider */
+.heritage-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.heritage-divider::before,
+.heritage-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--walnut-light);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--walnut);
+}
+
+/* Selection */
+::selection {
+  background: var(--gold);
+  color: var(--walnut-dark);
+}
+
+/* Premium Image Treatment */
+.image-warm {
+  filter: sepia(0.05) saturate(1.05) brightness(1.02);
+}
+
+/* Luxury Text Gradient */
+.text-heritage {
+  background: linear-gradient(135deg, var(--walnut-dark) 0%, var(--walnut) 50%, var(--umber) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Wax Seal Effect */
+.wax-seal {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: radial-gradient(circle at 30% 30%, var(--oxblood) 0%, #4A1F2B 100%);
+  border-radius: 50%;
+  box-shadow: 
+    inset 0 2px 4px rgba(255, 255, 255, 0.1),
+    0 4px 8px rgba(0, 0, 0, 0.2);
+}
