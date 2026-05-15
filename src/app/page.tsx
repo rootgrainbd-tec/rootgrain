@@ -1042,7 +1042,7 @@ function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-[var(--ivory)]/10 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-[var(--ivory)]/40 text-sm">
-            © 2024 RootGrain. All rights reserved. Crafted with legacy. Made in Bangladesh.
+            © 2026 RootGrain. All rights reserved. Crafted with legacy. Made in Bangladesh.
           </p>
           <div className="flex gap-8 text-[var(--ivory)]/40 text-sm">
             <a href="#" className="hover:text-[var(--ivory)] transition-colors">Privacy Policy</a>
