@@ -214,7 +214,7 @@ function HeroSection() {
           className="font-serif text-5xl md:text-7xl lg:text-8xl text-[var(--ivory)] font-light leading-tight mb-8 max-w-5xl"
         >
           Crafted with{" "}
-          <span className="italic font-normal">Legacy</span>
+          <span className="font-normal">Legacy</span>
           <br />
           Not Manufactured
         </motion.h1>
