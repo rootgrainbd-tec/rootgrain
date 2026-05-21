@@ -8,43 +8,46 @@ const __dirname = dirname(__filename);
 
 const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
   rules: {
-    // TypeScript rules
-    "@typescript-eslint/no-explicit-any": "off",
-    "@typescript-eslint/no-unused-vars": "off",
-    "@typescript-eslint/no-non-null-assertion": "off",
-    "@typescript-eslint/ban-ts-comment": "off",
-    "@typescript-eslint/prefer-as-const": "off",
-    "@typescript-eslint/no-unused-disable-directive": "off",
-    
-    // React rules
-    "react-hooks/exhaustive-deps": "off",
-    "react-hooks/purity": "off",
+    // ---------------------------------------------------------------
+    // TypeScript — warn on bad patterns, don't silence them
+    // ---------------------------------------------------------------
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-unused-vars": ["warn", {
+      argsIgnorePattern: "^_",
+      varsIgnorePattern: "^_",
+    }],
+    "@typescript-eslint/no-non-null-assertion": "warn",
+    "@typescript-eslint/ban-ts-comment": "warn",
+    "@typescript-eslint/prefer-as-const": "warn",
+
+    // ---------------------------------------------------------------
+    // React — keep safety checks, disable only cosmetic rules
+    // ---------------------------------------------------------------
+    "react-hooks/exhaustive-deps": "warn",
     "react/no-unescaped-entities": "off",
     "react/display-name": "off",
     "react/prop-types": "off",
-    "react-compiler/react-compiler": "off",
-    
-    // Next.js rules
-    "@next/next/no-img-element": "off",
+
+    // ---------------------------------------------------------------
+    // Next.js — keep image optimization enforcement
+    // ---------------------------------------------------------------
+    "@next/next/no-img-element": "warn",
     "@next/next/no-html-link-for-pages": "off",
-    
-    // General JavaScript rules
-    "prefer-const": "off",
-    "no-unused-vars": "off",
-    "no-console": "off",
-    "no-debugger": "off",
-    "no-empty": "off",
-    "no-irregular-whitespace": "off",
-    "no-case-declarations": "off",
-    "no-fallthrough": "off",
-    "no-mixed-spaces-and-tabs": "off",
-    "no-redeclare": "off",
-    "no-undef": "off",
-    "no-unreachable": "off",
-    "no-useless-escape": "off",
+
+    // ---------------------------------------------------------------
+    // General JS — catch real bugs, allow stylistic preferences
+    // ---------------------------------------------------------------
+    "prefer-const": "warn",
+    "no-console": "warn",
+    "no-debugger": "error",
+    "no-unreachable": "error",
+    "no-fallthrough": "error",
+    "no-case-declarations": "warn",
+    "no-redeclare": "error",
+    "no-undef": "off", // TypeScript handles this
   },
 }, {
-  ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts", "examples/**", "skills"]
+  ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts", "examples/**", "skills/**"]
 }];
 
 export default eslintConfig;
