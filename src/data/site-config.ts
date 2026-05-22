@@ -11,7 +11,7 @@ export const SITE_CONFIG: SiteConfig = {
   tagline: "Artisan Furniture",
   description:
     "RootGrain crafts heirloom-quality wooden furniture using time-honored artisan techniques. Each piece tells a story of craftsmanship, permanence, and timeless beauty.",
-  url: "https://rootgrain.com",
+  url: "https://rootgrain.bd",
   support: {
     phone: "+88 01917389253",
     email: "rootgrainbd@gmail.com",
