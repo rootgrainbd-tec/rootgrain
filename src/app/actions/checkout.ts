@@ -1,7 +1,6 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { createBkashPayment } from "@/lib/bkash";
 import { z } from "zod";
 
 // 1. Define Strict Zod Validation Schemas
@@ -69,12 +68,8 @@ export async function initiateCheckout(rawPayload: unknown) {
   const shippingCostPaisa = 15000; // Flat fee 150 BDT (in Paisa)
   const grandTotalPaisa = totalPaisa + shippingCostPaisa;
 
-  // 5. Calculate 20% Advance Booking Fee and 80% Cash balance
-  const advancePaisa = Math.round(grandTotalPaisa * 0.20);
-  const balancePaisa = grandTotalPaisa - advancePaisa;
-
-  // Format amount as Taka string for bKash
-  const advanceTakaStr = (advancePaisa / 100).toFixed(2);
+  // 5. Bypass Advance Booking (bKash disabled), 100% Cash on Delivery
+  const balancePaisa = grandTotalPaisa;
 
   // Generate unique order number (e.g. RG-20260522-XXXXX)
   const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,"");
@@ -82,7 +77,6 @@ export async function initiateCheckout(rawPayload: unknown) {
   const orderNumber = `RG-${timestamp}-${randomSuffix}`;
 
   // 6. DB Transaction: Atomic order & payment creation
-  // Corrects relations to "paymentRecords" and fields to "type"
   const order = await prisma.order.create({
     data: {
       orderNumber,
@@ -91,8 +85,8 @@ export async function initiateCheckout(rawPayload: unknown) {
       shippingCost: shippingCostPaisa,
       total: grandTotalPaisa,
       advancePaid: 0,
-      balanceDue: grandTotalPaisa, // Defaults until payment succeeds
-      status: "PENDING_ADVANCE",
+      balanceDue: grandTotalPaisa,
+      status: "PROCESSING", // Bypass PENDING_ADVANCE hold
       shippingAddress: payload.shippingAddress,
       logistics: "PRIVATE_FREIGHT",
       trackingState: "PENDING_PRODUCTION",
@@ -102,12 +96,6 @@ export async function initiateCheckout(rawPayload: unknown) {
       paymentRecords: {
         create: [
           {
-            amount: advancePaisa,
-            method: "BKASH_PGW",
-            type: "ADVANCE",
-            status: "INITIATED",
-          },
-          {
             amount: balancePaisa,
             method: "COD",
             type: "SETTLEMENT",
@@ -115,25 +103,11 @@ export async function initiateCheckout(rawPayload: unknown) {
           }
         ]
       }
-    },
-    include: {
-      paymentRecords: true,
     }
   });
 
-  const advancePayment = order.paymentRecords.find(p => p.type === "ADVANCE")!;
-
-  try {
-    // 7. Request external bKash Payment URL
-    const bkashRes = await createBkashPayment(advanceTakaStr, advancePayment.id);
-    
-    return {
-      bkashURL: bkashRes.bkashURL,
-    };
-  } catch (error) {
-    console.error("Payment Gateway Error. Rolling back created Order:", error);
-    // Cleanup/delete orphan order to prevent database clutter
-    await prisma.order.delete({ where: { id: order.id } });
-    throw new Error("Unable to contact payment provider. Please try again.");
-  }
+  // 7. Bypass bKash API completely and redirect to success page
+  return {
+    bkashURL: `/checkout/success?order=${order.orderNumber}`,
+  };
 }
