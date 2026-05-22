@@ -2,20 +2,37 @@
 
 import prisma from "@/lib/prisma";
 import { createBkashPayment } from "@/lib/bkash";
+import { z } from "zod";
 
-export interface CheckoutPayload {
-  items: { productId: string; quantity: number }[];
-  shippingAddress: {
-    fullName: string;
-    phone: string;
-    division: string;
-    district: string;
-    addressLine: string;
-  };
-}
+// 1. Define Strict Zod Validation Schemas
+const checkoutSchema = z.object({
+  items: z.array(
+    z.object({
+      productId: z.string().cuid(),
+      quantity: z.number().int().min(1, "Quantity must be at least 1").max(10, "Bulk purchase limit exceeded"),
+    })
+  ).min(1, "Cart cannot be empty"),
+  shippingAddress: z.object({
+    fullName: z.string().min(2, "Full name required").max(100),
+    phone: z.string().regex(/^01[3-9]\d{8}$/, "Invalid Bangladesh mobile number (e.g. 017xxxxxxxx)"),
+    division: z.enum(["Dhaka", "Chattogram", "Rajshahi", "Khulna", "Barishal", "Sylhet", "Rangpur", "Mymensingh"]),
+    district: z.string().min(2, "District required").max(50),
+    addressLine: z.string().min(5, "Detail address line required").max(300),
+  }),
+});
 
-export async function initiateCheckout(payload: CheckoutPayload) {
-  // 1. Fetch real prices from DB to prevent client spoofing
+export type CheckoutPayload = z.infer<typeof checkoutSchema>;
+
+export async function initiateCheckout(rawPayload: unknown) {
+  // 2. Validate incoming payload against strict schemas
+  const validation = checkoutSchema.safeParse(rawPayload);
+  if (!validation.success) {
+    throw new Error(`Validation failed: ${validation.error.issues.map(i => i.message).join(", ")}`);
+  }
+
+  const payload = validation.data;
+
+  // 3. Fetch real prices from database to block price spoofing
   const productIds = payload.items.map((i) => i.productId);
   const products = await prisma.product.findMany({
     where: { id: { in: productIds } },
@@ -25,7 +42,15 @@ export async function initiateCheckout(payload: CheckoutPayload) {
     throw new Error("Invalid products in cart.");
   }
 
-  // 2. Calculate Total (in Paisa)
+  // Check product stock availability
+  for (const item of payload.items) {
+    const matched = products.find(p => p.id === item.productId)!;
+    if (!matched.inStock) {
+      throw new Error(`Product ${matched.name} is currently out of stock.`);
+    }
+  }
+
+  // 4. Calculate total prices in Paisa
   let totalPaisa = 0;
   const orderItemsData = payload.items.map((item) => {
     const product = products.find((p) => p.id === item.productId)!;
@@ -34,23 +59,39 @@ export async function initiateCheckout(payload: CheckoutPayload) {
 
     return {
       productId: product.id,
+      productName: product.name, // Record snapshots to survive product deletions
       quantity: item.quantity,
-      price: product.price,
+      unitPrice: product.price,
+      total: itemTotal,
     };
   });
 
-  // 3. Calculate 20% Advance Booking Fee
-  const advancePaisa = Math.round(totalPaisa * 0.20);
-  const balancePaisa = totalPaisa - advancePaisa;
+  const shippingCostPaisa = 15000; // Flat fee 150 BDT (in Paisa)
+  const grandTotalPaisa = totalPaisa + shippingCostPaisa;
 
-  // Convert to Taka string format for bKash API (e.g. "20000.00")
+  // 5. Calculate 20% Advance Booking Fee and 80% Cash balance
+  const advancePaisa = Math.round(grandTotalPaisa * 0.20);
+  const balancePaisa = grandTotalPaisa - advancePaisa;
+
+  // Format amount as Taka string for bKash
   const advanceTakaStr = (advancePaisa / 100).toFixed(2);
 
-  // 4. Create Order and PaymentRecord atomically
+  // Generate unique order number (e.g. RG-20260522-XXXXX)
+  const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,"");
+  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+  const orderNumber = `RG-${timestamp}-${randomSuffix}`;
+
+  // 6. DB Transaction: Atomic order & payment creation
+  // Corrects relations to "paymentRecords" and fields to "type"
   const order = await prisma.order.create({
     data: {
-      userId: "guest", // Assuming guest checkout for now
-      total: totalPaisa,
+      orderNumber,
+      userId: "guest",
+      subtotal: totalPaisa,
+      shippingCost: shippingCostPaisa,
+      total: grandTotalPaisa,
+      advancePaid: 0,
+      balanceDue: grandTotalPaisa, // Defaults until payment succeeds
       status: "PENDING_ADVANCE",
       shippingAddress: payload.shippingAddress,
       logistics: "PRIVATE_FREIGHT",
@@ -58,36 +99,41 @@ export async function initiateCheckout(payload: CheckoutPayload) {
       items: {
         create: orderItemsData,
       },
-      payments: {
+      paymentRecords: {
         create: [
           {
             amount: advancePaisa,
             method: "BKASH_PGW",
-            phase: "ADVANCE",
+            type: "ADVANCE",
             status: "INITIATED",
           },
           {
             amount: balancePaisa,
             method: "COD",
-            phase: "SETTLEMENT",
+            type: "SETTLEMENT",
             status: "INITIATED",
           }
         ]
       }
     },
     include: {
-      payments: true,
+      paymentRecords: true,
     }
   });
 
-  // Find the advance payment record ID to use as bKash invoice reference
-  const advancePayment = order.payments.find(p => p.phase === "ADVANCE")!;
+  const advancePayment = order.paymentRecords.find(p => p.type === "ADVANCE")!;
 
-  // 5. Initialize bKash Payment URL
-  const bkashRes = await createBkashPayment(advanceTakaStr, advancePayment.id);
-
-  // 6. Return redirect URL to client
-  return {
-    bkashURL: bkashRes.bkashURL,
-  };
+  try {
+    // 7. Request external bKash Payment URL
+    const bkashRes = await createBkashPayment(advanceTakaStr, advancePayment.id);
+    
+    return {
+      bkashURL: bkashRes.bkashURL,
+    };
+  } catch (error) {
+    console.error("Payment Gateway Error. Rolling back created Order:", error);
+    // Cleanup/delete orphan order to prevent database clutter
+    await prisma.order.delete({ where: { id: order.id } });
+    throw new Error("Unable to contact payment provider. Please try again.");
+  }
 }

@@ -11,65 +11,81 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing paymentID" }, { status: 400 });
   }
 
-  // Find the associated PaymentRecord (we used paymentRecord.id as merchantInvoiceNumber)
-  // But wait, the execute API actually returns the merchantInvoiceNumber.
-  // It's safer to just execute the payment first and get the details from bKash.
+  const successUrl = new URL("/checkout/success", request.url);
+  const errorUrl = new URL("/checkout/error", request.url);
 
   if (status === "success") {
     try {
-      // 1. Execute Payment with bKash
+      // 1. Execute payment with bKash Gateway
       const executeRes = await executeBkashPayment(paymentID);
 
       if (executeRes.statusCode && executeRes.statusCode !== "0000") {
-        // e.g., 2023 Insufficient Balance, or 2062 The payment has already been completed
         if (executeRes.statusCode === "2062") {
-          // Double execution attempt. Just redirect to success page.
-          return NextResponse.redirect(new URL("/checkout/success", request.url));
+          // Double click protection: bKash returned "Already Processed"
+          return NextResponse.redirect(successUrl);
         }
-        return NextResponse.redirect(new URL("/checkout/error?reason=execution_failed", request.url));
+        errorUrl.searchParams.set("reason", `gateway_${executeRes.statusCode}`);
+        return NextResponse.redirect(errorUrl);
       }
 
-      // executeRes contains merchantInvoiceNumber which maps to PaymentRecord.id
+      // merchantInvoiceNumber maps to PaymentRecord.id
       const paymentRecordId = executeRes.merchantInvoiceNumber;
       const trxID = executeRes.trxID;
 
-      // 2. Prisma Transaction to guarantee atomicity and prevent race conditions
+      if (!paymentRecordId) {
+        throw new Error("Payment executing response did not contain merchantInvoiceNumber");
+      }
+
+      // 2. Atomic Database Transaction Block
+      // Corrects update parameter to "bkashTrxId"
       await prisma.$transaction(async (tx) => {
-        // Lock or check current status
         const record = await tx.paymentRecord.findUnique({
           where: { id: paymentRecordId },
           include: { order: true },
         });
 
-        if (!record) throw new Error("Payment record not found");
-        if (record.status === "COMPLETED") return; // Already processed
+        if (!record) {
+          throw new Error(`Payment record ${paymentRecordId} not found`);
+        }
 
-        // Update Payment Record
+        // Avoid double processing
+        if (record.status === "COMPLETED") {
+          return;
+        }
+
+        // Update Payment Record with Transaction ID
         await tx.paymentRecord.update({
           where: { id: paymentRecordId },
           data: {
             status: "COMPLETED",
-            trxId: trxID,
+            bkashTrxId: trxID,
+            paidAt: new Date(),
           },
         });
 
-        // Update Order Status to PROCESSING
+        // Update main Order State and financial totals
         await tx.order.update({
           where: { id: record.orderId },
           data: {
             status: "PROCESSING",
+            advancePaid: record.amount,
+            balanceDue: {
+              decrement: record.amount,
+            },
           },
         });
       });
 
-      return NextResponse.redirect(new URL("/checkout/success", request.url));
+      return NextResponse.redirect(successUrl);
 
     } catch (error) {
-      console.error("bKash Execution Error:", error);
-      return NextResponse.redirect(new URL("/checkout/error?reason=internal_error", request.url));
+      console.error("CRITICAL: bKash Execution Callback Failed:", error);
+      errorUrl.searchParams.set("reason", "internal_execution_failure");
+      return NextResponse.redirect(errorUrl);
     }
   }
 
-  // Handle cancelled or failed statuses
-  return NextResponse.redirect(new URL(`/checkout/error?reason=${status}`, request.url));
+  // Handle cancelled or failed checkout states gracefully
+  errorUrl.searchParams.set("reason", status || "cancelled");
+  return NextResponse.redirect(errorUrl);
 }

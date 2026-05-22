@@ -24,6 +24,8 @@ model Product {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   orderItems   OrderItem[]
+
+  @@index([featured])
 }
 
 model Order {
@@ -44,6 +46,10 @@ model Order {
   updatedAt       DateTime        @updatedAt
   items           OrderItem[]
   paymentRecords  PaymentRecord[] // One-to-Many: Booking + Settlement
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model OrderItem {
@@ -56,6 +62,9 @@ model OrderItem {
   total       Int      // unitPrice * quantity
   order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product     Product  @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model PaymentRecord {
@@ -71,6 +80,7 @@ model PaymentRecord {
   order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@unique([orderId, type]) // Ensures only one advance and one settlement per order
+  @@index([status])
 }
 
 model Testimonial {
@@ -81,6 +91,8 @@ model Testimonial {
   piece     String
   approved  Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([approved])
 }
 
 // --- Enums enforce strict state machines ---

@@ -9,7 +9,6 @@ import { MaterialPhilosophySection } from "@/components/sections/MaterialPhiloso
 import { LifestyleInteriorsSection } from "@/components/sections/LifestyleInteriorsSection";
 import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 
-import { CRAFT_PROCESSES } from "@/data/crafts";
 import { SITE_CONFIG } from "@/data/site-config";
 import type { Product, ProductCategory } from "@/types/product";
 
@@ -49,7 +48,7 @@ export default async function RootGrainHome() {
     <main className="min-h-screen">
       <Navigation config={SITE_CONFIG} />
       <HeroSection />
-      <CraftsmanshipSection crafts={CRAFT_PROCESSES} />
+      <CraftsmanshipSection />
       <SignatureCollectionSection products={products} />
       <WorkshopStorySection />
       <MaterialPhilosophySection />

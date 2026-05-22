@@ -3,9 +3,9 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import Image from "next/image";
-import type { CraftProcess } from "@/types/content";
+import { CRAFT_PROCESSES } from "@/data/crafts";
 
-export function CraftsmanshipSection({ crafts }: { crafts: CraftProcess[] }) {
+export function CraftsmanshipSection() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -39,7 +39,7 @@ export function CraftsmanshipSection({ crafts }: { crafts: CraftProcess[] }) {
 
         {/* Crafts Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {crafts.map((craft, index) => (
+          {CRAFT_PROCESSES.map((craft, index) => (
             <motion.div
               key={craft.title}
               initial={{ opacity: 0, y: 30 }}
