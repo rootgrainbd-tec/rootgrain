@@ -1,32 +1,139 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // Essential for Supabase/Neon migrations
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Product {
+  id           String      @id @default(cuid())
+  name         String
+  slug         String      @unique
+  category     String      
+  price        Int         // Stored in Paisa
+  comparePrice Int?
+  wood         String
+  dimensions   String
+  image        String
+  description  String
+  inStock      Boolean     @default(true)
+  featured     Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  orderItems   OrderItem[]
 }
 
-model Post {
+model Order {
+  id              String          @id @default(cuid())
+  orderNumber     String          @unique // e.g. RG-20260522-0001
+  userId          String?         
+  subtotal        Int             // Paisa
+  shippingCost    Int             // Paisa
+  total           Int             // Paisa
+  advancePaid     Int             @default(0) // Tracks the PGW booking fee
+  balanceDue      Int             // total - advancePaid
+  status          OrderStatus     @default(PENDING_ADVANCE)
+  shippingAddress Json            // Structured division/district/address
+  notes           String?
+  logistics       LogisticsProvider @default(PRIVATE_FREIGHT)
+  trackingState   TrackingState   @default(PENDING_PRODUCTION)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  items           OrderItem[]
+  paymentRecords  PaymentRecord[] // One-to-Many: Booking + Settlement
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  productId   String
+  productName String
+  quantity    Int
+  unitPrice   Int      // Paisa at time of purchase
+  total       Int      // unitPrice * quantity
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id])
+}
+
+model PaymentRecord {
+  id          String        @id @default(cuid())
+  orderId     String
+  type        PaymentPhase  // ADVANCE or SETTLEMENT
+  method      PaymentMethod 
+  amount      Int           // Paisa
+  status      PaymentStatus @default(INITIATED)
+  bkashTrxId  String?       @unique // Nullable for Bank/COD
+  paidAt      DateTime?
+  createdAt   DateTime      @default(now())
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, type]) // Ensures only one advance and one settlement per order
+}
+
+model Testimonial {
   id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+  quote     String
+  author    String
+  location  String
+  piece     String
+  approved  Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+// --- Enums enforce strict state machines ---
+
+enum OrderStatus {
+  PENDING_ADVANCE
+  PROCESSING
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentPhase {
+  ADVANCE
+  SETTLEMENT
+}
+
+enum PaymentMethod {
+  BKASH_PGW
+  BANK_TRANSFER
+  COD
+}
+
+enum PaymentStatus {
+  INITIATED
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+// --- Logistics & Fulfillment Enums ---
+
+enum LogisticsProvider {
+  PRIVATE_FREIGHT
+  PATHAO
+  REDX
+  DHL
+}
+
+enum TrackingState {
+  PENDING_PRODUCTION
+  IN_PRODUCTION
+  QUALITY_CHECK
+  DISPATCHED
+  OUT_FOR_DELIVERY
+  DELIVERED_AND_COLLECTED
+}
+
+// --- Token Caching ---
+
+model BkashToken {
+  id        String   @id @default("bkash_singleton")
+  id_token  String   @db.Text
+  expiresAt DateTime
   updatedAt DateTime @updatedAt
 }
