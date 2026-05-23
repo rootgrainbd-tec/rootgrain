@@ -75,7 +75,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
             <div className="hidden lg:block">
               <Button
                 variant="outline"
-                className={`border-2 rounded-none px-6 py-2 text-sm tracking-wider uppercase font-medium transition-all hover:bg-[var(--walnut)] hover:text-[var(--ivory)] hover:border-[var(--walnut)] ${
+                className={`bg-transparent border-2 rounded-none px-6 py-2 text-sm tracking-wider uppercase font-medium transition-all hover:bg-[var(--walnut)] hover:text-[var(--ivory)] hover:border-[var(--walnut)] ${
                   isScrolled
                     ? "border-[var(--walnut)] text-[var(--walnut)]"
                     : "border-[var(--ivory)] text-[var(--ivory)]"

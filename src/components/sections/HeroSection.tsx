@@ -79,7 +79,7 @@ export function HeroSection() {
           </Button>
           <Button
             variant="outline"
-            className="border-[var(--ivory)]/30 text-[var(--ivory)] hover:bg-[var(--ivory)]/10 px-8 py-6 rounded-none text-sm tracking-wider uppercase"
+            className="bg-transparent border-[var(--ivory)]/30 text-[var(--ivory)] hover:bg-[var(--ivory)]/10 px-8 py-6 rounded-none text-sm tracking-wider uppercase"
           >
             Our Craft
           </Button>
