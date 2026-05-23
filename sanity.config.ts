@@ -4,8 +4,8 @@ import { schema } from './sanity/schema'
 
 export default defineConfig({
   basePath: '/studio',
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
+  projectId: "uuu315g5",
+  dataset: "production",
   title: 'RootGrain Studio',
   schema,
   plugins: [
