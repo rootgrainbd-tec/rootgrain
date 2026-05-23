@@ -5,9 +5,14 @@ import { motion, useInView } from "framer-motion";
 import Image from "next/image";
 import { CRAFT_PROCESSES } from "@/data/crafts";
 
-export function CraftsmanshipSection() {
+import { urlForImage } from "../../../../sanity/lib/image";
+import { Hammer } from "lucide-react";
+
+export function CraftsmanshipSection({ steps }: { steps?: any[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  const displaySteps = steps?.length ? steps : CRAFT_PROCESSES;
 
   return (
     <section
@@ -39,25 +44,28 @@ export function CraftsmanshipSection() {
 
         {/* Crafts Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {CRAFT_PROCESSES.map((craft, index) => (
-            <motion.div
-              key={craft.title}
-              initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="group p-8 bg-[var(--ivory)] border border-[var(--border)] hover:border-[var(--gold)] transition-all duration-500 hover-lift"
-            >
-              <div className="text-[var(--gold)] mb-6 group-hover:scale-110 transition-transform duration-500">
-                <craft.icon className="w-8 h-8" />
-              </div>
-              <h3 className="font-serif text-2xl text-[var(--walnut-dark)] mb-4">
-                {craft.title}
-              </h3>
-              <p className="text-[var(--walnut-light)] leading-relaxed">
-                {craft.description}
-              </p>
-            </motion.div>
-          ))}
+          {displaySteps.map((craft, index) => {
+            const Icon = craft.icon || Hammer;
+            return (
+              <motion.div
+                key={craft.title}
+                initial={{ opacity: 0, y: 30 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="group p-8 bg-[var(--ivory)] border border-[var(--border)] hover:border-[var(--gold)] transition-all duration-500 hover-lift"
+              >
+                <div className="text-[var(--gold)] mb-6 group-hover:scale-110 transition-transform duration-500">
+                  <Icon className="w-8 h-8" />
+                </div>
+                <h3 className="font-serif text-2xl text-[var(--walnut-dark)] mb-4">
+                  {craft.title}
+                </h3>
+                <p className="text-[var(--walnut-light)] leading-relaxed">
+                  {craft.description}
+                </p>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Image */}

@@ -6,7 +6,9 @@ import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
-export function MaterialPhilosophySection() {
+import { PortableText } from "next-sanity";
+
+export function MaterialPhilosophySection({ data }: { data?: any }) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -60,43 +62,49 @@ export function MaterialPhilosophySection() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="order-1 lg:order-2"
           >
-            <div className="space-y-8">
-              <div>
-                <h3 className="font-serif text-2xl text-[var(--walnut-dark)] mb-3">
-                  Premium Hardwoods
-                </h3>
-                <p className="text-[var(--walnut-light)] leading-relaxed">
-                  We work exclusively with sustainably sourced American Black Walnut, 
-                  White Oak, Cherry, and Maple—hardwoods chosen for their exceptional 
-                  beauty, durability, and ability to develop rich patinas over time. 
-                  Each board is hand-selected for its unique grain story.
-                </p>
-              </div>
+            <div className="space-y-8 portable-text-dark">
+              {data?.philosophyText ? (
+                <PortableText value={data.philosophyText} />
+              ) : (
+                <>
+                  <div>
+                    <h3 className="font-serif text-2xl text-[var(--walnut-dark)] mb-3">
+                      Premium Hardwoods
+                    </h3>
+                    <p className="text-[var(--walnut-light)] leading-relaxed">
+                      We work exclusively with sustainably sourced American Black Walnut, 
+                      White Oak, Cherry, and Maple—hardwoods chosen for their exceptional 
+                      beauty, durability, and ability to develop rich patinas over time. 
+                      Each board is hand-selected for its unique grain story.
+                    </p>
+                  </div>
 
-              <div>
-                <h3 className="font-serif text-2xl text-[var(--walnut-dark)] mb-3">
-                  Natural Finishes
-                </h3>
-                <p className="text-[var(--walnut-light)] leading-relaxed">
-                  Our furniture is finished with food-safe linseed oil and beeswax, 
-                  allowing the wood to breathe and develop character with age. Unlike 
-                  polyurethane, these natural finishes can be refreshed and renewed, 
-                  ensuring your piece grows more beautiful with each passing year.
-                </p>
-              </div>
+                  <div>
+                    <h3 className="font-serif text-2xl text-[var(--walnut-dark)] mb-3">
+                      Natural Finishes
+                    </h3>
+                    <p className="text-[var(--walnut-light)] leading-relaxed">
+                      Our furniture is finished with food-safe linseed oil and beeswax, 
+                      allowing the wood to breathe and develop character with age. Unlike 
+                      polyurethane, these natural finishes can be refreshed and renewed, 
+                      ensuring your piece grows more beautiful with each passing year.
+                    </p>
+                  </div>
 
-              <div>
-                <h3 className="font-serif text-2xl text-[var(--walnut-dark)] mb-3">
-                  Aging Gracefully
-                </h3>
-                <p className="text-[var(--walnut-light)] leading-relaxed">
-                  We embrace the natural aging process of wood—the way cherry darkens 
-                  to rich red-brown, how walnut deepens in color, the gentle wear 
-                  patterns that tell the story of a life well-lived. These are not 
-                  flaws to be feared, but the authentic marks of time that transform 
-                  furniture into family heirlooms.
-                </p>
-              </div>
+                  <div>
+                    <h3 className="font-serif text-2xl text-[var(--walnut-dark)] mb-3">
+                      Aging Gracefully
+                    </h3>
+                    <p className="text-[var(--walnut-light)] leading-relaxed">
+                      We embrace the natural aging process of wood—the way cherry darkens 
+                      to rich red-brown, how walnut deepens in color, the gentle wear 
+                      patterns that tell the story of a life well-lived. These are not 
+                      flaws to be feared, but the authentic marks of time that transform 
+                      furniture into family heirlooms.
+                    </p>
+                  </div>
+                </>
+              )}
 
               <div className="pt-4">
                 <Button

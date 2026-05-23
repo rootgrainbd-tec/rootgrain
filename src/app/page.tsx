@@ -11,33 +11,41 @@ import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 
 import { SITE_CONFIG } from "@/data/site-config";
 import type { Product, ProductCategory } from "@/types/product";
+import { client } from "../../sanity/lib/client";
+import { urlForImage } from "../../sanity/lib/image";
+
+// Optional: Set revalidation time if using ISR
+export const revalidate = 60;
 
 export default async function RootGrainHome() {
-  const dbProducts = await prisma.product.findMany({
-    where: { featured: true },
-  });
+  // Fetch everything concurrently from Sanity
+  const [homepage, craftsmanshipSteps, sanityProducts, workshop, sanityTestimonials] = await Promise.all([
+    client.fetch(`*[_type == "homepage"][0]`),
+    client.fetch(`*[_type == "craftsmanshipStep"] | order(order asc)`),
+    client.fetch(`*[_type == "product" && featured == true] {
+      _id, name, slug, category->{name}, price, comparePrice, wood, dimensions, heroImage, description, inStock, featured
+    }`),
+    client.fetch(`*[_type == "workshop"][0]`),
+    client.fetch(`*[_type == "testimonial" && approved == true]`)
+  ]);
 
-  const dbTestimonials = await prisma.testimonial.findMany({
-    where: { approved: true },
-  });
-
-  // Map to the strict types required by the Client Components, dropping Dates for serialization safety
-  const products: Product[] = dbProducts.map((p) => ({
-    id: p.id,
+  // Map Sanity products to the strict Product type expected by the UI
+  const products: Product[] = sanityProducts.map((p: any) => ({
+    id: p._id,
     name: p.name,
-    slug: p.slug,
-    category: p.category as ProductCategory,
+    slug: p.slug?.current || '',
+    category: p.category?.name as ProductCategory || 'Dining Tables',
     price: p.price,
-    comparePrice: p.comparePrice ?? undefined,
+    comparePrice: p.comparePrice,
     wood: p.wood as any,
-    dimensions: p.dimensions,
-    image: p.image,
-    description: p.description,
-    inStock: p.inStock,
-    featured: p.featured,
+    dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
+    image: p.heroImage ? urlForImage(p.heroImage).url() : '',
+    description: p.description || '',
+    inStock: p.inStock ?? true,
+    featured: p.featured ?? true,
   }));
 
-  const testimonials = dbTestimonials.map((t) => ({
+  const testimonials = sanityTestimonials.map((t: any) => ({
     quote: t.quote,
     author: t.author,
     location: t.location,
@@ -47,11 +55,11 @@ export default async function RootGrainHome() {
   return (
     <main className="min-h-screen">
       <Navigation config={SITE_CONFIG} />
-      <HeroSection />
-      <CraftsmanshipSection />
+      <HeroSection data={homepage} />
+      <CraftsmanshipSection steps={craftsmanshipSteps} />
       <SignatureCollectionSection products={products} />
-      <WorkshopStorySection />
-      <MaterialPhilosophySection />
+      <WorkshopStorySection data={workshop} stats={homepage?.statsItems} />
+      <MaterialPhilosophySection data={homepage} />
       <LifestyleInteriorsSection />
       <TestimonialsSection testimonials={testimonials} />
       <Footer config={SITE_CONFIG} />
