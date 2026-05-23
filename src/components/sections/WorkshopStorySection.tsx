@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import Image from "next/image";
 
-import { urlForImage } from "../../../../sanity/lib/image";
+import { urlForImage } from "../../../sanity/lib/image";
 import { PortableText } from "next-sanity";
 
 export function WorkshopStorySection({ data, stats }: { data?: any, stats?: any[] }) {

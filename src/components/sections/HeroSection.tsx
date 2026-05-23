@@ -6,7 +6,7 @@ import { ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
-import { urlForImage } from "../../../../sanity/lib/image";
+import { urlForImage } from "../../../sanity/lib/image";
 
 export function HeroSection({ data }: { data?: any }) {
   const ref = useRef<HTMLDivElement>(null);

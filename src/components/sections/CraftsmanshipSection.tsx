@@ -5,7 +5,7 @@ import { motion, useInView } from "framer-motion";
 import Image from "next/image";
 import { CRAFT_PROCESSES } from "@/data/crafts";
 
-import { urlForImage } from "../../../../sanity/lib/image";
+import { urlForImage } from "../../../sanity/lib/image";
 import { Hammer } from "lucide-react";
 
 export function CraftsmanshipSection({ steps }: { steps?: any[] }) {
