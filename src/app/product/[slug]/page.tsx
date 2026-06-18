@@ -28,7 +28,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const dimensionsStr = product.dimensions ? `${product.dimensions.length} x ${product.dimensions.width} x ${product.dimensions.height} ${product.dimensions.unit}` : null;
   const heroUrl = product.heroImage ? urlForImage(product.heroImage).url() : "/placeholder.jpg";
   const desc = product.description || product.shortDescription || '';
-  const isAvailable = product.inStock ?? (product.availability === 'Available') ?? true;
+  const isAvailable = product.inStock ?? (product.availability === 'Available');
 
   return (
     <main className="min-h-screen bg-[var(--ivory)]">
