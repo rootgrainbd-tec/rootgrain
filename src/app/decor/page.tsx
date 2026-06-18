@@ -24,7 +24,7 @@ export default async function DecorPage() {
     dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
     image: p.heroImage ? urlForImage(p.heroImage).url() : '',
     description: p.description || p.shortDescription || '',
-    inStock: p.inStock ?? (p.availability === 'Available') ?? true,
+    inStock: p.inStock ?? (p.availability === 'Available'),
     featured: p.featured ?? true,
   }));
 
