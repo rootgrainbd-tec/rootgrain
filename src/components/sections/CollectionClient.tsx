@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Product, PRODUCT_CATEGORIES, PRODUCT_CATEGORY_LABELS, formatPrice } from "@/types/product";
 
 import Link from "next/link";
+import { Suspense } from "react";
 
-export function CollectionClient({ 
+function CollectionContent({ 
   initialProducts,
   title = "The Complete Collection",
   subtitle = "Our Catalog",
@@ -154,5 +155,18 @@ export function CollectionClient({
         </div>
       </div>
     </section>
+  );
+}
+
+export function CollectionClient(props: {
+  initialProducts: Product[],
+  title?: string,
+  subtitle?: string,
+  allowedCategories?: string[]
+}) {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[var(--ivory)] text-[var(--walnut)]">Loading...</div>}>
+      <CollectionContent {...props} />
+    </Suspense>
   );
 }
