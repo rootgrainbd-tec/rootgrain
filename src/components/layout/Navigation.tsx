@@ -4,13 +4,16 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { NAV_LINKS } from "@/data/site-config";
 import type { SiteConfig } from "@/types/site";
+import { PRODUCT_CATEGORIES } from "@/types/product";
 
 export function Navigation({ config }: { config: SiteConfig }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [hoveredNav, setHoveredNav] = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -57,18 +60,74 @@ export function Navigation({ config }: { config: SiteConfig }) {
             </a>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-8">
-              {NAV_LINKS.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className={`text-sm font-medium tracking-wide transition-colors hover:text-[var(--gold)] ${
-                    isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
-                  }`}
-                >
-                  {link.label}
-                </a>
-              ))}
+            <div className="hidden lg:flex items-center gap-8 h-full">
+              {NAV_LINKS.map((link) => {
+                if (link.label === "Collection") {
+                  return (
+                    <div 
+                      key={link.href} 
+                      className="relative h-full flex items-center"
+                      onMouseEnter={() => setHoveredNav(link.label)}
+                      onMouseLeave={() => setHoveredNav(null)}
+                    >
+                      <Link
+                        href={link.href}
+                        className={`text-sm font-medium tracking-wide transition-colors hover:text-[var(--gold)] ${
+                          isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
+                        }`}
+                      >
+                        {link.label}
+                      </Link>
+                      
+                      {/* Dropdown Menu */}
+                      <AnimatePresence>
+                        {hoveredNav === "Collection" && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            transition={{ duration: 0.2 }}
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 mt-8 pt-6 pb-2 w-64"
+                          >
+                            <div className="bg-[var(--cream)] border border-[var(--walnut-light)]/20 shadow-xl shadow-[var(--walnut-dark)]/5 flex flex-col py-4">
+                              <Link 
+                                href="/collection"
+                                className="px-6 py-2 text-sm text-[var(--walnut)] hover:text-[var(--gold)] hover:bg-[var(--parchment)] transition-colors"
+                                onClick={() => setHoveredNav(null)}
+                              >
+                                View Complete Catalog
+                              </Link>
+                              <div className="h-px bg-[var(--walnut-light)]/20 my-2 mx-4" />
+                              {PRODUCT_CATEGORIES.slice(1).map((category) => (
+                                <Link
+                                  key={category}
+                                  href={`/collection?category=${encodeURIComponent(category)}`}
+                                  className="px-6 py-2 text-sm text-[var(--walnut-light)] hover:text-[var(--gold)] hover:bg-[var(--parchment)] transition-colors block"
+                                  onClick={() => setHoveredNav(null)}
+                                >
+                                  {category}
+                                </Link>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`text-sm font-medium tracking-wide transition-colors hover:text-[var(--gold)] flex items-center h-full ${
+                      isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
             </div>
 
             {/* CTA Button */}

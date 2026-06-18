@@ -3,7 +3,7 @@ import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/sections/HeroSection";
 import { CraftsmanshipSection } from "@/components/sections/CraftsmanshipSection";
-import { SignatureCollectionSection } from "@/components/sections/SignatureCollectionSection";
+import { ExpandableCategorySection } from "@/components/sections/ExpandableCategorySection";
 import { WorkshopStorySection } from "@/components/sections/WorkshopStorySection";
 import { MaterialPhilosophySection } from "@/components/sections/MaterialPhilosophySection";
 import { LifestyleInteriorsSection } from "@/components/sections/LifestyleInteriorsSection";
@@ -22,7 +22,7 @@ export default async function RootGrainHome() {
   const [homepage, craftsmanshipSteps, sanityProducts, workshop, sanityTestimonials] = await Promise.all([
     client.fetch(`*[_type == "homepage"][0]`),
     client.fetch(`*[_type == "craftsmanshipStep"] | order(order asc)`),
-    client.fetch(`*[_type == "product" && featured == true] {
+    client.fetch(`*[_type == "product"] {
       _id, name, slug, category->{name}, price, comparePrice, wood, dimensions, heroImage, description, inStock, featured
     }`),
     client.fetch(`*[_type == "workshop"][0]`),
@@ -57,7 +57,7 @@ export default async function RootGrainHome() {
       <Navigation config={SITE_CONFIG} />
       <HeroSection data={homepage} />
       <CraftsmanshipSection steps={craftsmanshipSteps} />
-      <SignatureCollectionSection products={products} />
+      <ExpandableCategorySection products={products} />
       <WorkshopStorySection data={workshop} stats={homepage?.statsItems} />
       <MaterialPhilosophySection data={homepage} />
       <LifestyleInteriorsSection />

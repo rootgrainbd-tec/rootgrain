@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 import { urlForImage } from "../../../sanity/lib/image";
@@ -78,15 +79,19 @@ export function HeroSection({ data }: { data?: any }) {
           transition={{ duration: 1, delay: 0.9 }}
           className="flex flex-col sm:flex-row gap-4"
         >
-          <Button className="bg-[var(--gold)] hover:bg-[var(--gold-light)] text-[var(--walnut-dark)] px-8 py-6 rounded-none text-sm tracking-wider uppercase font-semibold">
-            Explore Collection
-          </Button>
-          <Button
-            variant="outline"
-            className="bg-transparent border-[var(--ivory)]/30 text-[var(--ivory)] hover:bg-[var(--ivory)]/10 px-8 py-6 rounded-none text-sm tracking-wider uppercase"
-          >
-            Our Craft
-          </Button>
+          <Link href="/collection">
+            <Button className="w-full sm:w-auto bg-[var(--gold)] hover:bg-[var(--gold-light)] text-[var(--walnut-dark)] px-8 py-6 rounded-none text-sm tracking-wider uppercase font-semibold">
+              Explore Collection
+            </Button>
+          </Link>
+          <Link href="#craftsmanship">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto bg-transparent border-[var(--ivory)]/30 text-[var(--ivory)] hover:bg-[var(--ivory)]/10 px-8 py-6 rounded-none text-sm tracking-wider uppercase"
+            >
+              Our Craft
+            </Button>
+          </Link>
         </motion.div>
       </motion.div>
 

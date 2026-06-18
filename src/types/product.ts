@@ -25,21 +25,47 @@ export interface Product {
   featured: boolean;
 }
 
-export type ProductCategory =
-  | "dining-tables"
-  | "coffee-tables"
-  | "seating"
-  | "tables"
-  | "consoles"
-  | "home-decor";
+export type ProductCategory = string;
 
-export const PRODUCT_CATEGORY_LABELS: Record<ProductCategory, string> = {
-  "dining-tables": "Dining Tables",
-  "coffee-tables": "Coffee Tables",
-  "seating": "Seating",
-  "tables": "Tables",
-  "consoles": "Console Tables",
-  "home-decor": "Home Decor",
+export const PRODUCT_CATEGORIES = [
+  "All",
+  "Centerpiece Tables",
+  "Accent & Side Tables",
+  "Handcrafted Stools",
+  "The Dining Collection",
+  "Lounge Seating",
+  "Artisan Chairs",
+  "Serving & Display Trays",
+  "Culinary Boards",
+  "Coasters & Trivets",
+  "Turned Wooden Bowls",
+  "Plates & Platters",
+  "Architectural Wood Tiles"
+];
+
+// Map raw Sanity strings to our new Artisan Vibe labels
+export const PRODUCT_CATEGORY_LABELS: Record<string, string> = {
+  // Legacy mappings
+  "dining-tables": "The Dining Collection",
+  "coffee-tables": "Centerpiece Tables",
+  "seating": "Lounge Seating",
+  "tables": "Centerpiece Tables",
+  "consoles": "Accent & Side Tables",
+  "home-decor": "Architectural Wood Tiles",
+  
+  // New exact mappings
+  "Coffee Table": "Centerpiece Tables",
+  "Sofa Side Table": "Accent & Side Tables",
+  "Stool": "Handcrafted Stools",
+  "Dining": "The Dining Collection",
+  "Sofa": "Lounge Seating",
+  "Chair": "Artisan Chairs",
+  "Serving Tray": "Serving & Display Trays",
+  "Chopping Board": "Culinary Boards",
+  "Coffee/Tea Coaster": "Coasters & Trivets",
+  "Bowl": "Turned Wooden Bowls",
+  "Plate": "Plates & Platters",
+  "Wooden Tiles": "Architectural Wood Tiles"
 };
 
 export type WoodType =
