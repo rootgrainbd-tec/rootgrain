@@ -34,6 +34,7 @@ export const SITE_CONFIG: SiteConfig = {
 
 /** Navigation links used in header and mobile menu */
 export const NAV_LINKS: NavLink[] = [
+  { href: "#house-and-home", label: "House & Home" },
   { href: "#craftsmanship", label: "Craftsmanship" },
   { href: "/collection", label: "Collection" },
   { href: "#workshop", label: "Workshop" },

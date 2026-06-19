@@ -59,7 +59,7 @@ export function ExpandableCategorySection({ products }: { products: Product[] })
     : products.slice(0, 6); 
 
   return (
-    <section className="py-24 lg:py-32 bg-[var(--ivory)] overflow-hidden">
+    <section id="house-and-home" className="py-24 lg:py-32 bg-[var(--ivory)] overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
