@@ -49,7 +49,7 @@ export function Footer({ config }: { config: SiteConfig }) {
             <div className="flex items-center gap-2 mb-6">
               <div className="relative w-16 h-16">
                 <Image
-                  src="/images/logo-crest.png?v=16"
+                  src="/images/logo-new.png"
                   alt="RootGrain Logo"
                   fill
                   className="object-contain"

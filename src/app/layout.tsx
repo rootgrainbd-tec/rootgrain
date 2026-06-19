@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   keywords: ["handcrafted furniture", "artisan furniture", "wooden furniture", "heritage furniture", "luxury furniture", "dining tables", "coffee tables", "woodworking"],
   authors: [{ name: "RootGrain Atelier" }],
   icons: {
-    icon: "/images/logo-crest.png",
+    icon: "/images/logo-new.png",
   },
   openGraph: {
     title: "RootGrain | Heritage Artisan Furniture",

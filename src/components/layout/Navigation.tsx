@@ -38,7 +38,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
             <a href="#" className="flex items-center gap-2 group">
               <div className="relative w-36 h-36">
                 <Image
-                  src="/images/logo-crest.png?v=16"
+                  src="/images/logo-new.png"
                   alt="RootGrain Logo"
                   fill
                   className="object-contain"
