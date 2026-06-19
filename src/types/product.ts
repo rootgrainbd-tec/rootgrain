@@ -40,7 +40,8 @@ export const PRODUCT_CATEGORIES = [
   "Coasters & Trivets",
   "Turned Wooden Bowls",
   "Plates & Platters",
-  "Architectural Wood Tiles"
+  "Architectural Wood Tiles",
+  "Kumiko"
 ];
 
 // Map raw Sanity strings to our new Artisan Vibe labels
@@ -65,7 +66,9 @@ export const PRODUCT_CATEGORY_LABELS: Record<string, string> = {
   "Coffee/Tea Coaster": "Coasters & Trivets",
   "Bowl": "Turned Wooden Bowls",
   "Plate": "Plates & Platters",
-  "Wooden Tiles": "Architectural Wood Tiles"
+  "Wooden Tiles": "Architectural Wood Tiles",
+  "Kumiko": "Kumiko",
+  "Kumiko Art": "Kumiko"
 };
 
 export type WoodType =

@@ -29,7 +29,8 @@ export default async function DecorPage() {
   }));
 
   const allowedCategories = [
-    "Architectural Wood Tiles"
+    "Architectural Wood Tiles",
+    "Kumiko"
   ];
 
   return (

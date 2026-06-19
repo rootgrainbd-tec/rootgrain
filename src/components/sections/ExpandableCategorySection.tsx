@@ -37,7 +37,8 @@ const TAB_GROUPS = [
     id: "decor",
     label: "Home & Decor",
     categories: [
-      "Architectural Wood Tiles"
+      "Architectural Wood Tiles",
+      "Kumiko"
     ]
   }
 ];
