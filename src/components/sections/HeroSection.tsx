@@ -84,12 +84,20 @@ export function HeroSection({ data }: { data?: any }) {
               Explore Collection
             </Button>
           </Link>
-          <Link href="#craftsmanship">
+          <Link href="/#craftsmanship">
             <Button
               variant="outline"
               className="w-full sm:w-auto bg-transparent border-[var(--ivory)]/30 text-[var(--ivory)] hover:bg-[var(--ivory)]/10 px-8 py-6 rounded-none text-sm tracking-wider uppercase"
             >
               Our Craft
+            </Button>
+          </Link>
+          <Link href="/#contact">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto bg-transparent border-[var(--ivory)]/30 text-[var(--ivory)] hover:bg-[var(--ivory)]/10 px-8 py-6 rounded-none text-sm tracking-wider uppercase"
+            >
+              Visit Atelier
             </Button>
           </Link>
         </motion.div>

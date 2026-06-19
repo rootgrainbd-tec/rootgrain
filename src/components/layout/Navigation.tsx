@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User, Search, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -130,29 +130,31 @@ export function Navigation({ config }: { config: SiteConfig }) {
               })}
             </div>
 
-            {/* CTA Button */}
-            <div className="hidden lg:block">
-              <Button
-                variant="outline"
-                className={`bg-transparent border-2 rounded-none px-6 py-2 text-sm tracking-wider uppercase font-medium transition-all hover:bg-[var(--walnut)] hover:text-[var(--ivory)] hover:border-[var(--walnut)] ${
-                  isScrolled
-                    ? "border-[var(--walnut)] text-[var(--walnut)]"
-                    : "border-[var(--ivory)] text-[var(--ivory)]"
+            {/* Icons */}
+            <div className="flex items-center gap-4 lg:gap-6">
+              <button className={`hidden lg:block hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
+                <User className="w-5 h-5" strokeWidth={1.5} />
+              </button>
+              <button className={`hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
+                <Search className="w-5 h-5" strokeWidth={1.5} />
+              </button>
+              <button className={`relative hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
+                <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
+                <span className={`absolute -top-2 -right-2 text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center ${isScrolled ? 'bg-[var(--walnut)] text-[var(--ivory)]' : 'bg-[var(--ivory)] text-[var(--walnut-dark)]'}`}>
+                  0
+                </span>
+              </button>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className={`lg:hidden p-2 ml-2 ${
+                  isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
                 }`}
               >
-                Visit Atelier
-              </Button>
+                <Menu className="w-6 h-6" />
+              </button>
             </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(true)}
-              className={`lg:hidden p-2 ${
-                isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
-              }`}
-            >
-              <Menu className="w-6 h-6" />
-            </button>
           </div>
         </div>
       </nav>

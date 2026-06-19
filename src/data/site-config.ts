@@ -15,7 +15,7 @@ export const SITE_CONFIG: SiteConfig = {
   support: {
     phone: "+88 01917389253",
     email: "rootgrainbd@gmail.com",
-    hours: "Tue–Sat: 10am–6pm",
+    hours: "Saturday - Thursday: 10 am - 11 pm",
   },
   address: {
     line1: "Mujibnagar road, Rail Bazar",
