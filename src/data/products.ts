@@ -24,20 +24,20 @@ export const SIGNATURE_COLLECTION: Product[] = [
       "/images/products/RG-001/top-view.png",
       "/images/products/RG-001/corner-side.png"
     ],
-    description: `Handcrafted from three organically shaped mahogany root pieces, carefully joined using traditional sissoo butterfly joints. The live-edge top preserves the natural contours, grain patterns, and character of the original wood, making every table truly one of a kind. Supported by a solid sissoo wood base and finished with a glossy shellac coating, this coffee table showcases authentic craftsmanship, natural beauty, and lasting durability. Designed as both a functional centerpiece and a statement piece for contemporary living spaces.
+    description: `Handcrafted from three organically shaped mehogony root pieces, carefully joined using traditional sisu butterfly joints. The live-edge top preserves the natural contours, grain patterns, and character of the original wood, making every table truly one of a kind. Supported by a solid sisu wood base and finished with a glossy shellac coating, this coffee table showcases authentic craftsmanship, natural beauty, and lasting durability. Designed as both a functional centerpiece and a statement piece for contemporary living spaces.
 
 MATERIALS
-• Top: Solid Mahogany Root Wood (3 Pieces Joined)
-• Butterfly Joints: Solid Sissoo Wood
-• Frame & Legs: Solid Sissoo Wood
+• Top: Solid Mehogony Root Wood (3 Pieces Joined)
+• Butterfly Joints: Solid Sisu Wood
+• Frame & Legs: Solid Sisu Wood
 • Finish: Glossy Shellac Coating
 
 KEY FEATURES
 • Handmade craftsmanship
 • Organic freeform shape
-• Three mahogany root pieces joined together
-• Handcrafted sissoo butterfly joints
-• Solid sissoo wood frame and legs
+• Three mehogony root pieces joined together
+• Handcrafted sisu butterfly joints
+• Solid sisu wood frame and legs
 • Glossy shellac finish
 • Natural live-edge design
 • Unique grain patterns and character
