@@ -6,6 +6,45 @@ import type { Product } from "@/types/product";
  */
 export const SIGNATURE_COLLECTION: Product[] = [
   {
+    id: "rg-001-center-coffee-table",
+    name: "RG-001 Center Coffee Table",
+    slug: "rg-001-center-coffee-table",
+    category: "Centerpiece Tables",
+    price: 3100000,       // ৳31,000
+    wood: "Mehogony and Sisu",
+    dimensions: '42" × 24"',
+    image: "/images/products/RG-001/sideview-1.png",
+    gallery: [
+      "/images/products/RG-001/joint-view-2.png",
+      "/images/products/RG-001/joint-view.png",
+      "/images/products/RG-001/side-4.png",
+      "/images/products/RG-001/side5.png",
+      "/images/products/RG-001/sideview-2.png",
+      "/images/products/RG-001/sideview-3.png",
+      "/images/products/RG-001/top-view.png"
+    ],
+    description: `Handcrafted from three organically shaped mahogany root pieces, carefully joined using traditional sissoo butterfly joints. The live-edge top preserves the natural contours, grain patterns, and character of the original wood, making every table truly one of a kind. Supported by a solid sissoo wood base and finished with a glossy shellac coating, this coffee table showcases authentic craftsmanship, natural beauty, and lasting durability. Designed as both a functional centerpiece and a statement piece for contemporary living spaces.
+
+MATERIALS
+• Top: Solid Mahogany Root Wood (3 Pieces Joined)
+• Butterfly Joints: Solid Sissoo Wood
+• Frame & Legs: Solid Sissoo Wood
+• Finish: Glossy Shellac Coating
+
+KEY FEATURES
+• Handmade craftsmanship
+• Organic freeform shape
+• Three mahogany root pieces joined together
+• Handcrafted sissoo butterfly joints
+• Solid sissoo wood frame and legs
+• Glossy shellac finish
+• Natural live-edge design
+• Unique grain patterns and character
+• Every piece is one of a kind`,
+    inStock: true,
+    featured: true,
+  },
+  {
     id: "heritage-dining-table",
     name: "The Heritage Dining Table",
     slug: "heritage-dining-table",

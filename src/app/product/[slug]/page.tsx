@@ -6,17 +6,35 @@ import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { SITE_CONFIG } from "@/data/site-config";
 import { formatPrice, PRODUCT_CATEGORY_LABELS } from "@/types/product";
+import { SIGNATURE_COLLECTION } from "@/data/products";
 import { Button } from "@/components/ui/button";
+import { ProductGallery } from "@/components/sections/ProductGallery";
 
 export const revalidate = 60;
 
-export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const product = await client.fetch(`*[_type == "product" && slug.current == $slug][0] {
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params;
+  let product = await client.fetch(`*[_type == "product" && slug.current == $slug][0] {
     _id, name, title, category->{name}, price, comparePrice, woodType, wood, dimensions, heroImage, galleryImages, fullDescription, shortDescription, description, availability, inStock
-  }`, { slug: params.slug });
+  }`, { slug: resolvedParams.slug });
 
   if (!product) {
-    notFound();
+    const localProduct = SIGNATURE_COLLECTION.find(p => p.slug === resolvedParams.slug);
+    if (localProduct) {
+      product = {
+        name: localProduct.name,
+        category: { name: localProduct.category },
+        price: localProduct.price,
+        wood: localProduct.wood,
+        dimensionsStr: localProduct.dimensions,
+        heroUrl: localProduct.image,
+        description: localProduct.description,
+        inStock: localProduct.inStock,
+        galleryImages: localProduct.gallery || []
+      };
+    } else {
+      notFound();
+    }
   }
 
   const name = product.name || product.title || '';
@@ -25,8 +43,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const rawCategory = product.category?.name || '';
   const categoryLabel = PRODUCT_CATEGORY_LABELS[rawCategory] || rawCategory;
   const wood = product.wood || product.woodType;
-  const dimensionsStr = product.dimensions ? `${product.dimensions.length} x ${product.dimensions.width} x ${product.dimensions.height} ${product.dimensions.unit}` : null;
-  const heroUrl = product.heroImage ? urlForImage(product.heroImage).url() : "/placeholder.jpg";
+  const dimensionsStr = product.dimensionsStr || (product.dimensions ? `${product.dimensions.length} x ${product.dimensions.width} x ${product.dimensions.height} ${product.dimensions.unit}` : null);
+  const heroUrl = product.heroUrl || (product.heroImage ? urlForImage(product.heroImage).url() : "/placeholder.jpg");
   const desc = product.description || product.shortDescription || '';
   const isAvailable = product.inStock ?? (product.availability === 'Available');
 
@@ -34,59 +52,38 @@ export default async function ProductPage({ params }: { params: { slug: string }
     <main className="min-h-screen bg-[var(--ivory)]">
       <Navigation config={SITE_CONFIG} />
       
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-24 lg:py-32">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-40 pb-24 lg:pt-48 lg:pb-32">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-24">
           
           {/* Images */}
-          <div className="space-y-6">
-            <div className="relative aspect-square bg-[var(--parchment)]">
-              <Image
-                src={heroUrl}
-                alt={name}
-                fill
-                className="object-cover"
-                priority
-              />
-            </div>
-            {/* Render gallery images here if they exist */}
-            {product.galleryImages && product.galleryImages.length > 0 && (
-              <div className="grid grid-cols-2 gap-6">
-                {product.galleryImages.map((img: any, i: number) => (
-                  <div key={i} className="relative aspect-square bg-[var(--parchment)]">
-                    <Image
-                      src={urlForImage(img).url()}
-                      alt={`${name} gallery ${i+1}`}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <ProductGallery 
+            heroUrl={heroUrl} 
+            galleryImages={product.galleryImages || []} 
+            productName={name} 
+          />
 
           {/* Details */}
           <div className="flex flex-col">
             <span className="text-[var(--gold)] text-sm tracking-[0.4em] uppercase font-medium mb-4 block">
               {categoryLabel}
             </span>
-            <h1 className="font-serif text-4xl md:text-5xl text-[var(--walnut-dark)] font-light mb-6">
+            <h1 className="font-serif text-4xl md:text-5xl text-[var(--walnut-dark)] font-light mb-6 lining-nums">
               {name}
             </h1>
             
             <div className="flex items-center gap-4 mb-8">
-              <span className="font-serif text-3xl text-[var(--walnut-dark)]">
+              <span className="font-sans font-medium text-3xl text-[var(--walnut-dark)] tracking-tight">
                 {formatPrice(price)}
               </span>
               {comparePrice && (
-                <span className="font-serif text-xl text-[var(--walnut-light)] line-through">
+                <span className="font-sans font-medium text-xl text-[var(--walnut-light)] line-through tracking-tight">
                   {formatPrice(comparePrice)}
                 </span>
               )}
             </div>
 
-            <div className="prose prose-stone mb-12 text-[var(--walnut)]">
-              <p>{desc}</p>
+            <div className="prose prose-stone mb-12 text-[var(--walnut)] whitespace-pre-wrap">
+              {desc}
             </div>
 
             <div className="grid grid-cols-2 gap-y-6 gap-x-12 py-8 border-y border-[var(--walnut-light)]/20 mb-12">

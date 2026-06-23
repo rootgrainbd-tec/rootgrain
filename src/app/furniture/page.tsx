@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { CollectionClient } from "@/components/sections/CollectionClient";
 import { SITE_CONFIG } from "@/data/site-config";
 import type { Product, ProductCategory } from "@/types/product";
+import { SIGNATURE_COLLECTION } from "@/data/products";
 
 export const revalidate = 60;
 
@@ -13,7 +14,7 @@ export default async function FurniturePage() {
     _id, name, title, slug, category->{name}, price, comparePrice, woodType, wood, dimensions, heroImage, shortDescription, description, availability, inStock, featured
   }`);
 
-  const products: Product[] = sanityProducts.map((p: any) => ({
+  const sanityMappedProducts: Product[] = sanityProducts.map((p: any) => ({
     id: p._id,
     name: p.name || p.title || '',
     slug: p.slug?.current || '',
@@ -27,6 +28,8 @@ export default async function FurniturePage() {
     inStock: p.inStock ?? (p.availability === 'Available'),
     featured: p.featured ?? true,
   }));
+
+  const products: Product[] = [...SIGNATURE_COLLECTION, ...sanityMappedProducts];
 
   const allowedCategories = [
     "Centerpiece Tables",

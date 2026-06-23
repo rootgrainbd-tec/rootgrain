@@ -23,6 +23,8 @@ export interface Product {
   inStock: boolean;
   /** Whether to feature on homepage */
   featured: boolean;
+  /** Array of image URLs for the product gallery */
+  gallery?: string[];
 }
 
 export type ProductCategory = string;
@@ -78,7 +80,8 @@ export type WoodType =
   | "Cherry"
   | "Maple"
   | "Teak"
-  | "Mahogany";
+  | "Mahogany"
+  | "Mehogony and Sisu";
 
 export interface ProductImage {
   url: string;
@@ -92,5 +95,5 @@ export interface ProductImage {
  */
 export function formatPrice(paisa: number): string {
   const taka = paisa / 100;
-  return `৳${taka.toLocaleString("en-BD")}`;
+  return `৳ ${taka.toLocaleString("en-BD")}`;
 }

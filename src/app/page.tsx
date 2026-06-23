@@ -13,6 +13,7 @@ import { SITE_CONFIG } from "@/data/site-config";
 import type { Product, ProductCategory } from "@/types/product";
 import { client } from "../../sanity/lib/client";
 import { urlForImage } from "../../sanity/lib/image";
+import { SIGNATURE_COLLECTION } from "@/data/products";
 
 // Optional: Set revalidation time if using ISR
 export const revalidate = 60;
@@ -29,8 +30,7 @@ export default async function RootGrainHome() {
     client.fetch(`*[_type == "testimonial" && approved == true]`)
   ]);
 
-  // Map Sanity products to the strict Product type expected by the UI
-  const products: Product[] = sanityProducts.map((p: any) => ({
+  const sanityMappedProducts: Product[] = sanityProducts.map((p: any) => ({
     id: p._id,
     name: p.name,
     slug: p.slug?.current || '',
@@ -44,6 +44,8 @@ export default async function RootGrainHome() {
     inStock: p.inStock ?? true,
     featured: p.featured ?? true,
   }));
+
+  const products: Product[] = [...SIGNATURE_COLLECTION, ...sanityMappedProducts];
 
   const testimonials = sanityTestimonials.map((t: any) => ({
     quote: t.quote,
