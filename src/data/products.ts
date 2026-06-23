@@ -42,7 +42,7 @@ KEY FEATURES
 • Natural live-edge design
 • Unique grain patterns and character
 • Every piece is one of a kind`,
-    inStock: true,
+    inStock: false,
     featured: true,
   },
   {
