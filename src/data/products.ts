@@ -21,7 +21,8 @@ export const SIGNATURE_COLLECTION: Product[] = [
       "/images/products/RG-001/side5.png",
       "/images/products/RG-001/sideview-2.png",
       "/images/products/RG-001/sideview-3.png",
-      "/images/products/RG-001/top-view.png"
+      "/images/products/RG-001/top-view.png",
+      "/images/products/RG-001/corner-side.png"
     ],
     description: `Handcrafted from three organically shaped mahogany root pieces, carefully joined using traditional sissoo butterfly joints. The live-edge top preserves the natural contours, grain patterns, and character of the original wood, making every table truly one of a kind. Supported by a solid sissoo wood base and finished with a glossy shellac coating, this coffee table showcases authentic craftsmanship, natural beauty, and lasting durability. Designed as both a functional centerpiece and a statement piece for contemporary living spaces.
 
