@@ -33,10 +33,10 @@ export function Navigation({ config }: { config: SiteConfig }) {
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex items-center justify-between h-48">
-            {/* Logo */}
-            <a href="#" className="flex items-center gap-2 group">
-              <div className="relative w-36 h-36">
+          <div className="flex items-center justify-between h-24">
+            {/* Brand Logo & Name */}
+            <div className="flex items-center gap-2">
+              <Link href="/" className="relative w-28 h-28 shrink-0">
                 <Image
                   src="/images/logo-new.png"
                   alt="RootGrain Logo"
@@ -44,8 +44,8 @@ export function Navigation({ config }: { config: SiteConfig }) {
                   className="object-contain"
                   unoptimized
                 />
-              </div>
-              <div className="flex flex-col justify-center">
+              </Link>
+              <Link href="/" className="flex flex-col justify-center group">
                 <span className={`font-serif text-2xl font-semibold tracking-wide leading-tight ${
                   isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
                 }`}>
@@ -56,8 +56,8 @@ export function Navigation({ config }: { config: SiteConfig }) {
                 }`}>
                   {config.tagline}
                 </span>
-              </div>
-            </a>
+              </Link>
+            </div>
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-8 h-full">
