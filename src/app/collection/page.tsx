@@ -7,6 +7,8 @@ import type { Product, ProductCategory } from "@/types/product";
 import { client } from "../../../sanity/lib/client";
 import { urlForImage } from "../../../sanity/lib/image";
 
+import { SIGNATURE_COLLECTION } from "@/data/products";
+
 export const revalidate = 60;
 
 export default async function CollectionPage() {
@@ -16,7 +18,7 @@ export default async function CollectionPage() {
   }`);
 
   // Map Sanity products to the strict Product type expected by the UI
-  const products: Product[] = sanityProducts.map((p: any) => ({
+  const sanityMappedProducts: Product[] = sanityProducts.map((p: any) => ({
     id: p._id,
     name: p.name,
     slug: p.slug?.current || '',
@@ -30,6 +32,8 @@ export default async function CollectionPage() {
     inStock: p.inStock ?? true,
     featured: p.featured ?? false,
   }));
+
+  const products: Product[] = [...SIGNATURE_COLLECTION, ...sanityMappedProducts];
 
   return (
     <main className="min-h-screen pt-24 bg-[var(--ivory)]">
