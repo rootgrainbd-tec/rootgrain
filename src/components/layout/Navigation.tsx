@@ -34,8 +34,8 @@ export function Navigation({ config }: { config: SiteConfig }) {
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex items-center justify-between h-24">
-            {/* Brand Logo & Name */}
-            <div className="flex items-center gap-2">
+            {/* Brand Logo & Name (Mobile: Left, Desktop: Absolute Center) */}
+            <div className="flex items-center gap-2 lg:absolute lg:left-1/2 lg:-translate-x-1/2 z-10">
               <Link href="/" className="relative w-28 h-28 shrink-0">
                 <Image
                   src="/images/logo-new.png"
@@ -59,9 +59,9 @@ export function Navigation({ config }: { config: SiteConfig }) {
               </Link>
             </div>
 
-            {/* Desktop Navigation */}
+            {/* Desktop Navigation - Left Side */}
             <div className="hidden lg:flex items-center gap-8 h-full">
-              {NAV_LINKS.map((link) => {
+              {NAV_LINKS.slice(0, 3).map((link) => {
                 if (link.label === "Collection") {
                   return (
                     <div 
@@ -87,7 +87,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 10 }}
                             transition={{ duration: 0.2 }}
-                            className="absolute top-1/2 left-1/2 -translate-x-1/2 mt-8 pt-6 pb-2 w-64"
+                            className="absolute top-1/2 left-0 mt-8 pt-6 pb-2 w-64"
                           >
                             <div className="bg-[var(--cream)] border border-[var(--walnut-light)]/20 shadow-xl shadow-[var(--walnut-dark)]/5 flex flex-col py-4">
                               <Link 
@@ -115,7 +115,6 @@ export function Navigation({ config }: { config: SiteConfig }) {
                     </div>
                   );
                 }
-
                 return (
                   <Link
                     key={link.href}
@@ -130,30 +129,47 @@ export function Navigation({ config }: { config: SiteConfig }) {
               })}
             </div>
 
-            {/* Icons */}
-            <div className="flex items-center gap-4 lg:gap-6">
-              <button className={`hidden lg:block hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
-                <User className="w-5 h-5" strokeWidth={1.5} />
-              </button>
-              <button className={`hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
-                <Search className="w-5 h-5" strokeWidth={1.5} />
-              </button>
-              <button className={`relative hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
-                <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
-                <span className={`absolute -top-2 -right-2 text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center ${isScrolled ? 'bg-[var(--walnut)] text-[var(--ivory)]' : 'bg-[var(--ivory)] text-[var(--walnut-dark)]'}`}>
-                  0
-                </span>
-              </button>
+            {/* Desktop Navigation - Right Side & Icons */}
+            <div className="flex items-center h-full">
+              <div className="hidden lg:flex items-center gap-8 h-full mr-8">
+                {NAV_LINKS.slice(3).map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`text-sm font-medium tracking-wide transition-colors hover:text-[var(--gold)] flex items-center h-full ${
+                      isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
 
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() => setIsMobileMenuOpen(true)}
-                className={`lg:hidden p-2 ml-2 ${
-                  isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
-                }`}
-              >
-                <Menu className="w-6 h-6" />
-              </button>
+              {/* Icons */}
+              <div className="flex items-center gap-4 lg:gap-6 border-l border-[var(--walnut-light)]/20 pl-6 lg:pl-8">
+                <button className={`hidden lg:block hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
+                  <User className="w-5 h-5" strokeWidth={1.5} />
+                </button>
+                <button className={`hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
+                  <Search className="w-5 h-5" strokeWidth={1.5} />
+                </button>
+                <button className={`relative hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
+                  <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
+                  <span className={`absolute -top-2 -right-2 text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center ${isScrolled ? 'bg-[var(--walnut)] text-[var(--ivory)]' : 'bg-[var(--ivory)] text-[var(--walnut-dark)]'}`}>
+                    0
+                  </span>
+                </button>
+
+                {/* Mobile Menu Button */}
+                <button
+                  onClick={() => setIsMobileMenuOpen(true)}
+                  className={`lg:hidden p-2 ml-2 ${
+                    isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
+                  }`}
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
