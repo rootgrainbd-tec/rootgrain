@@ -4,9 +4,11 @@ import { useState } from "react";
 import Image from "next/image";
 import { urlForImage } from "../../../sanity/lib/image";
 
+import type { SanityImage } from "@/types/sanity";
+
 interface ProductGalleryProps {
   heroUrl: string;
-  galleryImages: any[];
+  galleryImages: (SanityImage | string)[];
   productName: string;
 }
 

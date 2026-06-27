@@ -42,7 +42,6 @@ export function Navigation({ config }: { config: SiteConfig }) {
                   alt="RootGrain Logo"
                   fill
                   className="object-contain"
-                  unoptimized
                 />
               </Link>
               <Link href="/" className="flex flex-col justify-center group">
@@ -89,7 +88,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
                             transition={{ duration: 0.2 }}
                             className="absolute top-1/2 left-0 mt-8 pt-6 pb-2 w-64"
                           >
-                            <div className="bg-[var(--cream)] border border-[var(--walnut-light)]/20 shadow-xl shadow-[var(--walnut-dark)]/5 flex flex-col py-4">
+                            <div className="bg-[var(--cream)]/90 backdrop-blur-md border border-[var(--walnut-light)]/20 shadow-xl shadow-[var(--walnut-dark)]/5 flex flex-col py-4">
                               <Link 
                                 href="/collection"
                                 className="px-6 py-2 text-sm text-[var(--walnut)] hover:text-[var(--gold)] hover:bg-[var(--parchment)] transition-colors"
@@ -147,13 +146,13 @@ export function Navigation({ config }: { config: SiteConfig }) {
 
               {/* Icons */}
               <div className="flex items-center gap-4 lg:gap-6 border-l border-[var(--walnut-light)]/20 pl-6 lg:pl-8">
-                <button className={`hidden lg:block hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
+                <button aria-label="User Account" className={`hidden lg:block hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
                   <User className="w-5 h-5" strokeWidth={1.5} />
                 </button>
-                <button className={`hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
+                <button aria-label="Search" className={`hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
                   <Search className="w-5 h-5" strokeWidth={1.5} />
                 </button>
-                <button className={`relative hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
+                <button aria-label="Shopping Cart" className={`relative hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
                   <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
                   <span className={`absolute -top-2 -right-2 text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center ${isScrolled ? 'bg-[var(--walnut)] text-[var(--ivory)]' : 'bg-[var(--ivory)] text-[var(--walnut-dark)]'}`}>
                     0
@@ -162,6 +161,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
 
                 {/* Mobile Menu Button */}
                 <button
+                  aria-label="Open Mobile Menu"
                   onClick={() => setIsMobileMenuOpen(true)}
                   className={`lg:hidden p-2 ml-2 ${
                     isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"

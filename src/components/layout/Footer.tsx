@@ -53,7 +53,6 @@ export function Footer({ config }: { config: SiteConfig }) {
                   alt="RootGrain Logo"
                   fill
                   className="object-contain"
-                  unoptimized
                 />
               </div>
               <div className="flex flex-col justify-center">
@@ -68,13 +67,13 @@ export function Footer({ config }: { config: SiteConfig }) {
               craftsmanship, and the timeless beauty of natural wood.
             </p>
             <div className="flex gap-4">
-              <a href={config.social.instagram ?? "#"} className="text-[var(--ivory)]/60 hover:text-[var(--gold)] transition-colors">
+              <a aria-label="Instagram" href={config.social.instagram ?? "#"} className="text-[var(--ivory)]/60 hover:text-[var(--gold)] transition-colors">
                 <Instagram className="w-5 h-5" />
               </a>
-              <a href={config.social.facebook ?? "#"} className="text-[var(--ivory)]/60 hover:text-[var(--gold)] transition-colors">
+              <a aria-label="Facebook" href={config.social.facebook ?? "#"} className="text-[var(--ivory)]/60 hover:text-[var(--gold)] transition-colors">
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href={config.social.twitter ?? "#"} className="text-[var(--ivory)]/60 hover:text-[var(--gold)] transition-colors">
+              <a aria-label="Twitter" href={config.social.twitter ?? "#"} className="text-[var(--ivory)]/60 hover:text-[var(--gold)] transition-colors">
                 <Twitter className="w-5 h-5" />
               </a>
             </div>

@@ -7,8 +7,9 @@ import { CRAFT_PROCESSES } from "@/data/crafts";
 
 import { urlForImage } from "../../../sanity/lib/image";
 import { Hammer } from "lucide-react";
+import type { SanityCraftsmanshipStep } from "@/types/sanity";
 
-export function CraftsmanshipSection({ steps }: { steps?: any[] }) {
+export function CraftsmanshipSection({ steps }: { steps?: SanityCraftsmanshipStep[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 

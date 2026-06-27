@@ -10,17 +10,18 @@ import { LifestyleInteriorsSection } from "@/components/sections/LifestyleInteri
 import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 
 import { SITE_CONFIG } from "@/data/site-config";
-import type { Product, ProductCategory } from "@/types/product";
+import type { Product, ProductCategory, WoodType } from "@/types/product";
 import { client } from "../../sanity/lib/client";
 import { urlForImage } from "../../sanity/lib/image";
 import { SIGNATURE_COLLECTION } from "@/data/products";
+import type { SanityProduct, SanityTestimonial, SanityHomepage, SanityCraftsmanshipStep, SanityWorkshop } from "@/types/sanity";
 
 // Optional: Set revalidation time if using ISR
 export const revalidate = 60;
 
 export default async function RootGrainHome() {
   // Fetch everything concurrently from Sanity
-  const [homepage, craftsmanshipSteps, sanityProducts, workshop, sanityTestimonials] = await Promise.all([
+  const [homepage, craftsmanshipSteps, sanityProducts, workshop, sanityTestimonials]: [SanityHomepage, SanityCraftsmanshipStep[], SanityProduct[], SanityWorkshop, SanityTestimonial[]] = await Promise.all([
     client.fetch(`*[_type == "homepage"][0]`),
     client.fetch(`*[_type == "craftsmanshipStep"] | order(order asc)`),
     client.fetch(`*[_type == "product"] {
@@ -30,14 +31,14 @@ export default async function RootGrainHome() {
     client.fetch(`*[_type == "testimonial" && approved == true]`)
   ]);
 
-  const sanityMappedProducts: Product[] = sanityProducts.map((p: any) => ({
+  const sanityMappedProducts: Product[] = sanityProducts.map((p) => ({
     id: p._id,
     name: p.name,
     slug: p.slug?.current || '',
     category: p.category?.name as ProductCategory || 'Dining Tables',
     price: p.price,
     comparePrice: p.comparePrice,
-    wood: p.wood as any,
+    wood: (p.wood || p.woodType) as WoodType,
     dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
     image: p.heroImage ? urlForImage(p.heroImage).url() : '',
     description: p.description || '',
@@ -47,7 +48,7 @@ export default async function RootGrainHome() {
 
   const products: Product[] = [...SIGNATURE_COLLECTION, ...sanityMappedProducts];
 
-  const testimonials = sanityTestimonials.map((t: any) => ({
+  const testimonials = sanityTestimonials.map((t) => ({
     quote: t.quote,
     author: t.author,
     location: t.location,

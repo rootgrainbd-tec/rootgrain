@@ -6,8 +6,14 @@ import Image from "next/image";
 
 import { urlForImage } from "../../../sanity/lib/image";
 import { PortableText } from "next-sanity";
+import type { SanityWorkshop } from "@/types/sanity";
 
-export function WorkshopStorySection({ data, stats }: { data?: any, stats?: any[] }) {
+interface WorkshopStat {
+  number: string;
+  label: string;
+}
+
+export function WorkshopStorySection({ data, stats }: { data?: SanityWorkshop | any, stats?: WorkshopStat[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 

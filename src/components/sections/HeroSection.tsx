@@ -8,8 +8,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 import { urlForImage } from "../../../sanity/lib/image";
+import type { SanityHomepage } from "@/types/sanity";
 
-export function HeroSection({ data }: { data?: any }) {
+export function HeroSection({ data }: { data?: SanityHomepage }) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,

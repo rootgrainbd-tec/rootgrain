@@ -3,7 +3,8 @@ import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { CollectionClient } from "@/components/sections/CollectionClient";
 import { SITE_CONFIG } from "@/data/site-config";
-import type { Product, ProductCategory } from "@/types/product";
+import type { Product, ProductCategory, WoodType } from "@/types/product";
+import type { SanityProduct } from "@/types/sanity";
 import { client } from "../../../sanity/lib/client";
 import { urlForImage } from "../../../sanity/lib/image";
 
@@ -13,19 +14,19 @@ export const revalidate = 60;
 
 export default async function CollectionPage() {
   // Fetch all products from Sanity
-  const sanityProducts = await client.fetch(`*[_type == "product"] {
+  const sanityProducts: SanityProduct[] = await client.fetch(`*[_type == "product"] {
     _id, name, slug, category->{name}, price, comparePrice, wood, dimensions, heroImage, description, inStock, featured
   }`);
 
   // Map Sanity products to the strict Product type expected by the UI
-  const sanityMappedProducts: Product[] = sanityProducts.map((p: any) => ({
+  const sanityMappedProducts: Product[] = sanityProducts.map((p) => ({
     id: p._id,
     name: p.name,
     slug: p.slug?.current || '',
     category: (p.category?.name as ProductCategory) || 'Dining Tables',
     price: p.price,
     comparePrice: p.comparePrice,
-    wood: p.wood as any,
+    wood: (p.wood || p.woodType) as WoodType,
     dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
     image: p.heroImage ? urlForImage(p.heroImage).url() : '',
     description: p.description || '',

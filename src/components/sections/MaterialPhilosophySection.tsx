@@ -7,8 +7,9 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 import { PortableText } from "next-sanity";
+import type { SanityHomepage } from "@/types/sanity";
 
-export function MaterialPhilosophySection({ data }: { data?: any }) {
+export function MaterialPhilosophySection({ data }: { data?: SanityHomepage | any }) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
