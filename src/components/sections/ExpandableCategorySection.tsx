@@ -4,52 +4,24 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown, ArrowRight } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Product, PRODUCT_CATEGORY_LABELS, formatPrice } from "@/types/product";
 
-const TAB_GROUPS = [
-  {
-    id: "furniture",
-    label: "Furniture",
-    categories: [
-      "Centerpiece Tables",
-      "Accent & Side Tables",
-      "Handcrafted Stools",
-      "The Dining Collection",
-      "Lounge Seating",
-      "Artisan Chairs",
-    ]
-  },
-  {
-    id: "kitchenware",
-    label: "Kitchenware & Dining",
-    categories: [
-      "Serving & Display Trays",
-      "Culinary Boards",
-      "Coasters & Trivets",
-      "Turned Wooden Bowls",
-      "Plates & Platters",
-    ]
-  },
-  {
-    id: "decor",
-    label: "Home & Decor",
-    categories: [
-      "Architectural Wood Tiles",
-      "Kumiko"
-    ]
-  }
-];
-
-export function ExpandableCategorySection({ products }: { products: Product[] }) {
+export function ExpandableCategorySection({ 
+  products,
+  tabGroups 
+}: { 
+  products: Product[],
+  tabGroups: { id: string, label: string, slug: string, categories: string[] }[]
+}) {
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
 
   // If a group is active, filter by that group. Otherwise, show top 6 products as default.
-  const currentGroup = TAB_GROUPS.find(g => g.id === activeGroup);
+  const currentGroup = tabGroups.find(g => g.id === activeGroup);
   
   const filteredProducts = currentGroup 
     ? products.filter(p => {
@@ -99,13 +71,13 @@ export function ExpandableCategorySection({ products }: { products: Product[] })
                       className="overflow-hidden"
                     >
                       <div className="pt-6 flex flex-col gap-4">
-                        {TAB_GROUPS.map((group) => (
+                        {tabGroups.map((group) => (
                           <button
                             key={group.id}
                             onMouseEnter={() => setActiveGroup(group.id)}
                             onClick={(e) => {
                               e.stopPropagation();
-                              router.push(`/${group.id}`);
+                              router.push(`/collection/${group.slug}`);
                             }}
                             className={`text-left text-sm tracking-widest uppercase transition-colors duration-300 ${
                               activeGroup === group.id 

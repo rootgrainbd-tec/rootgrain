@@ -28,6 +28,20 @@ export default defineType({
       name: 'woodType',
       title: 'Wood Type',
       type: 'string',
+      options: {
+        list: [
+          { title: 'Teak (Segun)', value: 'Teak' },
+          { title: 'Mahogany', value: 'Mahogany' },
+          { title: 'Sisu', value: 'Sisu' },
+          { title: 'Jackfruit', value: 'Jackfruit' },
+          { title: 'Jam', value: 'Jam' },
+          { title: 'Kerosin', value: 'Kerosin' },
+          { title: 'Neem', value: 'Neem' },
+          { title: 'American Black Walnut', value: 'American Black Walnut' },
+          { title: 'Cherry', value: 'Cherry' },
+          { title: 'White Oak', value: 'White Oak' },
+        ],
+      },
     }),
     defineField({
       name: 'price',

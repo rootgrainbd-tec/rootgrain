@@ -23,4 +23,10 @@ export interface SiteConfig {
     copyright: string;
     origin: string;
   };
+  categoryGroups?: {
+    id: string;
+    label: string;
+    slug: string;
+    categories: string[];
+  }[];
 }

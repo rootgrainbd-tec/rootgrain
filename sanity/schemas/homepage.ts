@@ -46,5 +46,26 @@ export default defineType({
       title: 'Featured Collection Title',
       type: 'string',
     }),
+    defineField({
+      name: 'lifestyleTitle',
+      title: 'Lifestyle Title',
+      type: 'string',
+    }),
+    defineField({
+      name: 'lifestyleDescription',
+      title: 'Lifestyle Description',
+      type: 'text',
+    }),
+    defineField({
+      name: 'lifestyleImage',
+      title: 'Lifestyle Image',
+      type: 'image',
+      options: { hotspot: true },
+    }),
+    defineField({
+      name: 'lifestyleSpace',
+      title: 'Lifestyle Space (e.g. A Japandi Dining Room)',
+      type: 'string',
+    }),
   ],
 })

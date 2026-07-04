@@ -5,10 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, User, Search, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { NAV_LINKS } from "@/data/site-config";
 import type { SiteConfig } from "@/types/site";
-import { PRODUCT_CATEGORIES } from "@/types/product";
 
 export function Navigation({ config }: { config: SiteConfig }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -33,25 +31,25 @@ export function Navigation({ config }: { config: SiteConfig }) {
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex items-center justify-between h-24">
+          <div className={`flex items-center justify-between transition-all duration-500 ${isScrolled ? "h-16" : "h-28"}`}>
             {/* Brand Logo & Name (Mobile: Left, Desktop: Absolute Center) */}
             <div className="flex items-center gap-2 lg:absolute lg:left-1/2 lg:-translate-x-1/2 z-10">
-              <Link href="/" className="relative w-28 h-28 shrink-0">
+              <Link href="/" className={`relative shrink-0 transition-all duration-500 ${isScrolled ? "w-[50px] h-[50px]" : "w-[90px] h-[90px] lg:w-[120px] lg:h-[120px]"}`}>
                 <Image
-                  src="/images/logo-new.png"
+                  src={isScrolled ? "/images/rootgrain-logo-dark.svg" : "/images/rootgrain-logo.svg"}
                   alt="RootGrain Logo"
                   fill
                   className="object-contain"
                 />
               </Link>
-              <Link href="/" className="flex flex-col justify-center group">
-                <span className={`font-serif text-2xl font-semibold tracking-wide leading-tight ${
-                  isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
+              <Link href="/" className="flex flex-col justify-center group overflow-hidden">
+                <span className={`font-serif font-semibold tracking-wide leading-tight transition-all duration-500 ${
+                  isScrolled ? "text-xl text-[var(--walnut)]" : "text-2xl text-[var(--ivory)]"
                 }`}>
                   {config.name.toUpperCase()}
                 </span>
-                <span className={`text-xs tracking-[0.3em] uppercase leading-tight mt-0.5 ${
-                  isScrolled ? "text-[var(--walnut-light)]" : "text-[var(--ivory)]/70"
+                <span className={`uppercase leading-tight transition-all duration-500 overflow-hidden ${
+                  isScrolled ? "text-[0px] tracking-[0px] opacity-0 h-0" : "text-xs tracking-[0.3em] opacity-100 h-4 mt-0.5 text-[var(--ivory)]/70"
                 }`}>
                   {config.tagline}
                 </span>
@@ -97,14 +95,14 @@ export function Navigation({ config }: { config: SiteConfig }) {
                                 View Complete Catalog
                               </Link>
                               <div className="h-px bg-[var(--walnut-light)]/20 my-2 mx-4" />
-                              {PRODUCT_CATEGORIES.slice(1).map((category) => (
+                              {config.categoryGroups?.map((group) => (
                                 <Link
-                                  key={category}
-                                  href={`/collection?category=${encodeURIComponent(category)}`}
+                                  key={group.id}
+                                  href={`/collection/${group.slug}`}
                                   className="px-6 py-2 text-sm text-[var(--walnut-light)] hover:text-[var(--gold)] hover:bg-[var(--parchment)] transition-colors block"
                                   onClick={() => setHoveredNav(null)}
                                 >
-                                  {category}
+                                  {group.label}
                                 </Link>
                               ))}
                             </div>

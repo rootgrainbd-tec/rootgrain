@@ -4,8 +4,10 @@ import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import type { SanityHomepage } from "@/types/sanity";
+import { urlForImage } from "../../../sanity/lib/image";
 
-export function LifestyleInteriorsSection() {
+export function LifestyleInteriorsSection({ data }: { data?: SanityHomepage | any }) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -26,12 +28,11 @@ export function LifestyleInteriorsSection() {
             Living with RootGrain
           </span>
           <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl text-[var(--walnut-dark)] font-light mb-6">
-            Lifestyle Interiors
+            {data?.lifestyleTitle || "Lifestyle Interiors"}
           </h2>
           <div className="w-24 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent mx-auto mb-8" />
           <p className="text-[var(--walnut-light)] text-lg max-w-2xl mx-auto leading-relaxed">
-            Our furniture finds its home in spaces that value authenticity, warmth, 
-            and the quiet luxury of natural materials.
+            {data?.lifestyleDescription || "Our furniture finds its home in spaces that value authenticity, warmth, and the quiet luxury of natural materials."}
           </p>
         </motion.div>
 
@@ -43,7 +44,7 @@ export function LifestyleInteriorsSection() {
           className="relative aspect-[21/9] overflow-hidden mb-8"
         >
           <Image
-            src="/images/lifestyle-interior.png"
+            src={data?.lifestyleImage ? urlForImage(data.lifestyleImage).url() : "/images/lifestyle-interior.png"}
             alt="RootGrain furniture in a warm Japandi-style interior"
             fill
             className="object-cover"
@@ -52,7 +53,7 @@ export function LifestyleInteriorsSection() {
           <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between">
             <div>
               <p className="text-[var(--ivory)]/70 text-sm tracking-wider uppercase mb-2">Featured Space</p>
-              <p className="font-serif text-2xl text-[var(--ivory)]">A Japandi Dining Room</p>
+              <p className="font-serif text-2xl text-[var(--ivory)]">{data?.lifestyleSpace || "A Japandi Dining Room"}</p>
             </div>
             <Button className="bg-[var(--ivory)] text-[var(--walnut-dark)] hover:bg-[var(--gold)] rounded-none px-6 py-4 text-sm tracking-wider uppercase">
               Explore Spaces

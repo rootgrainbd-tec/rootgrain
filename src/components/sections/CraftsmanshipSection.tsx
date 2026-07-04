@@ -3,9 +3,7 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import Image from "next/image";
-import { CRAFT_PROCESSES } from "@/data/crafts";
 
-import { urlForImage } from "../../../sanity/lib/image";
 import { Hammer } from "lucide-react";
 import type { SanityCraftsmanshipStep } from "@/types/sanity";
 
@@ -13,7 +11,7 @@ export function CraftsmanshipSection({ steps }: { steps?: SanityCraftsmanshipSte
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
-  const displaySteps = steps?.length ? steps : CRAFT_PROCESSES;
+  const displaySteps = steps || [];
 
   return (
     <section
@@ -46,7 +44,7 @@ export function CraftsmanshipSection({ steps }: { steps?: SanityCraftsmanshipSte
         {/* Crafts Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {displaySteps.map((craft, index) => {
-            const Icon = craft.icon || Hammer;
+            const Icon = (craft.icon as React.ElementType) || Hammer;
             return (
               <motion.div
                 key={craft.title}

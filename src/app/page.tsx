@@ -1,4 +1,3 @@
-import prisma from "@/lib/prisma";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/sections/HeroSection";
@@ -9,11 +8,10 @@ import { MaterialPhilosophySection } from "@/components/sections/MaterialPhiloso
 import { LifestyleInteriorsSection } from "@/components/sections/LifestyleInteriorsSection";
 import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 
-import { SITE_CONFIG } from "@/data/site-config";
+import { getSiteConfig } from "@/data/site-config";
 import type { Product, ProductCategory, WoodType } from "@/types/product";
 import { client } from "../../sanity/lib/client";
 import { urlForImage } from "../../sanity/lib/image";
-import { SIGNATURE_COLLECTION } from "@/data/products";
 import type { SanityProduct, SanityTestimonial, SanityHomepage, SanityCraftsmanshipStep, SanityWorkshop } from "@/types/sanity";
 
 // Optional: Set revalidation time if using ISR
@@ -21,19 +19,20 @@ export const revalidate = 60;
 
 export default async function RootGrainHome() {
   // Fetch everything concurrently from Sanity
-  const [homepage, craftsmanshipSteps, sanityProducts, workshop, sanityTestimonials]: [SanityHomepage, SanityCraftsmanshipStep[], SanityProduct[], SanityWorkshop, SanityTestimonial[]] = await Promise.all([
-    client.fetch(`*[_type == "homepage"][0]`),
-    client.fetch(`*[_type == "craftsmanshipStep"] | order(order asc)`),
-    client.fetch(`*[_type == "product"] {
-      _id, name, slug, category->{name}, price, comparePrice, wood, dimensions, heroImage, description, inStock, featured
+  const [sanityProducts, sanityTestimonials, homepage, workshop, craftsmanshipSteps, SITE_CONFIG] = await Promise.all([
+    client.fetch(`*[_type == "product"]{
+      _id, title, slug, category->{name}, price, comparePrice, woodType, inStock, heroImage, description, featured
     }`),
+    client.fetch(`*[_type == "testimonial" && approved == true]`),
+    client.fetch(`*[_type == "homepage"][0]`),
     client.fetch(`*[_type == "workshop"][0]`),
-    client.fetch(`*[_type == "testimonial" && approved == true]`)
+    client.fetch(`*[_type == "craftsmanshipStep"] | order(order asc)`),
+    getSiteConfig(),
   ]);
 
-  const sanityMappedProducts: Product[] = sanityProducts.map((p) => ({
+  const sanityMappedProducts: Product[] = sanityProducts.map((p: any) => ({
     id: p._id,
-    name: p.name,
+    name: p.title || p.name || 'Untitled',
     slug: p.slug?.current || '',
     category: p.category?.name as ProductCategory || 'Dining Tables',
     price: p.price,
@@ -46,9 +45,9 @@ export default async function RootGrainHome() {
     featured: p.featured ?? true,
   }));
 
-  const products: Product[] = [...SIGNATURE_COLLECTION, ...sanityMappedProducts];
+  const products: Product[] = sanityMappedProducts;
 
-  const testimonials = sanityTestimonials.map((t) => ({
+  const testimonials = sanityTestimonials.map((t: any) => ({
     quote: t.quote,
     author: t.author,
     location: t.location,
@@ -60,10 +59,10 @@ export default async function RootGrainHome() {
       <Navigation config={SITE_CONFIG} />
       <HeroSection data={homepage} />
       <CraftsmanshipSection steps={craftsmanshipSteps} />
-      <ExpandableCategorySection products={products} />
+      <ExpandableCategorySection products={products} tabGroups={SITE_CONFIG.categoryGroups || []} />
       <WorkshopStorySection data={workshop} stats={homepage?.statsItems} />
       <MaterialPhilosophySection data={homepage} />
-      <LifestyleInteriorsSection />
+      <LifestyleInteriorsSection data={homepage} />
       <TestimonialsSection testimonials={testimonials} />
       <Footer config={SITE_CONFIG} />
     </main>

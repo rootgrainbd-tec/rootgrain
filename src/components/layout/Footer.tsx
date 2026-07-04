@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, MapPin, Phone, Clock, Instagram, Facebook, Twitter } from "lucide-react";
+import { Mail, MapPin, Phone, Clock, Instagram, Facebook } from "lucide-react";
+
+const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+  </svg>
+);
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +15,40 @@ import type { SiteConfig } from "@/types/site";
 
 export function Footer({ config }: { config: SiteConfig }) {
   const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [message, setMessage] = useState("");
+
+  const handleSubscribe = async () => {
+    if (!email || !email.includes("@")) {
+      setStatus("error");
+      setMessage("Please enter a valid email address.");
+      return;
+    }
+
+    setStatus("loading");
+    setMessage("");
+
+    try {
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setStatus("success");
+        setMessage("Thank you for subscribing!");
+        setEmail("");
+      } else {
+        setStatus("error");
+        setMessage(data.message || "Something went wrong.");
+      }
+    } catch (err) {
+      setStatus("error");
+      setMessage("Failed to subscribe.");
+    }
+  };
 
   return (
     <footer id="contact" className="bg-[var(--walnut-dark)] text-[var(--ivory)]">
@@ -25,17 +65,29 @@ export function Footer({ config }: { config: SiteConfig }) {
                 and insights into the art of fine woodworking.
               </p>
             </div>
-            <div className="flex gap-4">
-              <Input
-                type="email"
-                placeholder="Your email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-transparent border-[var(--ivory)]/30 text-[var(--ivory)] placeholder:text-[var(--ivory)]/50 rounded-none py-6 focus:border-[var(--gold)]"
-              />
-              <Button className="bg-[var(--gold)] hover:bg-[var(--gold-light)] text-[var(--walnut-dark)] px-8 rounded-none whitespace-nowrap">
-                Subscribe
-              </Button>
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-4">
+                <Input
+                  type="email"
+                  placeholder="Your email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={status === "loading"}
+                  className="bg-transparent border-[var(--ivory)]/30 text-[var(--ivory)] placeholder:text-[var(--ivory)]/50 rounded-none py-6 focus:border-[var(--gold)]"
+                />
+                <Button 
+                  onClick={handleSubscribe} 
+                  disabled={status === "loading"}
+                  className="bg-[var(--gold)] hover:bg-[var(--gold-light)] text-[var(--walnut-dark)] px-8 rounded-none whitespace-nowrap disabled:opacity-50"
+                >
+                  {status === "loading" ? "Subscribing..." : "Subscribe"}
+                </Button>
+              </div>
+              {message && (
+                <p className={`text-sm ${status === "error" ? "text-red-400" : "text-[var(--gold)]"}`}>
+                  {message}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -47,9 +99,9 @@ export function Footer({ config }: { config: SiteConfig }) {
           {/* Brand */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-2 mb-6">
-              <div className="relative w-16 h-16">
+              <div className="relative w-[83px] h-[83px]">
                 <Image
-                  src="/images/logo-new.png"
+                  src="/images/rootgrain-logo.svg"
                   alt="RootGrain Logo"
                   fill
                   className="object-contain"
@@ -73,8 +125,8 @@ export function Footer({ config }: { config: SiteConfig }) {
               <a aria-label="Facebook" href={config.social.facebook ?? "#"} className="text-[var(--ivory)]/60 hover:text-[var(--gold)] transition-colors">
                 <Facebook className="w-5 h-5" />
               </a>
-              <a aria-label="Twitter" href={config.social.twitter ?? "#"} className="text-[var(--ivory)]/60 hover:text-[var(--gold)] transition-colors">
-                <Twitter className="w-5 h-5" />
+              <a aria-label="X" href={config.social.twitter ?? "#"} className="text-[var(--ivory)]/60 hover:text-[var(--gold)] transition-colors">
+                <XIcon className="w-[18px] h-[18px] mt-0.5" />
               </a>
             </div>
           </div>

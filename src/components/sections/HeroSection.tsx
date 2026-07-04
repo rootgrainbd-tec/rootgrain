@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, Fragment } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import Image from "next/image";
@@ -19,6 +19,19 @@ export function HeroSection({ data }: { data?: SanityHomepage }) {
 
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+
+  const renderHeadline = (text?: string) => {
+    if (!text) return null;
+    const lines = text.split('\n');
+    return lines.map((line, i) => (
+      <Fragment key={i}>
+        {line.split(/\*(.*?)\*/).map((part, j) => 
+          j % 2 === 1 ? <span key={j} className="font-normal">{part}</span> : part
+        )}
+        {i < lines.length - 1 && <br />}
+      </Fragment>
+    ));
+  };
 
   return (
     <section ref={ref} className="relative h-screen min-h-[700px] overflow-hidden">
@@ -56,13 +69,7 @@ export function HeroSection({ data }: { data?: SanityHomepage }) {
           transition={{ duration: 1, delay: 0.5 }}
           className="font-serif text-5xl md:text-7xl lg:text-8xl text-[var(--ivory)] font-light leading-tight mb-8 max-w-5xl"
         >
-          {data?.heroHeadline || (
-            <>
-              Crafted with <span className="font-normal">Legacy</span>
-              <br />
-              Not Manufactured
-            </>
-          )}
+          {renderHeadline(data?.heroHeadline)}
         </motion.h1>
 
         <motion.p
@@ -71,7 +78,7 @@ export function HeroSection({ data }: { data?: SanityHomepage }) {
           transition={{ duration: 1, delay: 0.7 }}
           className="text-[var(--ivory)]/80 text-lg md:text-xl max-w-2xl mb-12 font-light leading-relaxed"
         >
-          {data?.heroSubheadline || "Each piece tells a story of timeless craftsmanship, premium hardwoods, and the patient hands that shape them into heirlooms for generations."}
+          {data?.heroSubheadline}
         </motion.p>
 
         <motion.div

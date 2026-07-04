@@ -90,10 +90,9 @@ export interface ProductImage {
 }
 
 /**
- * Format a paisa amount as a BDT display string.
- * Example: 48000000 → "৳4,80,000"
+ * Format a Taka amount as a BDT display string.
+ * Example: 480000 → "৳ 4,80,000"
  */
-export function formatPrice(paisa: number): string {
-  const taka = paisa / 100;
+export function formatPrice(taka: number): string {
   return `৳ ${taka.toLocaleString("en-BD")}`;
 }

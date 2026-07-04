@@ -3,22 +3,20 @@ import { client } from "../../../../sanity/lib/client";
 import { urlForImage } from "../../../../sanity/lib/image";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
-import { SIGNATURE_COLLECTION } from "@/data/products";
 import { PRODUCT_CATEGORIES } from "@/types/product";
 import type { Product, ProductCategory, WoodType } from "@/types/product";
 import type { SanityProduct } from "@/types/sanity";
-import { SITE_CONFIG } from "@/data/site-config";
+import { getSiteConfig } from "@/data/site-config";
 import { CollectionClient } from "@/components/sections/CollectionClient";
 
 export const revalidate = 60;
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;
-  // Match slug to category name
+  const SITE_CONFIG = await getSiteConfig();
   const matchedCategory = PRODUCT_CATEGORIES.find((c: string) => 
     c.toLowerCase().replace(/[\s&/]+/g, '-').replace(/-+/g, '-') === resolvedParams.slug
   );
-
   if (!matchedCategory || matchedCategory === "All") {
     notFound();
   }
@@ -42,7 +40,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     featured: p.featured ?? false,
   }));
 
-  const products: Product[] = [...SIGNATURE_COLLECTION, ...sanityMappedProducts];
+  const products: Product[] = sanityMappedProducts;
 
   return (
     <main className="min-h-screen">

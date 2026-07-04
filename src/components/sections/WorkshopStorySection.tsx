@@ -42,34 +42,13 @@ export function WorkshopStorySection({ data, stats }: { data?: SanityWorkshop | 
             <div className="w-24 h-px bg-gradient-to-r from-[var(--gold)] to-transparent mb-8" />
             
             <div className="space-y-6 text-[var(--ivory)]/80 leading-relaxed portable-text">
-              {data?.workshopStory ? (
+              {data?.workshopStory && (
                 <PortableText value={data.workshopStory} />
-              ) : (
-                <>
-                  <p>
-                    In a sunlit workshop nestled among old-growth forests, our artisans continue 
-                    a tradition that spans generations. Here, the scent of fresh-cut hardwood mingles 
-                    with the quiet rhythm of hand tools, and each piece of furniture begins its 
-                    journey from raw timber to heirloom treasure.
-                  </p>
-                  <p>
-                    Every RootGrain piece carries the marks of its makers—the careful selection of 
-                    grain, the patient hours of sanding, the precision of hand-cut joints. These are 
-                    not imperfections; they are the signatures of authenticity, proof that human 
-                    hands guided every step of creation.
-                  </p>
-                  <p>
-                    We believe that in an age of disposable goods, there is profound value in 
-                    furniture designed to outlive its makers. Each table, chair, and bench we 
-                    create is built to become a cherished part of your family's story, passed 
-                    down through generations as a testament to enduring quality.
-                  </p>
-                </>
               )}
             </div>
 
             <div className="mt-10 flex flex-wrap gap-8">
-              {stats?.map((stat: any, i: number) => (
+              {stats?.map((stat: WorkshopStat, i: number) => (
                 <div key={i}>
                   <div className="font-serif text-4xl text-[var(--gold)]">{stat.number}</div>
                   <div className="text-sm text-[var(--ivory)]/60 mt-1">{stat.label}</div>

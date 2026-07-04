@@ -1,12 +1,10 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import { client } from "../../../../sanity/lib/client";
 import { urlForImage } from "../../../../sanity/lib/image";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
-import { SITE_CONFIG } from "@/data/site-config";
+import { getSiteConfig } from "@/data/site-config";
 import { formatPrice, PRODUCT_CATEGORY_LABELS } from "@/types/product";
-import { SIGNATURE_COLLECTION } from "@/data/products";
 import { Button } from "@/components/ui/button";
 import { ProductGallery } from "@/components/sections/ProductGallery";
 
@@ -14,27 +12,13 @@ export const revalidate = 60;
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;
-  let product = await client.fetch(`*[_type == "product" && slug.current == $slug][0] {
+  const SITE_CONFIG = await getSiteConfig();
+  const product = await client.fetch(`*[_type == "product" && slug.current == $slug][0] {
     _id, name, title, category->{name}, price, comparePrice, woodType, wood, dimensions, heroImage, galleryImages, fullDescription, shortDescription, description, availability, inStock
   }`, { slug: resolvedParams.slug });
 
   if (!product) {
-    const localProduct = SIGNATURE_COLLECTION.find(p => p.slug === resolvedParams.slug);
-    if (localProduct) {
-      product = {
-        name: localProduct.name,
-        category: { name: localProduct.category },
-        price: localProduct.price,
-        wood: localProduct.wood,
-        dimensionsStr: localProduct.dimensions,
-        heroUrl: localProduct.image,
-        description: localProduct.description,
-        inStock: localProduct.inStock,
-        galleryImages: localProduct.gallery || []
-      };
-    } else {
-      notFound();
-    }
+    notFound();
   }
 
   const name = product.name || product.title || '';

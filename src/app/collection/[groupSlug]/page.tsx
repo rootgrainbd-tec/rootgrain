@@ -1,22 +1,35 @@
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { CollectionClient } from "@/components/sections/CollectionClient";
 import { getSiteConfig } from "@/data/site-config";
 import type { Product, ProductCategory, WoodType } from "@/types/product";
-import type { SanityProduct } from "@/types/sanity";
-import { client } from "../../../sanity/lib/client";
-import { urlForImage } from "../../../sanity/lib/image";
+import { client } from "../../../../sanity/lib/client";
+import { urlForImage } from "../../../../sanity/lib/image";
 
 export const dynamic = 'force-dynamic';
 
-export default async function CollectionPage(
-  props: {
+export default async function CategoryGroupPage(
+  props: { 
+    params: Promise<{ groupSlug: string }>,
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
   }
 ) {
+  const params = await props.params;
   const searchParams = await props.searchParams;
+  const { groupSlug } = params;
   const SITE_CONFIG = await getSiteConfig();
+
+  // Find the category group
+  const group = await client.fetch(`*[_type == "categoryGroup" && slug.current == $slug][0]{
+    title,
+    "categories": categories[]->name
+  }`, { slug: groupSlug });
+
+  if (!group) {
+    notFound();
+  }
 
   // Pagination Config
   const ITEMS_PER_PAGE = 12;
@@ -26,17 +39,14 @@ export default async function CollectionPage(
   const end = start + ITEMS_PER_PAGE;
 
   // Filter Config
-  const category = searchParams.category as string;
   const wood = searchParams.wood as string;
   const availability = searchParams.availability as string;
   const priceRange = searchParams.price as string;
 
   // Build GROQ Query Conditions
-  const conditions = ['_type == "product"'];
+  // Base condition: must be a product and belong to one of the categories in this group
+  const conditions = ['_type == "product"', 'category->name in $categories'];
 
-  if (category && category !== "All") {
-    conditions.push(`category->name == "${category}"`);
-  }
   if (wood && wood !== "All") {
     conditions.push(`woodType == "${wood}"`);
   }
@@ -54,21 +64,18 @@ export default async function CollectionPage(
   const queryFilter = conditions.join(" && ");
 
   // Fetch Total Count
-  const totalCount = await client.fetch(`count(*[${queryFilter}])`);
+  const totalCount = await client.fetch(`count(*[${queryFilter}])`, { categories: group.categories || [] });
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   // Fetch Paginated Products
-  const sanityProducts: SanityProduct[] = await client.fetch(`*[${queryFilter}] | order(_createdAt desc) [$start...$end] {
+  const sanityProducts = await client.fetch(`*[${queryFilter}] | order(_createdAt desc) [$start...$end] {
     _id, title, slug, category->{name}, price, comparePrice, woodType, dimensions, heroImage, description, inStock, featured, availability
-  }`, { start, end });
+  }`, { categories: group.categories || [], start, end });
 
-  // Fetch all categories for the filter dropdown (so even empty ones show up)
-  const uniqueCategories = await client.fetch(`*[_type == "category"].name`);
   // Hardcode wood types so all options always appear
   const uniqueWoods = ['Teak', 'Mahogany', 'Sisu', 'Jackfruit', 'Jam', 'Kerosin', 'Neem', 'American Black Walnut', 'Cherry', 'White Oak'];
 
-  // Map Sanity products to the strict Product type expected by the UI
-  const products: Product[] = sanityProducts.map((p) => ({
+  const products: Product[] = sanityProducts.map((p: any) => ({
     id: p._id,
     name: p.title || p.name || 'Untitled',
     slug: p.slug?.current || '',
@@ -86,16 +93,30 @@ export default async function CollectionPage(
   return (
     <main className="min-h-screen pt-24 bg-[var(--ivory)]">
       <Navigation config={SITE_CONFIG} />
+      
+      {/* Group Header */}
+      <div className="bg-[var(--parchment)] py-12 border-b border-[var(--walnut-light)]/20">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <h1 className="font-serif text-4xl lg:text-5xl text-[var(--walnut-dark)]">
+            {group.title}
+          </h1>
+          <p className="text-[var(--walnut)] mt-4 max-w-2xl">
+            Explore our meticulously crafted collection of {group.title.toLowerCase()}, 
+            designed to bring timeless elegance to your space.
+          </p>
+        </div>
+      </div>
+
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
         <CollectionClient 
           products={products} 
           totalPages={totalPages}
           currentPage={currentPage}
-          uniqueCategories={uniqueCategories}
+          uniqueCategories={[]} // Don't show category filter on a specific tab page
           uniqueWoods={uniqueWoods}
-          title="The Complete Collection"
-          subtitle="Our Catalog"
-          basePath="/collection"
+          title={group.title}
+          subtitle="Explore"
+          basePath={`/collection/${groupSlug}`}
         />
       </Suspense>
       <Footer config={SITE_CONFIG} />

@@ -55,13 +55,38 @@ export interface SanityHomepage {
   subtitle?: string;
   heroText?: string;
   heroImage?: SanityImage;
-  heroHeadline?: string | React.ReactNode;
+  heroHeadline?: string;
   heroSubheadline?: string;
   statsItems?: any[];
+  lifestyleTitle?: string;
+  lifestyleDescription?: string;
+  lifestyleImage?: SanityImage;
+  lifestyleSpace?: string;
+}
+
+export interface SanitySiteSettings {
+  _id?: string;
+  siteTitle?: string;
+  tagline?: string;
+  description?: string;
+  phone?: string;
+  email?: string;
+  hours?: string;
+  address?: {
+    line1?: string;
+    line2?: string;
+  };
+  socialLinks?: {
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
+  };
+  copyright?: string;
+  origin?: string;
 }
 
 export interface SanityCraftsmanshipStep {
-  _id: string;
+  _id?: string;
   title: string;
   description: string;
   order: number;
