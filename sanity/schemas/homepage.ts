@@ -8,12 +8,12 @@ export default defineType({
     defineField({
       name: 'heroHeadline',
       title: 'Hero Headline',
-      type: 'string',
+      type: 'styledText',
     }),
     defineField({
       name: 'heroSubheadline',
       title: 'Hero Subheadline',
-      type: 'string',
+      type: 'styledText',
     }),
     defineField({
       name: 'heroImage',

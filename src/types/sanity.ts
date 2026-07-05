@@ -49,14 +49,24 @@ export interface SanityTestimonial {
   approved: boolean;
 }
 
+export interface SanityStyledText {
+  text?: string;
+  fontSize?: string;
+  textAlign?: string;
+  marginTop?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  marginRight?: number;
+}
+
 export interface SanityHomepage {
   _id: string;
   title?: string;
   subtitle?: string;
   heroText?: string;
   heroImage?: SanityImage;
-  heroHeadline?: string;
-  heroSubheadline?: string;
+  heroHeadline?: SanityStyledText | string;
+  heroSubheadline?: SanityStyledText | string;
   statsItems?: any[];
   lifestyleTitle?: string;
   lifestyleDescription?: string;

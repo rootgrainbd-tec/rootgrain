@@ -1,11 +1,12 @@
 "use client";
 
 import { useRef, Fragment } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { StyledText } from "@/components/ui/StyledText";
 
 import { urlForImage } from "../../../sanity/lib/image";
 import type { SanityHomepage } from "@/types/sanity";
@@ -17,21 +18,15 @@ export function HeroSection({ data }: { data?: SanityHomepage }) {
     offset: ["start start", "end start"],
   });
 
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+  // Smooth out scroll progress to prevent lag/jitter on mouse wheels
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
 
-  const renderHeadline = (text?: string) => {
-    if (!text) return null;
-    const lines = text.split('\n');
-    return lines.map((line, i) => (
-      <Fragment key={i}>
-        {line.split(/\*(.*?)\*/).map((part, j) => 
-          j % 2 === 1 ? <span key={j} className="font-normal">{part}</span> : part
-        )}
-        {i < lines.length - 1 && <br />}
-      </Fragment>
-    ));
-  };
+  const y = useTransform(smoothProgress, [0, 1], ["0%", "30%"]);
+  const opacity = useTransform(smoothProgress, [0, 0.5], [1, 0]);
 
   return (
     <section ref={ref} className="relative h-screen min-h-[700px] overflow-hidden">
@@ -52,40 +47,31 @@ export function HeroSection({ data }: { data?: SanityHomepage }) {
         style={{ opacity }}
         className="relative z-20 h-full flex flex-col items-center justify-center text-center px-6"
       >
+
+
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.3 }}
-          className="mb-6"
+          transition={{ duration: 1, delay: 0.5 }}
+          className="font-serif text-[var(--ivory)] font-light leading-tight mb-8 w-full"
         >
-          <span className="text-[var(--gold-light)] text-sm tracking-[0.4em] uppercase font-medium">
-            Heritage Artisan Furniture
-          </span>
+          <StyledText data={data?.heroHeadline as any} defaultTag="h1" className="text-5xl md:text-7xl lg:text-8xl" />
         </motion.div>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.5 }}
-          className="font-serif text-5xl md:text-7xl lg:text-8xl text-[var(--ivory)] font-light leading-tight mb-8 max-w-5xl"
-        >
-          {renderHeadline(data?.heroHeadline)}
-        </motion.h1>
-
-        <motion.p
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.7 }}
-          className="text-[var(--ivory)]/80 text-lg md:text-xl max-w-2xl mb-12 font-light leading-relaxed"
+          className="text-[var(--ivory)]/80 mb-12 w-full font-light leading-relaxed"
         >
-          {data?.heroSubheadline}
-        </motion.p>
+          <StyledText data={data?.heroSubheadline as any} defaultTag="p" className="text-lg md:text-xl" />
+        </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.9 }}
-          className="flex flex-col sm:flex-row gap-4"
+          className="flex flex-col sm:flex-row gap-4 mt-12 translate-y-24 md:translate-y-32"
         >
           <Link href="/collection">
             <Button className="w-full sm:w-auto bg-[var(--gold)] hover:bg-[var(--gold-light)] text-[var(--walnut-dark)] px-8 py-6 rounded-none text-sm tracking-wider uppercase font-semibold">
