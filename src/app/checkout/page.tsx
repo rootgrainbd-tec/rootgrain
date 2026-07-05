@@ -28,7 +28,7 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState({ name: "", phone: "", street: "" });
   
   useEffect(() => {
-    fetch("/api/admin/shipping")
+    fetch("/api/shipping")
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setShippingRates(data);
