@@ -2,9 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { ProfileForm } from "@/components/account/ProfileForm";
 
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions);
@@ -30,40 +28,7 @@ export default async function SettingsPage() {
           <CardDescription>Update your name and phone number.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-[var(--walnut)]">Full Name</Label>
-              <Input 
-                id="name" 
-                defaultValue={user?.name || ""} 
-                className="border-[var(--walnut)]/30 focus-visible:ring-[var(--gold)]"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-[var(--walnut)]">Email Address</Label>
-              <Input 
-                id="email" 
-                value={user?.email || ""} 
-                disabled 
-                className="bg-gray-50 border-[var(--walnut)]/30"
-              />
-              <p className="text-xs text-gray-500">Email cannot be changed. Contact support if needed.</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="text-[var(--walnut)]">Phone Number</Label>
-              <Input 
-                id="phone" 
-                defaultValue={user?.phone || ""} 
-                placeholder="+880 1..."
-                className="border-[var(--walnut)]/30 focus-visible:ring-[var(--gold)]"
-              />
-            </div>
-            <div className="pt-4">
-              <Button type="button" className="bg-[var(--walnut)] hover:bg-[var(--walnut-light)] text-white">
-                Save Changes
-              </Button>
-            </div>
-          </form>
+          <ProfileForm user={user!} />
         </CardContent>
       </Card>
     </div>
