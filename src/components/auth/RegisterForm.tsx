@@ -34,8 +34,9 @@ export function RegisterForm() {
         const data = await res.json();
         toast.error(data.message || "Failed to create account");
       }
-    } catch (error) {
-      toast.error("Something went wrong");
+    } catch (error: any) {
+      console.error("Fetch error:", error);
+      toast.error(error.message || "Something went wrong during fetch");
     } finally {
       setIsLoading(false);
     }

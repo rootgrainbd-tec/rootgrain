@@ -1,6 +1,6 @@
 import { NextResponse } from "next";
-import { prisma } from "@/lib/prisma";
-import bcrypt from "bcrypt";
+import prisma from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
@@ -30,6 +30,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: "User created", user }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    console.error("Registration error:", error);
+    return NextResponse.json({ message: String(error) }, { status: 500 });
   }
 }

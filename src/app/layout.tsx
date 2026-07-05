@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -65,6 +66,7 @@ export default function RootLayout({
           <SmoothScroll>
             {children}
             <Toaster />
+            <SonnerToaster position="bottom-right" richColors />
           </SmoothScroll>
         </AuthProviders>
       </body>
