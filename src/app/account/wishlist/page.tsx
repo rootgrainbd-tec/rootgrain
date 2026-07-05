@@ -1,11 +1,15 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, ShoppingCart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { WishlistActions } from "@/components/account/WishlistActions";
+import { client } from "../../../../sanity/lib/client";
+import { urlForImage } from "../../../../sanity/lib/image";
+import { formatPrice } from "@/types/product";
 
 export const metadata = {
   title: "My Wishlist - Rootgrain",
@@ -23,11 +27,26 @@ export default async function WishlistPage() {
     );
   }
 
-  // Fetch wishlist items (we assume a Wishlist model or similar in Prisma)
-  // For now, this is a placeholder UI since the exact product schema isn't fully linked
+  // Fetch wishlist items
   const wishlistItems = await prisma.wishlist.findMany({
     where: { userId: session.user.id },
   });
+
+  const productIds = wishlistItems.map(item => item.productId);
+
+  // Fetch actual product details from Sanity
+  let sanityProducts: any[] = [];
+  if (productIds.length > 0) {
+    sanityProducts = await client.fetch(`*[_type == "product" && _id in $ids] {
+      _id, title, slug, price, heroImage
+    }`, { ids: productIds });
+  }
+
+  // Map Sanity products by ID for easy lookup
+  const productMap = sanityProducts.reduce((acc, p) => {
+    acc[p._id] = p;
+    return acc;
+  }, {} as Record<string, any>);
 
   return (
     <div className="space-y-6">
@@ -55,23 +74,36 @@ export default async function WishlistPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {wishlistItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
-                      {/* Product Image placeholder */}
-                      <div className="w-full h-full bg-gray-200"></div>
+              {wishlistItems.map((item) => {
+                const product = productMap[item.productId];
+                
+                // Fallbacks if product was deleted in Sanity
+                const name = product?.title || "Product Unavailable";
+                const price = product?.price || 0;
+                const imageUrl = product?.heroImage ? urlForImage(product.heroImage).width(200).url() : "/placeholder.jpg";
+                const productUrl = product?.slug?.current ? `/product/${product.slug.current}` : "#";
+
+                return (
+                  <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <Link href={productUrl} className="block shrink-0">
+                        <div className="relative w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
+                          <Image src={imageUrl} alt={name} fill className="object-cover" />
+                        </div>
+                      </Link>
+                      <div>
+                        <Link href={productUrl}>
+                          <h4 className="font-medium text-[var(--walnut)] hover:text-[var(--gold)] transition-colors">{name}</h4>
+                        </Link>
+                        <p className="text-sm font-bold text-[var(--primary)] mt-1">
+                          {formatPrice(price)}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-medium text-[var(--walnut)]">Product ID: {item.productId}</h4>
-                      <p className="text-sm font-bold text-[var(--primary)]">
-                        ৳0
-                      </p>
-                    </div>
+                    <WishlistActions id={item.id} />
                   </div>
-                  <WishlistActions id={item.id} />
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

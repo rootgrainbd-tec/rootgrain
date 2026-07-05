@@ -30,10 +30,14 @@ export default async function CollectionPage(
   const wood = searchParams.wood as string;
   const availability = searchParams.availability as string;
   const priceRange = searchParams.price as string;
+  const searchQuery = searchParams.q as string;
 
   // Build GROQ Query Conditions
   const conditions = ['_type == "product"'];
 
+  if (searchQuery && searchQuery.trim() !== "") {
+    conditions.push(`(title match "*${searchQuery.trim()}*" || description match "*${searchQuery.trim()}*")`);
+  }
   if (category && category !== "All") {
     conditions.push(`category->name == "${category}"`);
   }

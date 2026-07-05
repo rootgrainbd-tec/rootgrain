@@ -40,6 +40,8 @@ model Order {
   balanceDue      Int             // total - advancePaid
   status          OrderStatus     @default(PENDING_ADVANCE)
   shippingAddress Json            // Structured division/district/address
+  promoCode       String?
+  discountAmount  Int             @default(0) // Paisa
   notes           String?
   logistics       LogisticsProvider @default(PRIVATE_FREIGHT)
   trackingState   TrackingState   @default(PENDING_PRODUCTION)
@@ -195,6 +197,7 @@ model User {
   orders        Order[]
   addresses     Address[]
   wishlists     Wishlist[]
+  reviews       Review[]
 }
 
 model VerificationToken {
@@ -250,4 +253,47 @@ model ShippingRate {
   perItemRate Int      // Paisa
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String   // Sanity Product ID
+  userId    String
+  rating    Int      // 1 to 5
+  comment   String   @db.Text
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([userId])
+  @@index([status])
+}
+
+model PromoCode {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  discountType   DiscountType
+  discountValue  Int       // Percentage (1-100) or Flat amount (Paisa)
+  isActive       Boolean   @default(true)
+  maxUses        Int?      // Null means unlimited
+  currentUses    Int       @default(0)
+  expiryDate     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([code])
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FLAT
 }

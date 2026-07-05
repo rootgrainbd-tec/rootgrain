@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
-import { LayoutDashboard, MessageSquare, Users, ShoppingCart, Truck } from "lucide-react";
+import { LayoutDashboard, MessageSquare, Users, ShoppingCart, Truck, Star, Ticket } from "lucide-react";
 
 export default async function AdminLayout({
   children,
@@ -21,6 +21,8 @@ export default async function AdminLayout({
     { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
     { name: "Customers", href: "/admin/users", icon: Users },
     { name: "Shipping Settings", href: "/admin/shipping", icon: Truck },
+    { name: "Reviews", href: "/admin/reviews", icon: Star },
+    { name: "Coupons", href: "/admin/coupons", icon: Ticket },
   ];
 
   return (

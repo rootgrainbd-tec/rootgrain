@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     const body = await request.json();
-    const { items, address, district } = body;
+    const { items, address, district, promoCode } = body;
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
@@ -62,7 +62,34 @@ export async function POST(request: Request) {
       shippingCost += (totalQuantity - 1) * shippingRate.perItemRate;
     }
 
-    const total = subtotal + shippingCost;
+    let discountAmount = 0;
+    
+    // Validate and apply promo code
+    if (promoCode) {
+      const promo = await prisma.promoCode.findUnique({
+        where: { code: promoCode.toUpperCase() }
+      });
+
+      if (promo && promo.isActive && (!promo.expiryDate || new Date() <= promo.expiryDate) && (promo.maxUses === null || promo.currentUses < promo.maxUses)) {
+        if (promo.discountType === "PERCENTAGE") {
+          discountAmount = Math.floor(subtotal * (promo.discountValue / 100));
+        } else {
+          discountAmount = promo.discountValue;
+        }
+
+        if (discountAmount > subtotal) {
+          discountAmount = subtotal;
+        }
+
+        // Increment usage
+        await prisma.promoCode.update({
+          where: { id: promo.id },
+          data: { currentUses: { increment: 1 } }
+        });
+      }
+    }
+
+    const total = subtotal + shippingCost - discountAmount;
     const balanceDue = total;
 
     // Create Order
@@ -74,6 +101,8 @@ export async function POST(request: Request) {
         shippingCost,
         total,
         balanceDue,
+        promoCode,
+        discountAmount,
         status: "PENDING_ADVANCE",
         logistics: "PRIVATE_FREIGHT",
         shippingAddress: {

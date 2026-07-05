@@ -26,6 +26,9 @@ export default function CheckoutPage() {
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [address, setAddress] = useState({ name: "", phone: "", street: "" });
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<any>(null);
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   
   useEffect(() => {
     fetch("/api/shipping")
@@ -50,7 +53,37 @@ export default function CheckoutPage() {
     }
   }
 
-  const total = subtotal + shippingCost;
+  const applyPromoCode = async () => {
+    if (!promoInput) return;
+    setIsApplyingPromo(true);
+    try {
+      const res = await fetch("/api/checkout/validate-coupon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoInput, subtotal })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setAppliedPromo(data);
+        toast.success("Promo code applied!");
+      } else {
+        setAppliedPromo(null);
+        toast.error(data.error || "Invalid promo code");
+      }
+    } catch (error) {
+      toast.error("Failed to apply promo code");
+    } finally {
+      setIsApplyingPromo(false);
+    }
+  };
+
+  const removePromoCode = () => {
+    setAppliedPromo(null);
+    setPromoInput("");
+  };
+
+  const discountAmount = appliedPromo?.discountAmount || 0;
+  const total = subtotal + shippingCost - discountAmount;
   const advanceRequired = total * 0.2; // 20% advance
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,7 +105,8 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           items,
           district: selectedDistrict,
-          address
+          address,
+          promoCode: appliedPromo?.code
         })
       });
 
@@ -211,6 +245,41 @@ export default function CheckoutPage() {
                 <span className="font-medium">
                   {shippingCost > 0 ? `৳${(shippingCost / 100).toLocaleString()}` : 'Select District'}
                 </span>
+              </div>
+              
+              {/* Promo Code Section */}
+              <div className="pt-2">
+                {!appliedPromo ? (
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="Promo Code" 
+                      value={promoInput} 
+                      onChange={e => setPromoInput(e.target.value.toUpperCase())}
+                      className="h-9 text-sm"
+                    />
+                    <Button 
+                      type="button" 
+                      variant="secondary" 
+                      className="h-9 px-3" 
+                      onClick={applyPromoCode}
+                      disabled={isApplyingPromo || !promoInput}
+                    >
+                      {isApplyingPromo ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between bg-green-50 text-green-700 p-2 rounded text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{appliedPromo.code}</span>
+                      <span className="opacity-80">
+                        (-৳{(appliedPromo.discountAmount / 100).toLocaleString()})
+                      </span>
+                    </div>
+                    <button type="button" onClick={removePromoCode} className="text-green-900 hover:underline text-xs">
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 

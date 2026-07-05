@@ -76,11 +76,13 @@ export function CollectionContent({
   const currentWood = searchParams.get("wood") || "All";
   const currentAvailability = searchParams.get("availability") || "All";
   const currentPrice = searchParams.get("price") || "All";
+  const currentQuery = searchParams.get("q") || "";
 
   // State for custom price range
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [isPriceOpen, setIsPriceOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(currentQuery);
 
   useEffect(() => {
     if (currentPrice && currentPrice !== "All") {
@@ -100,6 +102,11 @@ export function CollectionContent({
       handleFilterChange("price", `${minPrice}-${maxPrice}`);
     }
     setIsPriceOpen(false);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleFilterChange("q", searchQuery);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -134,9 +141,25 @@ export function CollectionContent({
         </div>
 
         {/* Filter Bar */}
-        <div className="mb-12 flex flex-col md:flex-row gap-4 items-center justify-between border-y border-[var(--walnut-light)]/20 py-4">
-          <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
-            <span className="text-sm text-[var(--walnut)] font-medium uppercase tracking-wider mr-2">Filter By:</span>
+        <div className="mb-12 flex flex-col gap-6 border-y border-[var(--walnut-light)]/20 py-6">
+          
+          {/* Search Bar */}
+          <form onSubmit={handleSearchSubmit} className="flex w-full max-w-md mx-auto relative">
+            <Input 
+              type="text" 
+              placeholder="Search products..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pr-12 rounded-none border-[var(--walnut-light)]/30 focus-visible:ring-[var(--gold)]"
+            />
+            <Button type="submit" variant="ghost" className="absolute right-0 top-0 h-full rounded-none px-3 text-[var(--walnut-light)] hover:text-[var(--gold)] hover:bg-transparent">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </Button>
+          </form>
+
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+              <span className="text-sm text-[var(--walnut)] font-medium uppercase tracking-wider mr-2">Filter By:</span>
             
             {/* Category Filter (Only show if uniqueCategories is provided, e.g., on the All Products page) */}
             {uniqueCategories.length > 0 && (
@@ -256,6 +279,7 @@ export function CollectionContent({
             Page {currentPage} of {Math.max(1, totalPages)}
           </div>
         </div>
+      </div>
 
         {/* Product Grid */}
         <main>

@@ -7,6 +7,7 @@ import { getSiteConfig } from "@/data/site-config";
 import { formatPrice, PRODUCT_CATEGORY_LABELS } from "@/types/product";
 import { ProductActions } from "@/components/product/ProductActions";
 import { ProductGallery } from "@/components/sections/ProductGallery";
+import { ProductReviews } from "@/components/product/ProductReviews";
 
 export const revalidate = 60;
 
@@ -98,6 +99,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             />
           </div>
         </div>
+        
+        <ProductReviews productId={product._id} />
       </div>
 
       <Footer config={SITE_CONFIG} />
