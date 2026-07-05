@@ -8,9 +8,12 @@ import Link from "next/link";
 import { NAV_LINKS } from "@/data/site-config";
 import type { SiteConfig } from "@/types/site";
 
+import { SearchCommand } from "./SearchCommand";
+
 export function Navigation({ config }: { config: SiteConfig }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
 
   useEffect(() => {
@@ -147,7 +150,11 @@ export function Navigation({ config }: { config: SiteConfig }) {
                 <button aria-label="User Account" className={`hidden lg:block hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
                   <User className="w-5 h-5" strokeWidth={1.5} />
                 </button>
-                <button aria-label="Search" className={`hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
+                <button 
+                  aria-label="Search" 
+                  onClick={() => setIsSearchOpen(true)}
+                  className={`hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}
+                >
                   <Search className="w-5 h-5" strokeWidth={1.5} />
                 </button>
                 <button aria-label="Shopping Cart" className={`relative hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
@@ -210,6 +217,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
           </motion.div>
         )}
       </AnimatePresence>
+      <SearchCommand open={isSearchOpen} onOpenChange={setIsSearchOpen} />
     </>
   );
 }
