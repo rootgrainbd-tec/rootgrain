@@ -48,7 +48,11 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   };
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
+    <CommandDialog 
+      open={open} 
+      onOpenChange={onOpenChange}
+      commandProps={{ shouldFilter: false }}
+    >
       <CommandInput 
         placeholder="Search for furniture, categories, or wood types..." 
         value={query}
@@ -64,7 +68,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
             {results.map((product) => (
               <CommandItem
                 key={product._id}
-                value={product.title || ""}
+                value={`${product.title} ${product.category?.name || ""} ${product.woodType || ""}`}
                 onSelect={() => {
                   if (product.slug?.current) {
                     runCommand(() => router.push(`/product/${product.slug?.current}`));

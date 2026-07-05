@@ -30,8 +30,10 @@ export async function searchProducts(query: string): Promise<SanityProduct[]> {
       category->{name}
     }[0...10]`,
     { searchTerm },
-    { next: { revalidate: 0 } }
+    { cache: "no-store", next: { revalidate: 0 } }
   );
+
+  console.log(`Search for "${searchTerm}" returned ${products.length} products.`);
 
   return products;
 }
