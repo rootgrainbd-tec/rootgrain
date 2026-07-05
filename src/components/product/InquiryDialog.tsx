@@ -26,8 +26,7 @@ export function InquiryDialog({ product }: InquiryDialogProps) {
   });
 
   const productUrl = typeof window !== "undefined" ? window.location.href : "";
-  // Assuming a static WhatsApp number for RootGrain, replace with the real one
-  const whatsappNumber = "8801934994273"; // Update with real number
+  const whatsappNumber = "8801917389253"; 
 
   const handleWhatsApp = () => {
     const text = encodeURIComponent(`Hello RootGrain, I want to inquire about the product: ${product.name}\nLink: ${productUrl}`);
