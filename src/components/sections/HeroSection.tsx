@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, Fragment } from "react";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -18,15 +18,8 @@ export function HeroSection({ data }: { data?: SanityHomepage }) {
     offset: ["start start", "end start"],
   });
 
-  // Smooth out scroll progress to prevent lag/jitter on mouse wheels
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001
-  });
-
-  const y = useTransform(smoothProgress, [0, 1], ["0%", "30%"]);
-  const opacity = useTransform(smoothProgress, [0, 0.5], [1, 0]);
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
   return (
     <section ref={ref} className="relative h-screen min-h-[700px] overflow-hidden">
