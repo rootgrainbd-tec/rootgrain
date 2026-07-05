@@ -8,14 +8,14 @@ export async function searchProducts(query: string): Promise<SanityProduct[]> {
     return [];
   }
 
-  const searchTerm = query.trim().toLowerCase();
+  const searchTerm = query.trim() + "*";
 
   // Search by title, category name, or wood type
   const products = await client.fetch(
     `*[_type == "product" && (
-      title match $searchTerm + "*" ||
-      category->name match $searchTerm + "*" ||
-      woodType match $searchTerm + "*"
+      title match $searchTerm ||
+      category->name match $searchTerm ||
+      woodType match $searchTerm
     )] {
       _id,
       title,
