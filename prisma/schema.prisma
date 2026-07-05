@@ -98,6 +98,11 @@ model Testimonial {
 
 // --- Enums enforce strict state machines ---
 
+enum Role {
+  USER
+  ADMIN
+}
+
 enum OrderStatus {
   PENDING_ADVANCE
   PROCESSING
@@ -188,6 +193,7 @@ model User {
   image         String?
   password      String?
   phone         String?
+  role          Role      @default(USER)
   
   accounts      Account[]
   sessions      Session[]
