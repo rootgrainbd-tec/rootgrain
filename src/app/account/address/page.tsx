@@ -3,7 +3,8 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Plus } from "lucide-react";
+import { MapPin } from "lucide-react";
+import { AddressDialog } from "@/components/account/AddressDialog";
 
 export const metadata = {
   title: "Address Book - Rootgrain",
@@ -34,10 +35,7 @@ export default async function AddressBookPage() {
             Manage your delivery and billing addresses.
           </p>
         </div>
-        <Button className="bg-[var(--primary)] hover:bg-[var(--gold)] text-white">
-          <Plus className="w-4 h-4 mr-2" />
-          Add New
-        </Button>
+        <AddressDialog />
       </div>
 
       {addresses.length === 0 ? (
@@ -50,9 +48,7 @@ export default async function AddressBookPage() {
             <p className="text-muted-foreground mt-2 mb-6 max-w-md">
               You haven't added any addresses yet. Add a delivery address to make checkout faster.
             </p>
-            <Button variant="outline" className="border-[var(--primary)] text-[var(--primary)]">
-              Add Your First Address
-            </Button>
+            <AddressDialog variant="outline" label="Add Your First Address" />
           </CardContent>
         </Card>
       ) : (
