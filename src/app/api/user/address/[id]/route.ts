@@ -3,8 +3,9 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -14,7 +15,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     
     const address = await prisma.address.update({
       where: { 
-        id: params.id,
+        id: id,
         userId: session.user.id // ensure user owns the address
       },
       data: {
@@ -33,8 +34,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -42,7 +44,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     
     await prisma.address.delete({
       where: { 
-        id: params.id,
+        id: id,
         userId: session.user.id // ensure user owns the address
       },
     });

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { UserNav } from "@/components/layout/UserNav";
 import { NAV_LINKS } from "@/data/site-config";
 import type { SiteConfig } from "@/types/site";
+import { CartSheet } from "./CartSheet";
 
 import { SearchCommand } from "./SearchCommand";
 
@@ -156,12 +157,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
                 >
                   <Search className="w-5 h-5" strokeWidth={1.5} />
                 </button>
-                <button aria-label="Shopping Cart" className={`relative hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
-                  <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
-                  <span className={`absolute -top-2 -right-2 text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center ${isScrolled ? 'bg-[var(--walnut)] text-[var(--ivory)]' : 'bg-[var(--ivory)] text-[var(--walnut-dark)]'}`}>
-                    0
-                  </span>
-                </button>
+                <CartSheet isScrolled={isScrolled} />
 
                 {/* Mobile Menu Button */}
                 <button

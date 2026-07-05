@@ -5,7 +5,7 @@ import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { getSiteConfig } from "@/data/site-config";
 import { formatPrice, PRODUCT_CATEGORY_LABELS } from "@/types/product";
-import { Button } from "@/components/ui/button";
+import { ProductActions } from "@/components/product/ProductActions";
 import { ProductGallery } from "@/components/sections/ProductGallery";
 
 export const revalidate = 60;
@@ -87,9 +87,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               </div>
             </div>
 
-            <Button className="w-full bg-[var(--walnut-dark)] hover:bg-[var(--gold)] text-[var(--ivory)] py-8 text-sm tracking-widest uppercase transition-colors rounded-none">
-              Inquire / Purchase
-            </Button>
+            <ProductActions 
+              product={{
+                id: product._id,
+                name: name,
+                price: price,
+                image: heroUrl,
+                isAvailable: isAvailable
+              }}
+            />
           </div>
         </div>
       </div>
