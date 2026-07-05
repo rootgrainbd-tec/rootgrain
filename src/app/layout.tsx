@@ -49,6 +49,7 @@ export const metadata: Metadata = {
 };
 
 import { SmoothScroll } from "@/components/SmoothScroll";
+import { AuthProviders } from "@/components/auth/Providers";
 
 export default function RootLayout({
   children,
@@ -60,10 +61,12 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${cormorant.variable} antialiased bg-background text-foreground`}
       >
-        <SmoothScroll>
-          {children}
-          <Toaster />
-        </SmoothScroll>
+        <AuthProviders>
+          <SmoothScroll>
+            {children}
+            <Toaster />
+          </SmoothScroll>
+        </AuthProviders>
       </body>
     </html>
   );

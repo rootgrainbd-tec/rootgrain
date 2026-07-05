@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, User, Search, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { UserNav } from "@/components/layout/UserNav";
 import { NAV_LINKS } from "@/data/site-config";
 import type { SiteConfig } from "@/types/site";
 
@@ -147,9 +148,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
 
               {/* Icons */}
               <div className="flex items-center gap-4 lg:gap-6 border-l border-[var(--walnut-light)]/20 pl-6 lg:pl-8">
-                <button aria-label="User Account" className={`hidden lg:block hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}>
-                  <User className="w-5 h-5" strokeWidth={1.5} />
-                </button>
+                <UserNav isScrolled={isScrolled} />
                 <button 
                   aria-label="Search" 
                   onClick={() => setIsSearchOpen(true)}
