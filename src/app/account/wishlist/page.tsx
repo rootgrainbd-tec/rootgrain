@@ -50,7 +50,7 @@ export default async function WishlistPage() {
                 Explore our store and add items you love to your wishlist.
               </p>
               <Button asChild className="bg-[var(--primary)] hover:bg-[var(--gold)] text-white">
-                <Link href="/">Continue Shopping</Link>
+                <Link href="/collection">Continue Shopping</Link>
               </Button>
             </div>
           ) : (

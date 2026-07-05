@@ -56,7 +56,7 @@ export default async function AccountPage() {
               <div className="text-center py-6">
                 <p className="text-[var(--walnut-light)] mb-4">You haven't placed any orders yet.</p>
                 <Button asChild className="bg-[var(--walnut)] hover:bg-[var(--walnut-light)] text-white">
-                  <Link href="/">Start Shopping</Link>
+                  <Link href="/collection">Start Shopping</Link>
                 </Button>
               </div>
             )}
