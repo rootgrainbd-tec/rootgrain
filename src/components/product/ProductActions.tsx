@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Heart, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { toast } from "sonner";
+import { InquiryDialog } from "./InquiryDialog";
 
 interface ProductActionsProps {
   product: {
@@ -68,14 +69,17 @@ export function ProductActions({ product }: ProductActionsProps) {
 
   return (
     <div className="flex flex-col sm:flex-row gap-4 mt-6">
-      <Button 
-        onClick={handleAddToCart}
-        disabled={!product.isAvailable}
-        className="flex-1 bg-[var(--walnut-dark)] hover:bg-[var(--gold)] text-[var(--ivory)] py-8 text-sm tracking-widest uppercase transition-colors rounded-none"
-      >
-        <ShoppingBag className="w-4 h-4 mr-2" />
-        {product.isAvailable ? "Add to Cart" : "Out of Stock"}
-      </Button>
+      {product.isAvailable ? (
+        <Button 
+          onClick={handleAddToCart}
+          className="flex-1 bg-[var(--walnut-dark)] hover:bg-[var(--gold)] text-[var(--ivory)] py-8 text-sm tracking-widest uppercase transition-colors rounded-none"
+        >
+          <ShoppingBag className="w-4 h-4 mr-2" />
+          Add to Cart
+        </Button>
+      ) : (
+        <InquiryDialog product={product} />
+      )}
       <Button 
         onClick={handleAddToWishlist}
         disabled={addingToWishlist}
