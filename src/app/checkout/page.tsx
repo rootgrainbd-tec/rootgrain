@@ -138,7 +138,7 @@ export default function CheckoutPage() {
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a district" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-64 overflow-y-auto">
                       {shippingRates.map(rate => (
                         <SelectItem key={rate.id} value={rate.district}>{rate.district}</SelectItem>
                       ))}
