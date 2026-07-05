@@ -2,13 +2,17 @@
 
 import { client } from "../../sanity/lib/client";
 import { SanityProduct } from "@/types/sanity";
+import { unstable_noStore as noStore } from "next/cache";
 
 export async function searchProducts(query: string): Promise<SanityProduct[]> {
+  noStore();
+
   if (!query || query.trim() === "") {
     return [];
   }
 
-  const searchTerm = query.trim() + "*";
+  // Use both leading and trailing wildcard for a more robust partial match
+  const searchTerm = "*" + query.trim() + "*";
 
   // Search by title, category name, or wood type
   const products = await client.fetch(
