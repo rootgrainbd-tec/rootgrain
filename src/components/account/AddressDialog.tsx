@@ -20,12 +20,11 @@ export function AddressDialog({ variant = "default", label = "Add New" }: Addres
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: "",
-    addressLine1: "",
-    addressLine2: "",
-    city: "",
-    postalCode: "",
+    name: "",
     phone: "",
+    division: "",
+    district: "",
+    street: "",
     isDefault: false,
   });
 
@@ -54,12 +53,11 @@ export function AddressDialog({ variant = "default", label = "Add New" }: Addres
       toast.success("Address added successfully!");
       setIsOpen(false);
       setFormData({
-        title: "",
-        addressLine1: "",
-        addressLine2: "",
-        city: "",
-        postalCode: "",
+        name: "",
         phone: "",
+        division: "",
+        district: "",
+        street: "",
         isDefault: false,
       });
       router.refresh();
@@ -94,12 +92,12 @@ export function AddressDialog({ variant = "default", label = "Add New" }: Addres
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Address Title</Label>
+              <Label htmlFor="name">Address Name</Label>
               <Input
-                id="title"
-                name="title"
+                id="name"
+                name="name"
                 placeholder="e.g. Home, Office"
-                value={formData.title}
+                value={formData.name}
                 onChange={handleChange}
                 required
               />
@@ -118,47 +116,36 @@ export function AddressDialog({ variant = "default", label = "Add New" }: Addres
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="addressLine1">Street Address</Label>
+            <Label htmlFor="street">Street Address</Label>
             <Input
-              id="addressLine1"
-              name="addressLine1"
-              placeholder="House #, Street name"
-              value={formData.addressLine1}
+              id="street"
+              name="street"
+              placeholder="House #, Street name, Apartment"
+              value={formData.street}
               onChange={handleChange}
               required
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="addressLine2">Apartment, suite, etc. (optional)</Label>
-            <Input
-              id="addressLine2"
-              name="addressLine2"
-              placeholder="Apartment, suite, unit, etc."
-              value={formData.addressLine2}
-              onChange={handleChange}
-            />
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="city">City / District</Label>
+              <Label htmlFor="division">Division</Label>
               <Input
-                id="city"
-                name="city"
+                id="division"
+                name="division"
                 placeholder="Dhaka"
-                value={formData.city}
+                value={formData.division}
                 onChange={handleChange}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="postalCode">Postal Code</Label>
+              <Label htmlFor="district">District</Label>
               <Input
-                id="postalCode"
-                name="postalCode"
-                placeholder="1200"
-                value={formData.postalCode}
+                id="district"
+                name="district"
+                placeholder="Dhaka"
+                value={formData.district}
                 onChange={handleChange}
                 required
               />

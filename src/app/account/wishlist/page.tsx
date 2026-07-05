@@ -26,9 +26,6 @@ export default async function WishlistPage() {
   // For now, this is a placeholder UI since the exact product schema isn't fully linked
   const wishlistItems = await prisma.wishlist.findMany({
     where: { userId: session.user.id },
-    include: {
-      product: true
-    }
   });
 
   return (
@@ -65,9 +62,9 @@ export default async function WishlistPage() {
                       <div className="w-full h-full bg-gray-200"></div>
                     </div>
                     <div>
-                      <h4 className="font-medium text-[var(--walnut)]">{item.product.name}</h4>
+                      <h4 className="font-medium text-[var(--walnut)]">Product ID: {item.productId}</h4>
                       <p className="text-sm font-bold text-[var(--primary)]">
-                        ৳{item.product.price.toString()}
+                        ৳0
                       </p>
                     </div>
                   </div>

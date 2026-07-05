@@ -61,17 +61,16 @@ export default async function AddressBookPage() {
                 </div>
               )}
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg text-[var(--walnut)]">{address.title || "Home"}</CardTitle>
+                <CardTitle className="text-lg text-[var(--walnut)]">{address.name || "Home"}</CardTitle>
                 <CardDescription>{address.phone}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-1 text-sm">
-                  <p>{address.addressLine1}</p>
-                  {address.addressLine2 && <p>{address.addressLine2}</p>}
+                  <p>{address.street}</p>
                   <p>
-                    {address.city}, {address.postalCode}
+                    {address.district}, {address.division}
                   </p>
-                  <p>{address.country}</p>
+                  <p>Bangladesh</p>
                 </div>
                 <div className="flex space-x-3 mt-4 pt-4 border-t">
                   <Button variant="link" className="p-0 h-auto text-[var(--primary)]">Edit</Button>

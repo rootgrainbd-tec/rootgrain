@@ -16,13 +16,11 @@ export async function POST(req: Request) {
     const address = await prisma.address.create({
       data: {
         userId: session.user.id,
-        title: data.title || "Home",
-        addressLine1: data.addressLine1,
-        addressLine2: data.addressLine2 || null,
-        city: data.city,
-        postalCode: data.postalCode,
-        country: data.country || "Bangladesh",
+        name: data.name || "Home",
         phone: data.phone,
+        division: data.division,
+        district: data.district,
+        street: data.street,
         isDefault: data.isDefault || false
       }
     });
