@@ -163,9 +163,9 @@ export default function CheckoutPage() {
             <div className="bg-[#fff9f2] p-6 rounded-lg border border-[var(--gold)]/30">
               <h3 className="text-lg font-medium text-[var(--walnut-dark)] mb-2">Important Notice</h3>
               <p className="text-sm text-gray-700 leading-relaxed">
-                আপনাকে মোট বিলের <strong>২০% অগ্রিম (Advance)</strong> প্রদান করতে হবে। 
-                নিচের <strong>"Book Order"</strong> বাটনে ক্লিক করে অর্ডার প্লেস করার পর, আমাদের একজন প্রতিনিধি 
-                আপনাকে কল করে অগ্রিম পেমেন্টের জন্য দিকনির্দেশনা দিবেন। অগ্রিম পেমেন্ট পাওয়ার পর আপনার অর্ডারটি কনফার্ম হবে।
+                You are required to pay a <strong>20% advance</strong> of the total bill. 
+                After placing the order by clicking the <strong>"Book Order"</strong> button below, our representative 
+                will call you with instructions for the advance payment. Your order will be confirmed upon receiving the advance payment.
               </p>
             </div>
 
