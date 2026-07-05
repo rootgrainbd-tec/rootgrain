@@ -105,10 +105,12 @@ enum Role {
 
 enum OrderStatus {
   PENDING_ADVANCE
+  CONFIRMED
   PROCESSING
   DISPATCHED
   DELIVERED
   CANCELLED
+  REJECTED
 }
 
 enum PaymentPhase {
@@ -117,7 +119,7 @@ enum PaymentPhase {
 }
 
 enum PaymentMethod {
-  BKASH_PGW
+  MANUAL_BKASH
   BANK_TRANSFER
   COD
 }
@@ -148,13 +150,6 @@ enum TrackingState {
 }
 
 // --- Token Caching ---
-
-model BkashToken {
-  id        String   @id @default("bkash_singleton")
-  id_token  String   @db.Text
-  expiresAt DateTime
-  updatedAt DateTime @updatedAt
-}
 
 // --- NextAuth & User Models ---
 
@@ -246,4 +241,13 @@ model Inquiry {
   status    String   @default("PENDING") // PENDING, RESPONDED, CLOSED
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ShippingRate {
+  id          String   @id @default(cuid())
+  district    String   @unique
+  baseRate    Int      // Paisa
+  perItemRate Int      // Paisa
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

@@ -1,11 +1,22 @@
-export default function OrdersPage() {
+import prisma from "@/lib/prisma";
+import OrdersTable from "./OrdersTable";
+
+export default async function OrdersPage() {
+  const orders = await prisma.order.findMany({
+    orderBy: { createdAt: "desc" },
+    include: {
+      items: true
+    }
+  });
+
   return (
     <div>
-      <h1 className="text-2xl font-serif text-[var(--walnut-dark)] mb-6">Orders Management</h1>
-      
-      <div className="bg-white rounded-sm p-8 text-center text-[var(--walnut-light)] border border-[var(--walnut-light)]/20">
-        Orders management will be implemented soon once the checkout system is complete.
+      <div className="mb-8">
+        <h1 className="text-3xl font-serif text-[var(--walnut-dark)]">Orders</h1>
+        <p className="text-muted-foreground mt-2">Manage customer orders and manually track advance payments.</p>
       </div>
+      
+      <OrdersTable orders={orders} />
     </div>
   );
 }
