@@ -76,7 +76,7 @@ export default async function CategoryGroupPage(
   const uniqueWoods = ['Teak', 'Mahogany', 'Sisu', 'Jackfruit', 'Jam', 'Kerosin', 'Neem', 'American Black Walnut', 'Cherry', 'White Oak'];
 
   const products: Product[] = sanityProducts.map((p: any) => ({
-    id: p._id,
+    id: p.slug?.current || p._id,
     name: p.title || p.name || 'Untitled',
     slug: p.slug?.current || '',
     category: (p.category?.name as ProductCategory) || 'Dining Tables',

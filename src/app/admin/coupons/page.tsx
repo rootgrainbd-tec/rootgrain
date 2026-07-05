@@ -53,9 +53,6 @@ export default function CouponsPage() {
     if (!code || !discountValue) return alert("Code and Value are required");
 
     let val = parseInt(discountValue);
-    if (discountType === "FLAT") {
-      val = val * 100; // convert Taka to Paisa
-    }
 
     try {
       const res = await fetch("/api/admin/coupons", {

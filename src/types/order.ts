@@ -27,11 +27,11 @@ export interface Order {
   orderNumber: string;
   userId: string;
   items: OrderItem[];
-  /** Subtotal in BDT paisa */
+  /** Subtotal in BDT Taka */
   subtotal: number;
-  /** Shipping cost in BDT paisa */
+  /** Shipping cost in BDT Taka */
   shippingCost: number;
-  /** Grand total in BDT paisa */
+  /** Grand total in BDT Taka */
   total: number;
   status: OrderStatus;
   paymentMethod: PaymentMethod;
@@ -45,9 +45,9 @@ export interface OrderItem {
   productId: string;
   productName: string;
   quantity: number;
-  /** Unit price in BDT paisa */
+  /** Unit price in BDT Taka */
   unitPrice: number;
-  /** Line total in BDT paisa */
+  /** Line total in BDT Taka */
   total: number;
 }
 

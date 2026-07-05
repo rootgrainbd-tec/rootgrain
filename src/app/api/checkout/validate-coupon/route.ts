@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     if (promo.discountType === "PERCENTAGE") {
       discountAmount = Math.floor(subtotal * (promo.discountValue / 100));
     } else {
-      discountAmount = promo.discountValue; // Flat amount in paisa
+      discountAmount = promo.discountValue; // Flat amount in Taka
     }
 
     // Ensure discount isn't more than subtotal

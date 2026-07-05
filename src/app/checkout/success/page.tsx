@@ -35,10 +35,15 @@ function SuccessContent() {
           </ul>
         </div>
 
-        <div className="pt-4">
+        <div className="pt-4 space-y-3">
           <Button asChild className="w-full bg-[var(--walnut-dark)] hover:bg-[var(--gold)] text-[var(--ivory)]">
-            <Link href="/shop">Continue Shopping</Link>
+            <Link href="/collection">Continue Shopping</Link>
           </Button>
+          {orderNumber && (
+            <Button asChild variant="outline" className="w-full border-[var(--walnut)]/30 text-[var(--walnut)]">
+              <Link href={`/checkout/invoice?order=${orderNumber}`} target="_blank">View / Print Invoice</Link>
+            </Button>
+          )}
         </div>
       </div>
     </div>

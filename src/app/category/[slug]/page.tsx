@@ -26,7 +26,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   }`);
 
   const sanityMappedProducts: Product[] = sanityProducts.map((p) => ({
-    id: p._id,
+    id: p.slug?.current || p._id,
     name: p.name || p.title || '',
     slug: p.slug?.current || '',
     category: p.category?.name as ProductCategory || 'Dining Tables',

@@ -13,7 +13,7 @@ model Product {
   name         String
   slug         String      @unique
   category     String      
-  price        Int         // Stored in Paisa
+  price        Int         // Stored in Taka
   comparePrice Int?
   wood         String
   dimensions   String
@@ -33,15 +33,15 @@ model Order {
   orderNumber     String          @unique // e.g. RG-20260522-0001
   userId          String?         
   user            User?           @relation(fields: [userId], references: [id])
-  subtotal        Int             // Paisa
-  shippingCost    Int             // Paisa
-  total           Int             // Paisa
+  subtotal        Int             // Taka
+  shippingCost    Int             // Taka
+  total           Int             // Taka
   advancePaid     Int             @default(0) // Tracks the PGW booking fee
   balanceDue      Int             // total - advancePaid
   status          OrderStatus     @default(PENDING_ADVANCE)
   shippingAddress Json            // Structured division/district/address
   promoCode       String?
-  discountAmount  Int             @default(0) // Paisa
+  discountAmount  Int             @default(0) // Taka
   notes           String?
   logistics       LogisticsProvider @default(PRIVATE_FREIGHT)
   trackingState   TrackingState   @default(PENDING_PRODUCTION)
@@ -61,7 +61,7 @@ model OrderItem {
   productId   String
   productName String
   quantity    Int
-  unitPrice   Int      // Paisa at time of purchase
+  unitPrice   Int      // Taka at time of purchase
   total       Int      // unitPrice * quantity
   order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product     Product  @relation(fields: [productId], references: [id])
@@ -75,7 +75,7 @@ model PaymentRecord {
   orderId     String
   type        PaymentPhase  // ADVANCE or SETTLEMENT
   method      PaymentMethod 
-  amount      Int           // Paisa
+  amount      Int           // Taka
   status      PaymentStatus @default(INITIATED)
   bkashTrxId  String?       @unique // Nullable for Bank/COD
   paidAt      DateTime?
@@ -249,8 +249,8 @@ model Inquiry {
 model ShippingRate {
   id          String   @id @default(cuid())
   district    String   @unique
-  baseRate    Int      // Paisa
-  perItemRate Int      // Paisa
+  baseRate    Int      // Taka
+  perItemRate Int      // Taka
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -276,7 +276,7 @@ model PromoCode {
   id             String    @id @default(cuid())
   code           String    @unique
   discountType   DiscountType
-  discountValue  Int       // Percentage (1-100) or Flat amount (Paisa)
+  discountValue  Int       // Percentage (1-100) or Flat amount (Taka)
   isActive       Boolean   @default(true)
   maxUses        Int?      // Null means unlimited
   currentUses    Int       @default(0)
@@ -285,6 +285,12 @@ model PromoCode {
   updatedAt      DateTime  @updatedAt
 
   @@index([code])
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
 }
 
 enum ReviewStatus {

@@ -56,8 +56,8 @@ export default function ShippingSettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           district,
-          baseRate: parseInt(baseRate) * 100, // Store in paisa
-          perItemRate: parseInt(perItemRate) * 100
+          baseRate: parseInt(baseRate),
+          perItemRate: parseInt(perItemRate)
         })
       });
 
@@ -95,8 +95,8 @@ export default function ShippingSettingsPage() {
 
   const handleEdit = (rate: ShippingRate) => {
     setDistrict(rate.district);
-    setBaseRate((rate.baseRate / 100).toString());
-    setPerItemRate((rate.perItemRate / 100).toString());
+    setBaseRate(rate.baseRate.toString());
+    setPerItemRate(rate.perItemRate.toString());
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -175,8 +175,8 @@ export default function ShippingSettingsPage() {
                   {rates.map((rate) => (
                     <tr key={rate.id} className="hover:bg-muted/50">
                       <td className="px-4 py-3 font-medium">{rate.district}</td>
-                      <td className="px-4 py-3">৳{(rate.baseRate / 100).toFixed(2)}</td>
-                      <td className="px-4 py-3">৳{(rate.perItemRate / 100).toFixed(2)}</td>
+                      <td className="px-4 py-3">৳{rate.baseRate.toLocaleString()}</td>
+                      <td className="px-4 py-3">৳{rate.perItemRate.toLocaleString()}</td>
                       <td className="px-4 py-3 text-right">
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(rate)}>
                           <Edit2 className="h-4 w-4 text-blue-500" />

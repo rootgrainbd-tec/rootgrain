@@ -28,18 +28,34 @@ export function ProductGallery({ heroUrl, galleryImages, productName }: ProductG
     <>
       <div className="space-y-6">
         <div 
-          className="relative aspect-square bg-[var(--parchment)] cursor-zoom-in group"
+          className="relative aspect-square bg-[var(--parchment)] cursor-zoom-in group overflow-hidden"
           onClick={() => setIsZoomed(true)}
+          onMouseMove={(e) => {
+            const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+            const x = ((e.clientX - left) / width) * 100;
+            const y = ((e.clientY - top) / height) * 100;
+            e.currentTarget.style.setProperty('--mouse-x', `${x}%`);
+            e.currentTarget.style.setProperty('--mouse-y', `${y}%`);
+          }}
         >
+          <div 
+            className="absolute inset-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+            style={{
+              backgroundImage: `url(${mainImage})`,
+              backgroundPosition: 'var(--mouse-x) var(--mouse-y)',
+              backgroundSize: '200%',
+              backgroundRepeat: 'no-repeat',
+            }}
+          />
           <Image
             src={mainImage}
             alt={productName}
             fill
-            className="object-contain p-4 transition-opacity duration-300"
+            className="object-contain p-4 transition-all duration-300 group-hover:opacity-0"
             priority
           />
           {/* Zoom hint icon */}
-          <div className="absolute bottom-4 right-4 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute bottom-4 right-4 z-20 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/><line x1="11" x2="11" y1="8" y2="14"/><line x1="8" x2="14" y1="11" y2="11"/></svg>
           </div>
         </div>

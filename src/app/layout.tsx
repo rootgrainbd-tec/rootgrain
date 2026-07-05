@@ -51,6 +51,8 @@ export const metadata: Metadata = {
 
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { AuthProviders } from "@/components/auth/Providers";
+import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
+import Script from "next/script";
 
 export default function RootLayout({
   children,
@@ -59,6 +61,25 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Placeholder: Google Analytics */}
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            // window.dataLayer = window.dataLayer || [];
+            // function gtag(){dataLayer.push(arguments);}
+            // gtag('js', new Date());
+            // gtag('config', 'G-XXXXXXXXXX');
+          `}
+        </Script>
+        {/* Placeholder: Meta Pixel */}
+        <Script id="meta-pixel" strategy="afterInteractive">
+          {`
+            // !function(f,b,e,v,n,t,s){...}(window, document,'script', 'https://connect.facebook.net/en_US/fbevents.js');
+            // fbq('init', 'XXXXXXXXXXXXXXX');
+            // fbq('track', 'PageView');
+          `}
+        </Script>
+      </head>
       <body
         className={`${inter.variable} ${cormorant.variable} antialiased bg-background text-foreground`}
       >
@@ -67,6 +88,7 @@ export default function RootLayout({
             {children}
             <Toaster />
             <SonnerToaster position="bottom-right" richColors />
+            <WhatsAppButton />
           </SmoothScroll>
         </AuthProviders>
       </body>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Mail, MapPin, Phone, Clock, Instagram, Facebook } from "lucide-react";
+import Link from "next/link";
 
 const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -185,8 +186,8 @@ export function Footer({ config }: { config: SiteConfig }) {
             {config.legal.copyright} {config.legal.origin}
           </p>
           <div className="flex gap-8 text-[var(--ivory)]/40 text-sm">
-            <a href="#" className="hover:text-[var(--ivory)] transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-[var(--ivory)] transition-colors">Terms of Service</a>
+            <Link href="/privacy" className="hover:text-[var(--ivory)] transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-[var(--ivory)] transition-colors">Terms of Service</Link>
             <a href="#" className="hover:text-[var(--ivory)] transition-colors">Care Guide</a>
           </div>
         </div>

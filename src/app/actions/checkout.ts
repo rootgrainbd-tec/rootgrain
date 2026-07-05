@@ -49,12 +49,12 @@ export async function initiateCheckout(rawPayload: unknown) {
     }
   }
 
-  // 4. Calculate total prices in Paisa
-  let totalPaisa = 0;
+  // 4. Calculate total prices in Taka
+  let totalTaka = 0;
   const orderItemsData = payload.items.map((item) => {
     const product = products.find((p) => p.id === item.productId)!;
     const itemTotal = product.price * item.quantity;
-    totalPaisa += itemTotal;
+    totalTaka += itemTotal;
 
     return {
       productId: product.id,
@@ -65,11 +65,11 @@ export async function initiateCheckout(rawPayload: unknown) {
     };
   });
 
-  const shippingCostPaisa = 15000; // Flat fee 150 BDT (in Paisa)
-  const grandTotalPaisa = totalPaisa + shippingCostPaisa;
+  const shippingCostTaka = 150; // Flat fee 150 BDT (in Taka)
+  const grandTotalTaka = totalTaka + shippingCostTaka;
 
   // 5. Bypass Advance Booking (bKash disabled), 100% Cash on Delivery
-  const balancePaisa = grandTotalPaisa;
+  const balanceTaka = grandTotalTaka;
 
   // Generate unique order number (e.g. RG-20260522-XXXXX)
   const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,"");
@@ -80,12 +80,12 @@ export async function initiateCheckout(rawPayload: unknown) {
   const order = await prisma.order.create({
     data: {
       orderNumber,
-      userId: "guest",
-      subtotal: totalPaisa,
-      shippingCost: shippingCostPaisa,
-      total: grandTotalPaisa,
+      userId: null, // Guest checkout - no authenticated user
+      subtotal: totalTaka,
+      shippingCost: shippingCostTaka,
+      total: grandTotalTaka,
       advancePaid: 0,
-      balanceDue: grandTotalPaisa,
+      balanceDue: grandTotalTaka,
       status: "PROCESSING", // Bypass PENDING_ADVANCE hold
       shippingAddress: payload.shippingAddress,
       logistics: "PRIVATE_FREIGHT",
@@ -96,7 +96,7 @@ export async function initiateCheckout(rawPayload: unknown) {
       paymentRecords: {
         create: [
           {
-            amount: balancePaisa,
+            amount: balanceTaka,
             method: "COD",
             type: "SETTLEMENT",
             status: "INITIATED",

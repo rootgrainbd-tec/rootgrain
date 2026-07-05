@@ -35,7 +35,7 @@ export interface PaymentRecord {
   id: string;
   orderId: string;
   method: PaymentMethod;
-  /** Amount in BDT paisa */
+  /** Amount in BDT Taka */
   amount: number;
   status: BkashTransactionStatus | CodStatus;
   /** bKash transaction ID (e.g., "BGH02NXYZ9") — only for bkash method */

@@ -73,7 +73,7 @@ export default async function CollectionPage(
 
   // Map Sanity products to the strict Product type expected by the UI
   const products: Product[] = sanityProducts.map((p) => ({
-    id: p._id,
+    id: p.slug?.current || p._id,
     name: p.title || p.name || 'Untitled',
     slug: p.slug?.current || '',
     category: (p.category?.name as ProductCategory) || 'Dining Tables',

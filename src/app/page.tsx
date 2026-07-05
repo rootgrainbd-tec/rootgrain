@@ -31,7 +31,7 @@ export default async function RootGrainHome() {
   ]);
 
   const sanityMappedProducts: Product[] = sanityProducts.map((p: any) => ({
-    id: p._id,
+    id: p.slug?.current || p._id,
     name: p.title || p.name || 'Untitled',
     slug: p.slug?.current || '',
     category: p.category?.name as ProductCategory || 'Dining Tables',

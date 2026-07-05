@@ -41,7 +41,7 @@ export default async function AccountPage() {
                       <p className="text-sm text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">৳{(order.total / 100).toLocaleString()}</p>
+                      <p className="font-medium">৳{order.total.toLocaleString()}</p>
                       <span className="text-xs px-2 py-1 bg-[var(--gold)]/20 text-[var(--gold)] rounded-full">
                         {order.status}
                       </span>

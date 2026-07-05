@@ -8,6 +8,10 @@ import { formatPrice, PRODUCT_CATEGORY_LABELS } from "@/types/product";
 import { ProductActions } from "@/components/product/ProductActions";
 import { ProductGallery } from "@/components/sections/ProductGallery";
 import { ProductReviews } from "@/components/product/ProductReviews";
+import { RelatedProducts } from "@/components/product/RelatedProducts";
+import { RecentlyViewed } from "@/components/product/RecentlyViewed";
+import { RecentlyViewedTracker } from "@/components/product/RecentlyViewedTracker";
+import type { Product, ProductCategory, WoodType } from "@/types/product";
 
 export const revalidate = 60;
 
@@ -17,6 +21,22 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const product = await client.fetch(`*[_type == "product" && slug.current == $slug][0] {
     _id, name, title, category->{name}, price, comparePrice, woodType, wood, dimensions, heroImage, galleryImages, fullDescription, shortDescription, description, availability, inStock
   }`, { slug: resolvedParams.slug });
+
+  let relatedProducts: Product[] = [];
+  if (product && product.category?.name) {
+    const related = await client.fetch(`*[_type == "product" && category->name == $category && slug.current != $slug][0...4] {
+      _id, name, title, slug, category->{name}, price, heroImage
+    }`, { category: product.category.name, slug: resolvedParams.slug });
+    
+    relatedProducts = related.map((p: any) => ({
+      id: p._id,
+      slug: p.slug?.current || '',
+      name: p.name || p.title || '',
+      category: p.category?.name as ProductCategory || 'Dining Tables',
+      price: p.price || 0,
+      image: p.heroImage ? urlForImage(p.heroImage).url() : "/placeholder.jpg",
+    }));
+  }
 
   if (!product) {
     notFound();
@@ -90,7 +110,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
             <ProductActions 
               product={{
-                id: product._id,
+                id: resolvedParams.slug,
                 name: name,
                 price: price,
                 image: heroUrl,
@@ -101,7 +121,19 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </div>
         
         <ProductReviews productId={product._id} />
+        <RelatedProducts products={relatedProducts} />
+        <RecentlyViewed currentProductId={resolvedParams.slug} />
       </div>
+
+      <RecentlyViewedTracker 
+        product={{
+          id: resolvedParams.slug,
+          name: name,
+          price: price,
+          image: heroUrl,
+          category: rawCategory,
+        }} 
+      />
 
       <Footer config={SITE_CONFIG} />
     </main>

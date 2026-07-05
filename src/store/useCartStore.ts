@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export interface CartItem {
-  id: string; // Product ID (Sanity ID)
+  id: string; // Product slug (matches Prisma Product.id)
   name: string;
   price: number;
   image: string;

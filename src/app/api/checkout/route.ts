@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 
 function generateOrderNumber() {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const random = Math.floor(1000 + Math.random() * 9000);
+  const random = Math.floor(100000 + Math.random() * 900000);
   return `RG-${date}-${random}`;
 }
 

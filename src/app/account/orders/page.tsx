@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { OrderTracker } from "@/components/orders/OrderTracker";
 
 export default async function OrdersPage() {
   const session = await getServerSession(authOptions);
@@ -36,7 +37,7 @@ export default async function OrdersPage() {
                     <CardDescription>Placed on {new Date(order.createdAt).toLocaleDateString()}</CardDescription>
                   </div>
                   <div className="text-left md:text-right">
-                    <p className="font-medium text-[var(--walnut)]">Total: ৳{(order.total / 100).toLocaleString()}</p>
+                    <p className="font-medium text-[var(--walnut)]">Total: ৳{order.total.toLocaleString()}</p>
                     <span className="inline-block mt-1 text-xs px-2 py-1 bg-[var(--gold)]/20 text-[var(--gold)] rounded-full">
                       {order.status.replace("_", " ")}
                     </span>
@@ -51,14 +52,12 @@ export default async function OrdersPage() {
                         <p className="font-medium text-[var(--walnut)]">{item.productName}</p>
                         <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                       </div>
-                      <p className="font-medium">৳{(item.total / 100).toLocaleString()}</p>
+                      <p className="font-medium">৳{item.total.toLocaleString()}</p>
                     </div>
                   ))}
                 </div>
-                <div className="mt-6 pt-4 border-t border-[var(--walnut)]/10 flex justify-end">
-                  <Button asChild variant="outline" className="border-[var(--walnut)]/30 text-[var(--walnut)]">
-                    <Link href={`/track?order=${order.orderNumber}`}>Track Order</Link>
-                  </Button>
+                <div className="mt-8 mb-4">
+                  <OrderTracker status={order.status} />
                 </div>
               </CardContent>
             </Card>

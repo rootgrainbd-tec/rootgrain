@@ -131,7 +131,7 @@ export default function CheckoutPage() {
         <h1 className="text-3xl font-serif text-[var(--walnut-dark)] mb-4">Your Cart is Empty</h1>
         <p className="text-muted-foreground mb-8">Add some beautiful furniture to checkout.</p>
         <Button asChild className="bg-[var(--walnut-dark)] hover:bg-[var(--gold)] text-[var(--ivory)]">
-          <Link href="/shop">Go to Shop</Link>
+          <Link href="/collection">Go to Shop</Link>
         </Button>
       </div>
     );
@@ -229,7 +229,7 @@ export default function CheckoutPage() {
                       <h4 className="font-medium text-sm text-[var(--walnut-dark)]">{item.name}</h4>
                       <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                     </div>
-                    <p className="font-medium text-sm">৳{((item.price * item.quantity) / 100).toLocaleString()}</p>
+                    <p className="font-medium text-sm">৳{(item.price * item.quantity).toLocaleString()}</p>
                   </div>
                 </div>
               ))}
@@ -238,12 +238,12 @@ export default function CheckoutPage() {
             <div className="space-y-3 py-4 border-t border-gray-100">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Subtotal ({totalQuantity} items)</span>
-                <span className="font-medium">৳{(subtotal / 100).toLocaleString()}</span>
+                <span className="font-medium">৳{subtotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Shipping Estimate</span>
                 <span className="font-medium">
-                  {shippingCost > 0 ? `৳${(shippingCost / 100).toLocaleString()}` : 'Select District'}
+                  {shippingCost > 0 ? `৳${shippingCost.toLocaleString()}` : 'Select District'}
                 </span>
               </div>
               
@@ -272,7 +272,7 @@ export default function CheckoutPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{appliedPromo.code}</span>
                       <span className="opacity-80">
-                        (-৳{(appliedPromo.discountAmount / 100).toLocaleString()})
+                        (-৳{appliedPromo.discountAmount.toLocaleString()})
                       </span>
                     </div>
                     <button type="button" onClick={removePromoCode} className="text-green-900 hover:underline text-xs">
@@ -287,14 +287,14 @@ export default function CheckoutPage() {
               <div className="flex justify-between items-end mb-2">
                 <span className="font-medium text-gray-900">Total</span>
                 <span className="text-xl font-bold text-[var(--walnut-dark)]">
-                  ৳{(total / 100).toLocaleString()}
+                  ৳{total.toLocaleString()}
                 </span>
               </div>
               
               <div className="flex justify-between items-end mt-4 p-3 bg-red-50 text-red-900 rounded-md">
                 <span className="font-medium text-sm">Advance Required (20%)</span>
                 <span className="font-bold text-lg">
-                  ৳{(advanceRequired / 100).toLocaleString()}
+                  ৳{advanceRequired.toLocaleString()}
                 </span>
               </div>
               <p className="text-xs text-gray-500 mt-2 text-right">Remaining amount is Cash on Delivery</p>

@@ -7,9 +7,9 @@ export interface Product {
   slug: string;
   /** Product category key */
   category: ProductCategory;
-  /** Price in BDT paisa (1 BDT = 100 paisa). Format at display time. */
+  /** Price in BDT (Taka). Format at display time. */
   price: number;
-  /** Original price for strike-through display, in BDT paisa */
+  /** Original price for strike-through display, in BDT Taka */
   comparePrice?: number;
   /** Primary wood material */
   wood: WoodType;
