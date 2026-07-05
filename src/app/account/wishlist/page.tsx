@@ -1,52 +1,90 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Trash2, ShoppingCart } from "lucide-react";
 import Link from "next/link";
-import { Heart } from "lucide-react";
+
+export const metadata = {
+  title: "My Wishlist - Rootgrain",
+  description: "View and manage your wishlist items",
+};
 
 export default async function WishlistPage() {
   const session = await getServerSession(authOptions);
-  
-  if (!session?.user) return null;
 
+  if (!session?.user?.id) {
+    return (
+      <div className="flex justify-center items-center h-48">
+        <p>Please login to view your wishlist.</p>
+      </div>
+    );
+  }
+
+  // Fetch wishlist items (we assume a Wishlist model or similar in Prisma)
+  // For now, this is a placeholder UI since the exact product schema isn't fully linked
   const wishlistItems = await prisma.wishlist.findMany({
     where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" }
+    include: {
+      product: true
+    }
   });
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-serif text-[var(--walnut)]">My Wishlist</h1>
-        <p className="text-[var(--walnut-light)] mt-2">
-          Products you have saved for later.
+        <h2 className="text-2xl font-bold tracking-tight text-[var(--walnut)]">My Wishlist</h2>
+        <p className="text-muted-foreground">
+          Items you have saved for later.
         </p>
       </div>
 
-      <div>
-        {wishlistItems.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* 
-              Here we would normally map over wishlistItems, 
-              extract the productIds, and fetch the full product data from Sanity.
-              For now, we display a placeholder count.
-            */}
-            <div className="col-span-full text-[var(--walnut)] p-6 bg-[var(--ivory)] rounded-lg border border-[var(--walnut)]/20">
-              <p>You have {wishlistItems.length} items in your wishlist.</p>
-              <p className="text-sm mt-2">Full Sanity product integration for wishlist is pending.</p>
+      <Card>
+        <CardContent className="p-6">
+          {wishlistItems.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-orange-100 text-orange-600 mb-4">
+                <ShoppingCart className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-medium text-[var(--walnut)]">Your wishlist is empty</h3>
+              <p className="text-muted-foreground mt-2 mb-6">
+                Explore our store and add items you love to your wishlist.
+              </p>
+              <Button asChild className="bg-[var(--primary)] hover:bg-[var(--gold)] text-white">
+                <Link href="/shop">Continue Shopping</Link>
+              </Button>
             </div>
-          </div>
-        ) : (
-          <div className="text-center py-16 bg-white rounded-lg border border-[var(--walnut)]/20 shadow-sm flex flex-col items-center">
-            <Heart className="w-12 h-12 text-[var(--walnut)]/20 mb-4" />
-            <p className="text-[var(--walnut-light)] mb-6">Your wishlist is empty.</p>
-            <Button asChild className="bg-[var(--walnut)] hover:bg-[var(--walnut-light)] text-white">
-              <Link href="/shop">Explore Collection</Link>
-            </Button>
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className="space-y-4">
+              {wishlistItems.map((item) => (
+                <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
+                      {/* Product Image placeholder */}
+                      <div className="w-full h-full bg-gray-200"></div>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-[var(--walnut)]">{item.product.name}</h4>
+                      <p className="text-sm font-bold text-[var(--primary)]">
+                        ৳{item.product.price.toString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button variant="outline" size="sm" className="hidden sm:flex">
+                      Add to Cart
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
