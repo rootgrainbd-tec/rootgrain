@@ -67,7 +67,7 @@ export default async function OrdersPage() {
           <div className="text-center py-12 bg-white rounded-lg border border-[var(--walnut)]/20 shadow-sm">
             <p className="text-[var(--walnut-light)] mb-4">You have no order history.</p>
             <Button asChild className="bg-[var(--walnut)] hover:bg-[var(--walnut-light)] text-white">
-              <Link href="/shop">Browse Products</Link>
+              <Link href="/">Browse Products</Link>
             </Button>
           </div>
         )}
