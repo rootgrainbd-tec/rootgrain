@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 import { AddressDialog } from "@/components/account/AddressDialog";
+import { AddressDeleteButton } from "@/components/account/AddressDeleteButton";
 
 export const metadata = {
   title: "Address Book - Rootgrain",
@@ -73,8 +74,8 @@ export default async function AddressBookPage() {
                   <p>Bangladesh</p>
                 </div>
                 <div className="flex space-x-3 mt-4 pt-4 border-t">
-                  <Button variant="link" className="p-0 h-auto text-[var(--primary)]">Edit</Button>
-                  <Button variant="link" className="p-0 h-auto text-red-500">Delete</Button>
+                  <AddressDialog variant="link" label="Edit" address={address} />
+                  <AddressDeleteButton id={address.id} />
                 </div>
               </CardContent>
             </Card>

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Trash2, ShoppingCart } from "lucide-react";
 import Link from "next/link";
+import { WishlistActions } from "@/components/account/WishlistActions";
 
 export const metadata = {
   title: "My Wishlist - Rootgrain",
@@ -68,14 +69,7 @@ export default async function WishlistPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" className="hidden sm:flex">
-                      Add to Cart
-                    </Button>
-                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <WishlistActions id={item.id} />
                 </div>
               ))}
             </div>

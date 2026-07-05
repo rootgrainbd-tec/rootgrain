@@ -11,21 +11,30 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 interface AddressDialogProps {
-  variant?: "default" | "outline";
+  variant?: "default" | "outline" | "link";
   label?: string;
+  address?: {
+    id: string;
+    name: string;
+    phone: string;
+    division: string;
+    district: string;
+    street: string;
+    isDefault: boolean;
+  };
 }
 
-export function AddressDialog({ variant = "default", label = "Add New" }: AddressDialogProps) {
+export function AddressDialog({ variant = "default", label = "Add New", address }: AddressDialogProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    division: "",
-    district: "",
-    street: "",
-    isDefault: false,
+    name: address?.name || "",
+    phone: address?.phone || "",
+    division: address?.division || "",
+    district: address?.district || "",
+    street: address?.street || "",
+    isDefault: address?.isDefault || false,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,8 +47,9 @@ export function AddressDialog({ variant = "default", label = "Add New" }: Addres
     setLoading(true);
 
     try {
-      const res = await fetch("/api/user/address", {
-        method: "POST",
+      const isEditing = !!address;
+      const res = await fetch(isEditing ? `/api/user/address/${address.id}` : "/api/user/address", {
+        method: isEditing ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -47,22 +57,27 @@ export function AddressDialog({ variant = "default", label = "Add New" }: Addres
       });
 
       if (!res.ok) {
-        throw new Error("Failed to add address");
+        throw new Error(`Failed to ${isEditing ? "update" : "add"} address`);
       }
 
-      toast.success("Address added successfully!");
+      toast.success(`Address ${isEditing ? "updated" : "added"} successfully!`);
       setIsOpen(false);
-      setFormData({
-        name: "",
-        phone: "",
-        division: "",
-        district: "",
-        street: "",
-        isDefault: false,
-      });
+      
+      // Only reset form if we're adding a new one, otherwise keep the edited values
+      if (!isEditing) {
+        setFormData({
+          name: "",
+          phone: "",
+          division: "",
+          district: "",
+          street: "",
+          isDefault: false,
+        });
+      }
+      
       router.refresh();
     } catch (error) {
-      toast.error("Failed to add address. Please try again.");
+      toast.error(`Failed to ${address ? "update" : "add"} address. Please try again.`);
     } finally {
       setLoading(false);
     }
@@ -73,6 +88,10 @@ export function AddressDialog({ variant = "default", label = "Add New" }: Addres
       <DialogTrigger asChild>
         {variant === "outline" ? (
           <Button variant="outline" className="border-[var(--primary)] text-[var(--primary)]">
+            {label}
+          </Button>
+        ) : variant === "link" ? (
+          <Button variant="link" className="p-0 h-auto text-[var(--primary)]">
             {label}
           </Button>
         ) : (
