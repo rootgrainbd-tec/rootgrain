@@ -25,7 +25,8 @@ export async function searchProducts(query: string): Promise<SanityProduct[]> {
       heroImage,
       category->{name}
     }[0...10]`,
-    { searchTerm }
+    { searchTerm },
+    { next: { revalidate: 0 } }
   );
 
   return products;
