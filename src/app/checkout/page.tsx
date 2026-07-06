@@ -39,6 +39,28 @@ export default function CheckoutPage() {
         if (Array.isArray(data)) setShippingRates(data);
       })
       .catch(() => toast.error("Failed to load shipping rates"));
+
+    fetch("/api/user/address")
+      .then(res => {
+        if (!res.ok) throw new Error("Not logged in or no addresses");
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const defaultAddress = data.find((a: any) => a.isDefault) || data[0];
+          setAddress({
+            name: defaultAddress.name || "",
+            phone: defaultAddress.phone || "",
+            street: defaultAddress.street || "",
+            postCode: defaultAddress.postCode || "",
+          });
+          if (defaultAddress.division) setSelectedDivision(defaultAddress.division);
+          if (defaultAddress.district) setSelectedDistrict(defaultAddress.district);
+        }
+      })
+      .catch(() => {
+        // Silently ignore if not logged in
+      });
   }, []);
 
   const subtotal = items.reduce((acc: any, item: any) => acc + item.price * item.quantity, 0);
