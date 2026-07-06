@@ -9,8 +9,8 @@ import { UserNav } from "@/components/layout/UserNav";
 import { NAV_LINKS } from "@/data/site-config";
 import type { SiteConfig } from "@/types/site";
 import { CartSheet } from "./CartSheet";
-
 import { SearchCommand } from "./SearchCommand";
+import { usePathname } from "next/navigation";
 
 export function Navigation({ config }: { config: SiteConfig }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -26,6 +26,9 @@ export function Navigation({ config }: { config: SiteConfig }) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const pathname = usePathname();
+  const isDarkText = isScrolled || pathname !== "/";
+
   return (
     <>
       <nav
@@ -37,11 +40,11 @@ export function Navigation({ config }: { config: SiteConfig }) {
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className={`flex items-center justify-between transition-all duration-500 ${isScrolled ? "h-16" : "h-28"}`}>
-            {/* Brand Logo & Name (Mobile: Left, Desktop: Absolute Center) */}
-            <div className="flex items-center gap-2 lg:absolute lg:left-1/2 lg:-translate-x-1/2 z-10">
+            {/* Brand Logo & Name */}
+            <div className="flex items-center gap-2 z-10 shrink-0">
               <Link href="/" className={`relative shrink-0 transition-all duration-500 ${isScrolled ? "w-[50px] h-[50px]" : "w-[90px] h-[90px] lg:w-[120px] lg:h-[120px]"}`}>
                 <Image
-                  src={isScrolled ? "/images/rootgrain-logo-dark.svg" : "/images/rootgrain-logo.svg"}
+                  src={isDarkText ? "/images/rootgrain-logo-dark.svg" : "/images/rootgrain-logo.svg"}
                   alt="RootGrain Logo"
                   fill
                   className="object-contain"
@@ -49,21 +52,21 @@ export function Navigation({ config }: { config: SiteConfig }) {
               </Link>
               <Link href="/" className="flex flex-col justify-center group overflow-hidden">
                 <span className={`font-serif font-semibold tracking-wide leading-tight transition-all duration-500 ${
-                  isScrolled ? "text-xl text-[var(--walnut)]" : "text-2xl text-[var(--ivory)]"
+                  isDarkText ? "text-xl text-[var(--walnut)]" : "text-2xl text-[var(--ivory)]"
                 }`}>
                   {config.name.toUpperCase()}
                 </span>
                 <span className={`uppercase leading-tight transition-all duration-500 overflow-hidden ${
-                  isScrolled ? "text-[0px] tracking-[0px] opacity-0 h-0" : "text-xs tracking-[0.3em] opacity-100 h-4 mt-0.5 text-[var(--ivory)]/70"
+                  isDarkText ? "text-[0px] tracking-[0px] opacity-0 h-0" : "text-xs tracking-[0.3em] opacity-100 h-4 mt-0.5 text-[var(--ivory)]/70"
                 }`}>
                   {config.tagline}
                 </span>
               </Link>
             </div>
 
-            {/* Desktop Navigation - Left Side */}
-            <div className="hidden lg:flex items-center gap-8 h-full">
-              {NAV_LINKS.slice(0, 3).map((link) => {
+            {/* Desktop Navigation - Center */}
+            <div className="hidden lg:flex flex-1 items-center justify-center gap-8 h-full px-8">
+              {NAV_LINKS.map((link) => {
                 if (link.label === "Collection") {
                   return (
                     <div 
@@ -75,7 +78,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
                       <Link
                         href={link.href}
                         className={`text-sm font-medium tracking-wide transition-colors hover:text-[var(--gold)] ${
-                          isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
+                          isDarkText ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
                         }`}
                       >
                         {link.label}
@@ -89,7 +92,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 10 }}
                             transition={{ duration: 0.2 }}
-                            className="absolute top-1/2 left-0 mt-8 pt-6 pb-2 w-64"
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 mt-8 pt-6 pb-2 w-64"
                           >
                             <div className="bg-[var(--cream)]/90 backdrop-blur-md border border-[var(--walnut-light)]/20 shadow-xl shadow-[var(--walnut-dark)]/5 flex flex-col py-4">
                               <Link 
@@ -122,7 +125,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
                     key={link.href}
                     href={link.href}
                     className={`text-sm font-medium tracking-wide transition-colors hover:text-[var(--gold)] flex items-center h-full ${
-                      isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
+                      isDarkText ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
                     }`}
                   >
                     {link.label}
@@ -131,45 +134,28 @@ export function Navigation({ config }: { config: SiteConfig }) {
               })}
             </div>
 
-            {/* Desktop Navigation - Right Side & Icons */}
-            <div className="flex items-center h-full">
-              <div className="hidden lg:flex items-center gap-8 h-full mr-8">
-                {NAV_LINKS.slice(3).map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`text-sm font-medium tracking-wide transition-colors hover:text-[var(--gold)] flex items-center h-full ${
-                      isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
+            {/* Icons - Right Side */}
+            <div className="flex items-center gap-4 lg:gap-6 h-full shrink-0">
+              <UserNav isScrolled={isDarkText} />
+              <button 
+                aria-label="Search" 
+                onClick={() => setIsSearchOpen(true)}
+                className={`hover:text-[var(--gold)] transition-colors ${isDarkText ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}
+              >
+                <Search className="w-5 h-5" strokeWidth={1.5} />
+              </button>
+              <CartSheet isScrolled={isDarkText} />
 
-              {/* Icons */}
-              <div className="flex items-center gap-4 lg:gap-6 border-l border-[var(--walnut-light)]/20 pl-6 lg:pl-8">
-                <UserNav isScrolled={isScrolled} />
-                <button 
-                  aria-label="Search" 
-                  onClick={() => setIsSearchOpen(true)}
-                  className={`hover:text-[var(--gold)] transition-colors ${isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"}`}
-                >
-                  <Search className="w-5 h-5" strokeWidth={1.5} />
-                </button>
-                <CartSheet isScrolled={isScrolled} />
-
-                {/* Mobile Menu Button */}
-                <button
-                  aria-label="Open Mobile Menu"
-                  onClick={() => setIsMobileMenuOpen(true)}
-                  className={`lg:hidden p-2 ml-2 ${
-                    isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
-                  }`}
-                >
-                  <Menu className="w-6 h-6" />
-                </button>
-              </div>
+              {/* Mobile Menu Button */}
+              <button
+                aria-label="Open Mobile Menu"
+                onClick={() => setIsMobileMenuOpen(true)}
+                className={`lg:hidden p-2 ml-2 ${
+                  isDarkText ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
+                }`}
+              >
+                <Menu className="w-6 h-6" />
+              </button>
             </div>
           </div>
         </div>

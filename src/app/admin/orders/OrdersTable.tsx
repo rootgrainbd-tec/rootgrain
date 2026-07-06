@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateOrderStatus } from "@/app/actions/admin";
 import { OrderStatus } from "@prisma/client";
-import { Loader2, Eye, Download } from "lucide-react";
+import { Loader2, Eye, Download, Printer } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -119,8 +119,8 @@ export default function OrdersTable({ orders }: { orders: any[] }) {
                     {order.items.map((i: any) => `${i.quantity}x ${i.productName}`).join(', ')}
                   </div>
                 </td>
-                <td className="px-4 py-3">৳{order.total.toLocaleString()}</td>
-                <td className="px-4 py-3">৳{order.advancePaid.toLocaleString()}</td>
+                <td className="px-4 py-3">৳{(order.total || 0).toLocaleString()}</td>
+                <td className="px-4 py-3">৳{(order.advancePaid || 0).toLocaleString()}</td>
                 <td className="px-4 py-3">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium
                     ${order.status === 'PENDING_ADVANCE' ? 'bg-yellow-100 text-yellow-800' : 
@@ -141,6 +141,15 @@ export default function OrdersTable({ orders }: { orders: any[] }) {
                       }}
                     >
                       <Eye className="w-4 h-4 text-[var(--walnut)]" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      asChild
+                    >
+                      <a href={`/checkout/invoice?order=${order.orderNumber}`} target="_blank" rel="noreferrer">
+                        <Printer className="w-4 h-4 text-[var(--gold)]" />
+                      </a>
                     </Button>
                     <Select 
                       disabled={isPending} 
@@ -175,7 +184,7 @@ export default function OrdersTable({ orders }: { orders: any[] }) {
           </DialogHeader>
           <form onSubmit={handleConfirmAdvance} className="space-y-4 pt-4">
             <p className="text-sm text-gray-600">
-              Total Order Value: <strong className="text-black">৳{selectedOrder ? selectedOrder.total.toLocaleString() : 0}</strong>
+              Total Order Value: <strong className="text-black">৳{selectedOrder ? (selectedOrder.total || 0).toLocaleString() : 0}</strong>
             </p>
             <div className="space-y-2">
               <label className="text-sm font-medium">Advance Amount Received (BDT)</label>
@@ -201,7 +210,16 @@ export default function OrdersTable({ orders }: { orders: any[] }) {
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Order Details: {viewOrder?.orderNumber}</DialogTitle>
+            <DialogTitle className="flex justify-between items-center pr-8">
+              <span>Order Details: {viewOrder?.orderNumber}</span>
+              {viewOrder && (
+                <Button variant="outline" size="sm" asChild className="h-8">
+                  <a href={`/checkout/invoice?order=${viewOrder.orderNumber}`} target="_blank" rel="noreferrer">
+                    <Printer className="w-4 h-4 mr-2" /> Print Invoice
+                  </a>
+                </Button>
+              )}
+            </DialogTitle>
           </DialogHeader>
           {viewOrder && (
             <div className="space-y-6 pt-4 text-sm">
@@ -226,25 +244,25 @@ export default function OrdersTable({ orders }: { orders: any[] }) {
                     <div key={item.id} className="flex justify-between p-3">
                       <div>
                         <p className="font-medium">{item.productName}</p>
-                        <p className="text-gray-500">Qty: {item.quantity} x ৳{item.price.toLocaleString()}</p>
+                        <p className="text-gray-500">Qty: {item.quantity} x ৳{(item.unitPrice || 0).toLocaleString()}</p>
                       </div>
-                      <p className="font-medium">৳{item.total.toLocaleString()}</p>
+                      <p className="font-medium">৳{(item.total || 0).toLocaleString()}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-1 text-right">
-                <p className="text-gray-600">Subtotal: ৳{viewOrder.subtotal.toLocaleString()}</p>
-                <p className="text-gray-600">Shipping: ৳{viewOrder.shippingCost.toLocaleString()}</p>
+                <p className="text-gray-600">Subtotal: ৳{(viewOrder.subtotal || 0).toLocaleString()}</p>
+                <p className="text-gray-600">Shipping: ৳{(viewOrder.shippingCost || 0).toLocaleString()}</p>
                 {viewOrder.discountAmount > 0 && (
-                  <p className="text-green-600">Discount: -৳{viewOrder.discountAmount.toLocaleString()}</p>
+                  <p className="text-green-600">Discount: -৳{(viewOrder.discountAmount || 0).toLocaleString()}</p>
                 )}
                 <p className="font-bold text-lg pt-2 border-t inline-block w-48 text-[var(--walnut-dark)]">
-                  Total: ৳{viewOrder.total.toLocaleString()}
+                  Total: ৳{(viewOrder.total || 0).toLocaleString()}
                 </p>
-                <p className="text-gray-600 mt-2">Advance Paid: ৳{viewOrder.advancePaid.toLocaleString()}</p>
-                <p className="text-gray-600 font-medium">Pending: ৳{(viewOrder.total - viewOrder.advancePaid).toLocaleString()}</p>
+                <p className="text-gray-600 mt-2">Advance Paid: ৳{(viewOrder.advancePaid || 0).toLocaleString()}</p>
+                <p className="text-gray-600 font-medium">Pending: ৳{((viewOrder.total || 0) - (viewOrder.advancePaid || 0)).toLocaleString()}</p>
               </div>
             </div>
           )}

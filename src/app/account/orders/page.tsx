@@ -50,11 +50,24 @@ export default async function OrdersPage() {
                     <div key={item.id} className="flex justify-between items-center">
                       <div>
                         <p className="font-medium text-[var(--walnut)]">{item.productName}</p>
-                        <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+                        <p className="text-sm text-gray-500">Qty: {item.quantity} x ৳{(item.unitPrice || 0).toLocaleString()}</p>
                       </div>
-                      <p className="font-medium">৳{item.total.toLocaleString()}</p>
+                      <p className="font-medium">৳{(item.total || 0).toLocaleString()}</p>
                     </div>
                   ))}
+                </div>
+
+                <div className="mt-6 pt-4 border-t flex flex-col items-end space-y-1 text-right text-sm">
+                  <p className="text-gray-600">Subtotal: ৳{(order.subtotal || 0).toLocaleString()}</p>
+                  <p className="text-gray-600">Shipping: ৳{(order.shippingCost || 0).toLocaleString()}</p>
+                  {order.discountAmount > 0 && (
+                    <p className="text-green-600">Discount: -৳{(order.discountAmount || 0).toLocaleString()}</p>
+                  )}
+                  <p className="font-bold text-lg pt-2 mt-1 border-t inline-block min-w-[200px] text-[var(--walnut-dark)]">
+                    Total: ৳{(order.total || 0).toLocaleString()}
+                  </p>
+                  <p className="text-gray-600 mt-2">Advance Paid: ৳{(order.advancePaid || 0).toLocaleString()}</p>
+                  <p className="text-gray-600 font-medium">Pending: ৳{((order.total || 0) - (order.advancePaid || 0)).toLocaleString()}</p>
                 </div>
                 <div className="mt-8 mb-4">
                   <OrderTracker status={order.status} />

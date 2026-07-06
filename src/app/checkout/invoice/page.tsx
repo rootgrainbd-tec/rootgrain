@@ -1,8 +1,12 @@
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
+import PrintButton from "./PrintButton";
+import { getSiteConfig } from "@/data/site-config";
 
-export default async function InvoicePage({ searchParams }: { searchParams: { order: string } }) {
+export default async function InvoicePage(props: { searchParams: Promise<{ order: string }> }) {
+  const searchParams = await props.searchParams;
+  
   if (!searchParams.order) notFound();
 
   const order = await prisma.order.findUnique({
@@ -12,18 +16,13 @@ export default async function InvoicePage({ searchParams }: { searchParams: { or
 
   if (!order) notFound();
 
+  const config = await getSiteConfig();
+
   return (
     <div className="max-w-3xl mx-auto p-8 bg-white min-h-screen font-sans">
       {/* Print button container - hidden when printing */}
       <div className="flex justify-end mb-8 print:hidden">
-        <button 
-          onClick={() => {
-            if (typeof window !== "undefined") window.print();
-          }}
-          className="bg-[var(--walnut)] text-white px-4 py-2 rounded-sm"
-        >
-          Print / Save PDF
-        </button>
+        <PrintButton />
       </div>
 
       <div className="border border-gray-200 p-8 space-y-8">
@@ -33,8 +32,11 @@ export default async function InvoicePage({ searchParams }: { searchParams: { or
             <p className="text-gray-500 mt-1">Order # {order.orderNumber}</p>
           </div>
           <div className="text-right">
-            <h2 className="text-xl font-bold text-[var(--gold)]">ROOTGRAIN</h2>
-            <p className="text-sm text-gray-500 mt-1">123 Furniture St<br/>Dhaka, Bangladesh</p>
+            <h2 className="text-xl font-bold text-[var(--gold)] uppercase">{config.name}</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              {config.address?.line1}<br/>
+              {config.address?.line2}
+            </p>
           </div>
         </div>
 
@@ -66,8 +68,8 @@ export default async function InvoicePage({ searchParams }: { searchParams: { or
               <tr key={item.id}>
                 <td className="py-3 px-2">{item.productName}</td>
                 <td className="py-3 px-2 text-center">{item.quantity}</td>
-                <td className="py-3 px-2 text-right">৳{item.unitPrice.toLocaleString()}</td>
-                <td className="py-3 px-2 text-right font-medium">৳{item.total.toLocaleString()}</td>
+                <td className="py-3 px-2 text-right">৳{(item.unitPrice || 0).toLocaleString()}</td>
+                <td className="py-3 px-2 text-right font-medium">৳{(item.total || 0).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
@@ -77,36 +79,40 @@ export default async function InvoicePage({ searchParams }: { searchParams: { or
           <div className="w-64 space-y-2">
             <div className="flex justify-between text-gray-600">
               <span>Subtotal:</span>
-              <span>৳{order.subtotal.toLocaleString()}</span>
+              <span>৳{(order.subtotal || 0).toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-gray-600">
               <span>Shipping:</span>
-              <span>৳{order.shippingCost.toLocaleString()}</span>
+              <span>৳{(order.shippingCost || 0).toLocaleString()}</span>
             </div>
             {order.discountAmount > 0 && (
               <div className="flex justify-between text-green-600">
                 <span>Discount:</span>
-                <span>-৳{order.discountAmount.toLocaleString()}</span>
+                <span>-৳{(order.discountAmount || 0).toLocaleString()}</span>
               </div>
             )}
             <div className="flex justify-between text-lg font-bold border-t border-gray-300 pt-2 mt-2">
               <span>Total:</span>
-              <span>৳{order.total.toLocaleString()}</span>
+              <span>৳{(order.total || 0).toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-gray-600 pt-2">
               <span>Advance Paid:</span>
-              <span>৳{order.advancePaid.toLocaleString()}</span>
+              <span>৳{(order.advancePaid || 0).toLocaleString()}</span>
             </div>
             <div className="flex justify-between font-semibold text-[var(--walnut)]">
               <span>Balance Due:</span>
-              <span>৳{(order.total - order.advancePaid).toLocaleString()}</span>
+              <span>৳{((order.total || 0) - (order.advancePaid || 0)).toLocaleString()}</span>
             </div>
           </div>
         </div>
 
         <div className="text-center text-sm text-gray-500 pt-8 border-t border-gray-200">
-          <p>Thank you for choosing Rootgrain!</p>
-          <p>For support, email us at support@rootgrain.com</p>
+          <p>Thank you for choosing {config.name}!</p>
+          <div className="flex items-center justify-center gap-2 mt-1">
+            {config.support?.email && <span>Email: {config.support.email}</span>}
+            {config.support?.email && config.support?.phone && <span>|</span>}
+            {config.support?.phone && <span>Phone: {config.support.phone}</span>}
+          </div>
         </div>
       </div>
       
