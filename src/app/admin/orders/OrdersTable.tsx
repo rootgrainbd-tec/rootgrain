@@ -232,8 +232,11 @@ export default function OrdersTable({ orders }: { orders: any[] }) {
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900 mb-1">Shipping Address</h3>
-                  <p className="text-gray-600">{viewOrder.shippingAddress?.address}</p>
-                  <p className="text-gray-600">{viewOrder.shippingAddress?.district}</p>
+                  <p className="text-gray-600">{viewOrder.shippingAddress?.street}</p>
+                  <p className="text-gray-600">
+                    {viewOrder.shippingAddress?.district}, {viewOrder.shippingAddress?.division}
+                    {viewOrder.shippingAddress?.postCode ? ` - ${viewOrder.shippingAddress?.postCode}` : ""}
+                  </p>
                 </div>
               </div>
 

@@ -69,7 +69,7 @@ export default async function AddressBookPage() {
                 <div className="space-y-1 text-sm">
                   <p>{address.street}</p>
                   <p>
-                    {address.district}, {address.division}
+                    {address.district}, {address.division} {address.postCode ? `- ${address.postCode}` : ""}
                   </p>
                   <p>Bangladesh</p>
                 </div>

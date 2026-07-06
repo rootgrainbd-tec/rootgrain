@@ -6,9 +6,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
+import { bdDivisions, bdDistricts } from "@/lib/bd-locations";
 
 interface AddressDialogProps {
   variant?: "default" | "outline" | "link";
@@ -20,6 +22,7 @@ interface AddressDialogProps {
     division: string;
     district: string;
     street: string;
+    postCode?: string | null;
     isDefault: boolean;
   };
 }
@@ -34,12 +37,22 @@ export function AddressDialog({ variant = "default", label = "Add New", address 
     division: address?.division || "",
     district: address?.district || "",
     street: address?.street || "",
+    postCode: address?.postCode || "",
     isDefault: address?.isDefault || false,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => {
+      if (name === "division") {
+        return { ...prev, division: value, district: "" }; // Reset district when division changes
+      }
+      return { ...prev, [name]: value };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,6 +84,7 @@ export function AddressDialog({ variant = "default", label = "Add New", address 
           division: "",
           district: "",
           street: "",
+          postCode: "",
           isDefault: false,
         });
       }
@@ -111,11 +125,11 @@ export function AddressDialog({ variant = "default", label = "Add New", address 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Address Name</Label>
+              <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
                 name="name"
-                placeholder="e.g. Home, Office"
+                placeholder="e.g. John Doe"
                 value={formData.name}
                 onChange={handleChange}
                 required
@@ -146,27 +160,50 @@ export function AddressDialog({ variant = "default", label = "Add New", address 
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="division">Division</Label>
-              <Input
-                id="division"
-                name="division"
-                placeholder="Dhaka"
-                value={formData.division}
-                onChange={handleChange}
+              <Select 
+                value={formData.division} 
+                onValueChange={(value) => handleSelectChange("division", value)} 
                 required
-              />
+              >
+                <SelectTrigger id="division">
+                  <SelectValue placeholder="Select Division" />
+                </SelectTrigger>
+                <SelectContent className="max-h-64">
+                  {bdDivisions.map((div) => (
+                    <SelectItem key={div} value={div}>{div}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="district">District</Label>
-              <Input
-                id="district"
-                name="district"
-                placeholder="Dhaka"
-                value={formData.district}
-                onChange={handleChange}
+              <Select 
+                value={formData.district} 
+                onValueChange={(value) => handleSelectChange("district", value)} 
                 required
+                disabled={!formData.division}
+              >
+                <SelectTrigger id="district">
+                  <SelectValue placeholder="Select District" />
+                </SelectTrigger>
+                <SelectContent className="max-h-64">
+                  {formData.division && bdDistricts[formData.division]?.map((dist) => (
+                    <SelectItem key={dist} value={dist}>{dist}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="postCode">Post Code</Label>
+              <Input
+                id="postCode"
+                name="postCode"
+                placeholder="1200"
+                value={formData.postCode}
+                onChange={handleChange}
               />
             </div>
           </div>

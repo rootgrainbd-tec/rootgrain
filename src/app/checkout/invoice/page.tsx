@@ -44,8 +44,11 @@ export default async function InvoicePage(props: { searchParams: Promise<{ order
           <div>
             <h3 className="font-semibold text-gray-700">Bill To:</h3>
             <p className="text-gray-600 mt-1">{(order.shippingAddress as any).name}</p>
-            <p className="text-gray-600">{(order.shippingAddress as any).address}</p>
-            <p className="text-gray-600">{(order.shippingAddress as any).district}, {(order.shippingAddress as any).division}</p>
+            <p className="text-gray-600">{(order.shippingAddress as any).street}</p>
+            <p className="text-gray-600">
+              {(order.shippingAddress as any).district}, {(order.shippingAddress as any).division}
+              {(order.shippingAddress as any).postCode ? ` - ${(order.shippingAddress as any).postCode}` : ""}
+            </p>
             <p className="text-gray-600">{(order.shippingAddress as any).phone}</p>
           </div>
           <div className="text-right">

@@ -21,6 +21,7 @@ export async function POST(req: Request) {
         division: data.division,
         district: data.district,
         street: data.street,
+        postCode: data.postCode,
         isDefault: data.isDefault || false
       }
     });

@@ -24,6 +24,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         division: data.division,
         district: data.district,
         street: data.street,
+        postCode: data.postCode,
         isDefault: data.isDefault
       }
     });

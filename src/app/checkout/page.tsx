@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { bdDivisions, bdDistricts } from "@/lib/bd-locations";
 
 interface ShippingRate {
   id: string;
@@ -23,9 +24,10 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { items, clearCart } = useCartStore();
   const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
+  const [selectedDivision, setSelectedDivision] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [address, setAddress] = useState({ name: "", phone: "", street: "" });
+  const [address, setAddress] = useState({ name: "", phone: "", street: "", postCode: "" });
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<any>(null);
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
@@ -43,6 +45,7 @@ export default function CheckoutPage() {
   const totalQuantity = items.reduce((acc: any, item: any) => acc + item.quantity, 0);
 
   let shippingCost = 0;
+  let isShippingAvailable = true;
   if (selectedDistrict) {
     const rate = shippingRates.find(r => r.district === selectedDistrict);
     if (rate) {
@@ -50,6 +53,8 @@ export default function CheckoutPage() {
       if (totalQuantity > 1) {
         shippingCost += (totalQuantity - 1) * rate.perItemRate;
       }
+    } else {
+      isShippingAvailable = false;
     }
   }
 
@@ -88,8 +93,12 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDistrict) {
-      toast.error("Please select a district");
+    if (!selectedDivision || !selectedDistrict) {
+      toast.error("Please select both division and district");
+      return;
+    }
+    if (!isShippingAvailable) {
+      toast.error("Shipping is not available for the selected district");
       return;
     }
     if (!address.name || !address.phone || !address.street) {
@@ -104,6 +113,7 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items,
+          division: selectedDivision,
           district: selectedDistrict,
           address,
           promoCode: appliedPromo?.code
@@ -166,21 +176,41 @@ export default function CheckoutPage() {
                     required 
                   />
                 </div>
-                <div>
-                  <Label htmlFor="district">District</Label>
-                  <Select value={selectedDistrict} onValueChange={setSelectedDistrict} required>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a district" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-64 overflow-y-auto">
-                      {shippingRates.map(rate => (
-                        <SelectItem key={rate.id} value={rate.district}>{rate.district}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {!selectedDistrict && (
-                    <p className="text-xs text-muted-foreground mt-1">Select a district to calculate shipping</p>
-                  )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="division">Division</Label>
+                    <Select value={selectedDivision} onValueChange={(val) => { setSelectedDivision(val); setSelectedDistrict(""); }} required>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select Division" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-64">
+                        {bdDivisions.map(div => (
+                          <SelectItem key={div} value={div}>{div}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="district">District</Label>
+                    <Select value={selectedDistrict} onValueChange={setSelectedDistrict} required disabled={!selectedDivision}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select District" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-64 overflow-y-auto">
+                        {selectedDivision && bdDistricts[selectedDivision]?.map(dist => {
+                          const hasRate = shippingRates.some(r => r.district === dist);
+                          return (
+                            <SelectItem key={dist} value={dist} disabled={!hasRate}>
+                              {dist} {!hasRate && "(No Delivery)"}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    {!selectedDistrict && (
+                      <p className="text-xs text-muted-foreground mt-1">Select a district to calculate shipping</p>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="street">Detailed Address (Street, House, Area)</Label>
@@ -189,6 +219,14 @@ export default function CheckoutPage() {
                     value={address.street} 
                     onChange={e => setAddress({...address, street: e.target.value})} 
                     required 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="postCode">Post Code (Optional)</Label>
+                  <Input 
+                    id="postCode" 
+                    value={address.postCode} 
+                    onChange={e => setAddress({...address, postCode: e.target.value})} 
                   />
                 </div>
               </div>
@@ -243,7 +281,7 @@ export default function CheckoutPage() {
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Shipping Estimate</span>
                 <span className="font-medium">
-                  {shippingCost > 0 ? `৳${shippingCost.toLocaleString()}` : 'Select District'}
+                  {!selectedDistrict ? 'Select District' : !isShippingAvailable ? 'Not Available' : `৳${shippingCost.toLocaleString()}`}
                 </span>
               </div>
               

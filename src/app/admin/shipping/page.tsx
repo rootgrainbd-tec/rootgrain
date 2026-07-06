@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Trash2, Edit2, Plus, Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { bdDivisions, bdDistricts } from "@/lib/bd-locations";
 
 interface ShippingRate {
   id: string;
@@ -19,6 +21,7 @@ export default function ShippingSettingsPage() {
   const [rates, setRates] = useState<ShippingRate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
+  const [division, setDivision] = useState("");
   const [district, setDistrict] = useState("");
   const [baseRate, setBaseRate] = useState("");
   const [perItemRate, setPerItemRate] = useState("");
@@ -94,6 +97,15 @@ export default function ShippingSettingsPage() {
   };
 
   const handleEdit = (rate: ShippingRate) => {
+    // Find the division for this district
+    let foundDiv = "";
+    for (const div of bdDivisions) {
+      if (bdDistricts[div]?.includes(rate.district)) {
+        foundDiv = div;
+        break;
+      }
+    }
+    setDivision(foundDiv);
     setDistrict(rate.district);
     setBaseRate(rate.baseRate.toString());
     setPerItemRate(rate.perItemRate.toString());
@@ -114,14 +126,31 @@ export default function ShippingSettingsPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSave} className="flex flex-col md:flex-row gap-4 items-end">
-            <div className="space-y-2 flex-1">
-              <Label htmlFor="district">District Name (e.g. Dhaka)</Label>
-              <Input 
-                id="district" 
-                value={district} 
-                onChange={(e) => setDistrict(e.target.value)} 
-                placeholder="District"
-              />
+            <div className="space-y-2 flex-1 min-w-[150px]">
+              <Label htmlFor="division">Division</Label>
+              <Select value={division} onValueChange={(val) => { setDivision(val); setDistrict(""); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Division" />
+                </SelectTrigger>
+                <SelectContent className="max-h-64">
+                  {bdDivisions.map(div => (
+                    <SelectItem key={div} value={div}>{div}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 flex-1 min-w-[150px]">
+              <Label htmlFor="district">District</Label>
+              <Select value={district} onValueChange={setDistrict} disabled={!division}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select District" />
+                </SelectTrigger>
+                <SelectContent className="max-h-64 overflow-y-auto">
+                  {division && bdDistricts[division]?.map(dist => (
+                    <SelectItem key={dist} value={dist}>{dist}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2 flex-1">
               <Label htmlFor="baseRate">Base Charge (BDT) - 1st item</Label>

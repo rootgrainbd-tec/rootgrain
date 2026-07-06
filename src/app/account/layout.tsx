@@ -31,7 +31,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation config={SITE_CONFIG} />
-      <div className="container flex-1 py-10 md:py-20">
+      <div className="container flex-1 pt-28 pb-10 md:pt-36 md:pb-20">
         <div className="flex flex-col md:flex-row gap-8">
           <aside className="w-full md:w-64 shrink-0">
             <nav className="flex flex-row md:flex-col gap-2 overflow-x-auto pb-4 md:pb-0">

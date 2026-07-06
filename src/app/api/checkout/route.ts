@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     const body = await request.json();
-    const { items, address, district, promoCode } = body;
+    const { items, address, division, district, promoCode } = body;
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
@@ -108,8 +108,10 @@ export async function POST(request: Request) {
         shippingAddress: {
           name: address.name,
           phone: address.phone,
+          division: division,
           district: district,
           street: address.street,
+          postCode: address.postCode,
         },
         items: {
           create: orderItemsData
