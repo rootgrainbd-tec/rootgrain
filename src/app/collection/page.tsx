@@ -42,7 +42,7 @@ export default async function CollectionPage(
     conditions.push(`category->name == "${category}"`);
   }
   if (wood && wood !== "All") {
-    conditions.push(`woodType == "${wood}"`);
+    conditions.push(`woodType match "*${wood}*"`);
   }
   if (availability && availability !== "All") {
     conditions.push(`availability == "${availability}"`);
