@@ -135,16 +135,16 @@ export async function sendOrderConfirmationEmail(order: any, customerEmail: stri
       </div>
     `;
 
-    const html = getBaseTemplate(\`Order Confirmation - \${order.orderNumber}\`, content);
+    const html = getBaseTemplate(`Order Confirmation - ${order.orderNumber}`, content);
 
     await transporter.sendMail({
       from: SENDER,
       to: customerEmail,
-      subject: \`Order Confirmation - \${order.orderNumber} | Rootgrain\`,
+      subject: `Order Confirmation - ${order.orderNumber} | Rootgrain`,
       html,
     });
     
-    console.log(\`[EMAIL] Order confirmation sent to \${customerEmail}\`);
+    console.log(`[EMAIL] Order confirmation sent to ${customerEmail}`);
   } catch (error) {
     console.error("[EMAIL ERROR] Failed to send order confirmation:", error);
   }
@@ -169,37 +169,37 @@ export async function sendOrderStatusUpdateEmail(order: any, customerEmail: stri
 
     const itemsHtml = getOrderItemsHtml(order.items);
 
-    const content = \`
-      <h2>\${heading}</h2>
-      <p>Hi \${customerName},</p>
-      <p>An update on your order <strong>#\${order.orderNumber}</strong>:</p>
+    const content = `
+      <h2>${heading}</h2>
+      <p>Hi ${customerName},</p>
+      <p>An update on your order <strong>#${order.orderNumber}</strong>:</p>
       
-      <div style="background-color: #f8f9fa; padding: 20px; border-left: 4px solid \${BRAND_COLOR}; margin: 25px 0; border-radius: 0 4px 4px 0;">
-        <p style="margin: 0; font-size: 16px; line-height: 1.5;">\${statusMessage}</p>
+      <div style="background-color: #f8f9fa; padding: 20px; border-left: 4px solid ${BRAND_COLOR}; margin: 25px 0; border-radius: 0 4px 4px 0;">
+        <p style="margin: 0; font-size: 16px; line-height: 1.5;">${statusMessage}</p>
       </div>
 
-      \${itemsHtml ? \`
+      ${itemsHtml ? `
       <div class="order-summary" style="margin-top: 30px;">
         <h4 style="margin-top: 0; color: #555;">Items in this order:</h4>
-        \${itemsHtml}
+        ${itemsHtml}
       </div>
-      \` : ''}
+      ` : ''}
 
       <div style="text-align: center; margin-top: 30px;">
         <a href="https://rootgrain.bd" class="btn">Visit Website</a>
       </div>
-    \`;
+    `;
 
-    const html = getBaseTemplate(\`Order Update - \${order.orderNumber}\`, content);
+    const html = getBaseTemplate(`Order Update - ${order.orderNumber}`, content);
 
     await transporter.sendMail({
       from: SENDER,
       to: customerEmail,
-      subject: \`Order Update: \${status} - \${order.orderNumber} | Rootgrain\`,
+      subject: `Order Update: ${status} - ${order.orderNumber} | Rootgrain`,
       html,
     });
 
-    console.log(\`[EMAIL] Status update (\${status}) sent to \${customerEmail}\`);
+    console.log(`[EMAIL] Status update (${status}) sent to ${customerEmail}`);
   } catch (error) {
     console.error("[EMAIL ERROR] Failed to send status update:", error);
   }
