@@ -27,7 +27,7 @@ export default function CheckoutPage() {
   const [selectedDivision, setSelectedDivision] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [address, setAddress] = useState({ name: "", phone: "", street: "", postCode: "" });
+  const [address, setAddress] = useState({ name: "", email: "", phone: "", street: "", postCode: "" });
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<any>(null);
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
@@ -50,6 +50,7 @@ export default function CheckoutPage() {
           const defaultAddress = data.find((a: any) => a.isDefault) || data[0];
           setAddress({
             name: defaultAddress.name || "",
+            email: data.email || "", // we need email from user, maybe API doesn't send it. Let's just keep it empty for now, or if defaultAddress has email.
             phone: defaultAddress.phone || "",
             street: defaultAddress.street || "",
             postCode: defaultAddress.postCode || "",
@@ -186,6 +187,16 @@ export default function CheckoutPage() {
                     id="name" 
                     value={address.name} 
                     onChange={e => setAddress({...address, name: e.target.value})} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input 
+                    id="email" 
+                    type="email"
+                    value={address.email} 
+                    onChange={e => setAddress({...address, email: e.target.value})} 
                     required 
                   />
                 </div>

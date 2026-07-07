@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { z } from "zod";
+import { client } from "../../../sanity/lib/client";
 
 // 1. Define Strict Zod Validation Schemas
 const checkoutSchema = z.object({
@@ -33,9 +34,14 @@ export async function initiateCheckout(rawPayload: unknown) {
 
   // 3. Fetch real prices from database to block price spoofing
   const productIds = payload.items.map((i) => i.productId);
-  const products = await prisma.product.findMany({
-    where: { id: { in: productIds } },
-  });
+  const products = await client.fetch(`
+    *[_type == "product" && slug.current in $slugs] {
+      "id": slug.current,
+      "name": title,
+      price,
+      availability
+    }
+  `, { slugs: productIds });
 
   if (products.length !== productIds.length) {
     throw new Error("Invalid products in cart.");
@@ -43,8 +49,8 @@ export async function initiateCheckout(rawPayload: unknown) {
 
   // Check product stock availability
   for (const item of payload.items) {
-    const matched = products.find(p => p.id === item.productId)!;
-    if (!matched.inStock) {
+    const matched = products.find((p: any) => p.id === item.productId)!;
+    if (matched.availability === "Sold") {
       throw new Error(`Product ${matched.name} is currently out of stock.`);
     }
   }
@@ -52,7 +58,7 @@ export async function initiateCheckout(rawPayload: unknown) {
   // 4. Calculate total prices in Taka
   let totalTaka = 0;
   const orderItemsData = payload.items.map((item) => {
-    const product = products.find((p) => p.id === item.productId)!;
+    const product = products.find((p: any) => p.id === item.productId)!;
     const itemTotal = product.price * item.quantity;
     totalTaka += itemTotal;
 

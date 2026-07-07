@@ -26,6 +26,7 @@ export async function updateInquiryStatus(id: string, status: string) {
 }
 
 import { OrderStatus } from "@prisma/client";
+import { sendOrderStatusUpdateEmail } from "@/lib/email";
 
 export async function updateOrderStatus(id: string, status: OrderStatus, advancePaidAmount?: number) {
   try {
@@ -35,18 +36,26 @@ export async function updateOrderStatus(id: string, status: OrderStatus, advance
     }
 
     const updateData: any = { status };
+    let currentOrder = null;
+    
     if (status === "CONFIRMED" && advancePaidAmount !== undefined) {
       updateData.advancePaid = advancePaidAmount;
-      const order = await prisma.order.findUnique({ where: { id } });
-      if (order) {
-        updateData.balanceDue = order.total - advancePaidAmount;
+      currentOrder = await prisma.order.findUnique({ where: { id } });
+      if (currentOrder) {
+        updateData.balanceDue = currentOrder.total - advancePaidAmount;
       }
     }
 
-    await prisma.order.update({
+    const updatedOrder = await prisma.order.update({
       where: { id },
       data: updateData,
     });
+
+    // Send email notification for status change
+    const email = (updatedOrder.shippingAddress as any)?.email;
+    if (email && ["CONFIRMED", "DISPATCHED", "DELIVERED"].includes(status)) {
+      sendOrderStatusUpdateEmail(updatedOrder, email, status).catch(console.error);
+    }
 
     revalidatePath("/admin/orders");
     return { success: true };

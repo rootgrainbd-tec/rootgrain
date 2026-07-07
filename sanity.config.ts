@@ -2,6 +2,7 @@ import { defineConfig } from 'sanity'
 import { structureTool } from 'sanity/structure'
 import { visionTool } from '@sanity/vision'
 import { schema } from './sanity/schema'
+import { structure } from './sanity/structure'
 
 export default defineConfig({
   basePath: '/studio',
@@ -10,7 +11,7 @@ export default defineConfig({
   title: 'RootGrain Studio',
   schema,
   plugins: [
-    structureTool(),
+    structureTool({ structure }),
     visionTool(),
   ],
 })

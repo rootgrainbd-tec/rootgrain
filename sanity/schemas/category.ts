@@ -27,4 +27,9 @@ export default defineType({
       type: 'text',
     }),
   ],
+  preview: {
+    select: {
+      title: 'name',
+    },
+  },
 })

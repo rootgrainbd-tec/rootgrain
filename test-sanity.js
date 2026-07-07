@@ -7,4 +7,4 @@ const client = createClient({
   apiVersion: '2023-01-01'
 });
 
-client.fetch('*[_type == "product"]{title, woodType}').then(console.log).catch(console.error);
+client.fetch('*[_type == "product"]{_id, title}').then(console.log).catch(console.error);

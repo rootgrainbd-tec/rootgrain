@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { client } from "../../../../sanity/lib/client";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 
 function generateOrderNumber() {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -19,21 +21,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
     }
 
-    if (!district || !address.name || !address.phone || !address.street) {
+    if (!district || !address.name || !address.phone || !address.email || !address.street) {
       return NextResponse.json({ error: "Missing address details" }, { status: 400 });
     }
 
     // Fetch product prices to prevent client-side tampering
     const productIds = items.map((i: any) => i.id);
-    const dbProducts = await prisma.product.findMany({
-      where: { id: { in: productIds } },
-      select: { id: true, name: true, price: true }
-    });
+    const dbProducts = await client.fetch(`
+      *[_type == "product" && slug.current in $slugs] {
+        "id": slug.current,
+        "name": title,
+        price,
+        availability
+      }
+    `, { slugs: productIds });
 
     let subtotal = 0;
     const orderItemsData = items.map((item: any) => {
-      const dbProd = dbProducts.find(p => p.id === item.id);
+      const dbProd = dbProducts.find((p: any) => p.id === item.id);
       if (!dbProd) throw new Error(`Product not found: ${item.id}`);
+      if (dbProd.availability === "Sold") throw new Error(`Product ${dbProd.name} is currently out of stock.`);
       
       const itemTotal = dbProd.price * item.quantity;
       subtotal += itemTotal;
@@ -107,6 +114,7 @@ export async function POST(request: Request) {
         logistics: "PRIVATE_FREIGHT",
         shippingAddress: {
           name: address.name,
+          email: address.email,
           phone: address.phone,
           division: division,
           district: district,
@@ -118,6 +126,9 @@ export async function POST(request: Request) {
         }
       }
     });
+
+    // Send order confirmation email without blocking the response
+    sendOrderConfirmationEmail(order, address.email).catch(console.error);
 
     return NextResponse.json({ success: true, orderId: order.id, orderNumber: order.orderNumber });
   } catch (error: any) {
