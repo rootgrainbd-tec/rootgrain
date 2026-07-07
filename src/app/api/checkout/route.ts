@@ -124,7 +124,8 @@ export async function POST(request: Request) {
         items: {
           create: orderItemsData
         }
-      }
+      },
+      include: { items: true }
     });
 
     // Send order confirmation email without blocking the response

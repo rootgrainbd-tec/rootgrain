@@ -49,6 +49,7 @@ export async function updateOrderStatus(id: string, status: OrderStatus, advance
     const updatedOrder = await prisma.order.update({
       where: { id },
       data: updateData,
+      include: { items: true }
     });
 
     // Send email notification for status change
