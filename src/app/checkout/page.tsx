@@ -50,7 +50,7 @@ export default function CheckoutPage() {
           const defaultAddress = data.find((a: any) => a.isDefault) || data[0];
           setAddress({
             name: defaultAddress.name || "",
-            email: data.email || "", // we need email from user, maybe API doesn't send it. Let's just keep it empty for now, or if defaultAddress has email.
+            email: "",
             phone: defaultAddress.phone || "",
             street: defaultAddress.street || "",
             postCode: defaultAddress.postCode || "",
