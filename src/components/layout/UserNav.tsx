@@ -28,7 +28,7 @@ export function UserNav({ isScrolled }: { isScrolled?: boolean }) {
     return (
       <Link 
         href="/login" 
-        className={`hidden lg:flex items-center hover:text-[var(--gold)] transition-colors ${
+        className={`flex items-center hover:text-[var(--gold)] transition-colors ${
           isScrolled ? "text-[var(--walnut)]" : "text-[var(--ivory)]"
         }`}
       >
