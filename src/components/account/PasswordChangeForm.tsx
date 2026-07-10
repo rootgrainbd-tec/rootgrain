@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 
 export function PasswordChangeForm() {
   const [loading, setLoading] = useState(false);
@@ -69,7 +70,12 @@ export function PasswordChangeForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="currentPassword" className="text-[var(--walnut)]">Current Password</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="currentPassword" className="text-[var(--walnut)]">Current Password</Label>
+          <Link href="/forgot-password" className="text-sm font-medium text-[var(--gold)] hover:underline">
+            Forgot password?
+          </Link>
+        </div>
         <Input 
           id="currentPassword" 
           type="password"
