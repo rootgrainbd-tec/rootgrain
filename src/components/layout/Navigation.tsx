@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, User, Search, ShoppingBag } from "lucide-react";
 import Image from "next/image";
@@ -13,6 +14,7 @@ import { SearchCommand } from "./SearchCommand";
 import { usePathname } from "next/navigation";
 
 export function Navigation({ config }: { config: SiteConfig }) {
+  const { data: session } = useSession();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -180,7 +182,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              <div className="flex flex-col items-center justify-center flex-1 gap-8">
+              <div className="flex flex-col items-center justify-center flex-1 gap-6 py-8 overflow-y-auto">
                 {NAV_LINKS.map((link, index) => (
                   <motion.a
                     key={link.href}
@@ -194,6 +196,49 @@ export function Navigation({ config }: { config: SiteConfig }) {
                     {link.label}
                   </motion.a>
                 ))}
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: NAV_LINKS.length * 0.1 }}
+                  className="w-12 h-px bg-[var(--ivory)]/20 my-2"
+                />
+
+                {!session?.user ? (
+                  <>
+                    <motion.a
+                      href="/login"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: (NAV_LINKS.length + 1) * 0.1 }}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="font-serif text-2xl text-[var(--ivory)]/70 hover:text-[var(--gold)] transition-colors"
+                    >
+                      Login
+                    </motion.a>
+                    <motion.a
+                      href="/register"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: (NAV_LINKS.length + 2) * 0.1 }}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="font-serif text-2xl text-[var(--ivory)]/70 hover:text-[var(--gold)] transition-colors"
+                    >
+                      Register
+                    </motion.a>
+                  </>
+                ) : (
+                  <motion.a
+                    href="/account"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: (NAV_LINKS.length + 1) * 0.1 }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="font-serif text-2xl text-[var(--ivory)]/70 hover:text-[var(--gold)] transition-colors"
+                  >
+                    My Account
+                  </motion.a>
+                )}
               </div>
             </div>
           </motion.div>
