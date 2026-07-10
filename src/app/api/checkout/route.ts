@@ -99,11 +99,23 @@ export async function POST(request: Request) {
     const total = subtotal + shippingCost - discountAmount;
     const balanceDue = total;
 
+    let userId = session?.user ? session.user.id : null;
+    
+    // If not logged in, check if an account exists with this email
+    if (!userId && address.email) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: address.email }
+      });
+      if (existingUser) {
+        userId = existingUser.id;
+      }
+    }
+
     // Create Order
     const order = await prisma.order.create({
       data: {
         orderNumber: generateOrderNumber(),
-        userId: session?.user ? session.user.id : null,
+        userId: userId,
         subtotal,
         shippingCost,
         total,
