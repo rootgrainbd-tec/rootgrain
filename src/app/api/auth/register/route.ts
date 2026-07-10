@@ -28,6 +28,19 @@ export async function POST(req: Request) {
       },
     });
 
+    // Link previous guest orders to this newly created account
+    try {
+      await prisma.$executeRaw`
+        UPDATE "Order"
+        SET "userId" = ${user.id}
+        WHERE "userId" IS NULL 
+        AND "shippingAddress"->>'email' = ${email}
+      `;
+      console.log(`Linked guest orders for ${email}`);
+    } catch (e) {
+      console.error("Failed to link guest orders:", e);
+    }
+
     return NextResponse.json({ message: "User created", user }, { status: 201 });
   } catch (error) {
     console.error("Registration error:", error);

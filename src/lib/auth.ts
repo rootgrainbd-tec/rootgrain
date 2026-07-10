@@ -64,6 +64,23 @@ export const authOptions: NextAuthOptions = {
       }
     })
   ],
+  events: {
+    async createUser({ user }) {
+      if (user.email) {
+        try {
+          await prisma.$executeRaw`
+            UPDATE "Order"
+            SET "userId" = ${user.id}
+            WHERE "userId" IS NULL 
+            AND "shippingAddress"->>'email' = ${user.email}
+          `;
+          console.log(`Linked guest orders for ${user.email} via OAuth`);
+        } catch (e) {
+          console.error("Failed to link guest orders on OAuth:", e);
+        }
+      }
+    }
+  },
   callbacks: {
     async session({ session, token }) {
       if (session.user) {
