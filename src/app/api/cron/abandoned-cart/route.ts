@@ -53,7 +53,7 @@ export async function GET(request: Request) {
       });
 
       // Send email
-      await sendAbandonedCartEmail(cart.email, cart.cartItems, code, settings.abandonedCartDiscountPercent);
+      await sendAbandonedCartEmail(cart.email, cart.cartItems as any[], code, settings.abandonedCartDiscountPercent);
 
       // Update cart status
       await prisma.abandonedCart.update({
