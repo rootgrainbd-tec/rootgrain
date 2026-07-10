@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, User, Search, ShoppingBag } from "lucide-react";
 import Image from "next/image";
@@ -230,16 +230,30 @@ export function Navigation({ config }: { config: SiteConfig }) {
                     </motion.a>
                   </>
                 ) : (
-                  <motion.a
-                    href="/account"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: (NAV_LINKS.length + 1) * 0.1 }}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="font-serif text-2xl text-[var(--ivory)]/70 hover:text-[var(--gold)] transition-colors"
-                  >
-                    My Account
-                  </motion.a>
+                  <>
+                    <motion.a
+                      href="/account"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: (NAV_LINKS.length + 1) * 0.1 }}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="font-serif text-2xl text-[var(--ivory)]/70 hover:text-[var(--gold)] transition-colors"
+                    >
+                      Profile
+                    </motion.a>
+                    <motion.button
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: (NAV_LINKS.length + 2) * 0.1 }}
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        signOut({ callbackUrl: "/" });
+                      }}
+                      className="font-serif text-2xl text-[var(--ivory)]/70 hover:text-[var(--gold)] transition-colors"
+                    >
+                      Log Out
+                    </motion.button>
+                  </>
                 )}
               </div>
             </div>
