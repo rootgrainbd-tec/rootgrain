@@ -52,6 +52,7 @@ export const metadata: Metadata = {
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { AuthProviders } from "@/components/auth/Providers";
 import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
+import { MaintenanceGuard } from "@/components/layout/MaintenanceGuard";
 import Script from "next/script";
 
 export default function RootLayout({
@@ -97,7 +98,9 @@ export default function RootLayout({
       >
         <AuthProviders>
           <SmoothScroll>
-            {children}
+            <MaintenanceGuard>
+              {children}
+            </MaintenanceGuard>
             <Toaster />
             <SonnerToaster position="bottom-right" richColors />
             <WhatsAppButton />

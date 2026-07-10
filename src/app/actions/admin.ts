@@ -98,3 +98,31 @@ export async function updateStoreSettings(delayHours: number, discountPercent: n
     return { success: false, error: "Database error" };
   }
 }
+
+export async function toggleMaintenanceMode(status: boolean) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== "ADMIN") {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const existing = await prisma.storeSettings.findFirst();
+    if (existing) {
+      await prisma.storeSettings.update({
+        where: { id: existing.id },
+        data: { maintenanceMode: status }
+      });
+    } else {
+      await prisma.storeSettings.create({
+        data: { maintenanceMode: status }
+      });
+    }
+
+    revalidatePath("/");
+    revalidatePath("/admin/settings");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to toggle maintenance mode:", error);
+    return { success: false, error: "Database error" };
+  }
+}

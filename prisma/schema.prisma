@@ -315,6 +315,7 @@ model StoreSettings {
   id                           String   @id @default(cuid())
   abandonedCartDelayHours      Int      @default(24)
   abandonedCartDiscountPercent Int      @default(5)
+  maintenanceMode              Boolean  @default(false)
   updatedAt                    DateTime @updatedAt
 }
 

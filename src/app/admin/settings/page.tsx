@@ -1,11 +1,12 @@
 import prisma from "@/lib/prisma";
-import { Button } from "@/components/ui/button";
 import { SettingsForm } from "./SettingsForm";
+import { MaintenanceToggle } from "./MaintenanceToggle";
 
 export default async function SettingsPage() {
   const settings = await prisma.storeSettings.findFirst();
   const delay = settings?.abandonedCartDelayHours || 24;
   const discount = settings?.abandonedCartDiscountPercent || 5;
+  const maintenanceMode = settings?.maintenanceMode || false;
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -28,7 +29,7 @@ export default async function SettingsPage() {
           <div>
             <label className="block text-sm font-medium mb-1">Maintenance Mode</label>
             <p className="text-sm text-gray-500 mb-2">Enable this to show a maintenance page to regular users.</p>
-            <Button variant="outline">Enable Maintenance Mode</Button>
+            <MaintenanceToggle initialState={maintenanceMode} />
           </div>
         </div>
       </div>
