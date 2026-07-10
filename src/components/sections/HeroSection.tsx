@@ -18,18 +18,19 @@ export function HeroSection({ data }: { data?: SanityHomepage }) {
     offset: ["start start", "end start"],
   });
 
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
   return (
     <section ref={ref} className="relative h-screen min-h-[700px] overflow-hidden">
       {/* Background Image */}
-      <motion.div style={{ y }} className="absolute inset-0">
+      <motion.div style={{ y, willChange: "transform" }} className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-b from-[var(--walnut-dark)]/60 via-[var(--walnut-dark)]/40 to-[var(--cream)] z-10" />
         <Image
-          src={data?.heroImage ? urlForImage(data.heroImage).url() : "/images/hero-workshop.png"}
+          src={data?.heroImage ? urlForImage(data.heroImage).url() : "/images/hero-workshop.webp"}
           alt="RootGrain Artisan Workshop"
           fill
+          sizes="100vw"
           className="object-cover"
           priority
         />
@@ -37,33 +38,33 @@ export function HeroSection({ data }: { data?: SanityHomepage }) {
 
       {/* Content */}
       <motion.div
-        style={{ opacity }}
+        style={{ opacity, willChange: "opacity" }}
         className="relative z-20 h-full flex flex-col items-center justify-center text-center px-6"
       >
 
 
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.5 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
           className="font-serif text-[var(--ivory)] font-light leading-tight mb-8 w-full"
         >
           <StyledText data={data?.heroHeadline as any} defaultTag="h1" className="text-5xl md:text-7xl lg:text-8xl" />
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.7 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
           className="text-[var(--ivory)]/80 mb-12 w-full font-light leading-relaxed"
         >
           <StyledText data={data?.heroSubheadline as any} defaultTag="p" className="text-lg md:text-xl" />
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.9 }}
+          transition={{ duration: 0.8, delay: 0.7 }}
           className="flex flex-col sm:flex-row gap-4 mt-12 translate-y-24 md:translate-y-32"
         >
           <Link href="/collection">
@@ -94,17 +95,16 @@ export function HeroSection({ data }: { data?: SanityHomepage }) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.5 }}
+        transition={{ delay: 1.2 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
       >
-        <motion.div
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="flex flex-col items-center gap-2 text-[var(--ivory)]/60"
+        <div
+          className="flex flex-col items-center gap-2 text-[var(--ivory)]/60 animate-bounce"
+          style={{ animationDuration: '2s' }}
         >
           <span className="text-xs tracking-[0.2em] uppercase">Discover</span>
           <ChevronDown className="w-5 h-5" />
-        </motion.div>
+        </div>
       </motion.div>
     </section>
   );

@@ -49,6 +49,7 @@ export function MaterialPhilosophySection({ data }: { data?: SanityHomepage | an
                 src="/images/material-wood-grain.png"
                 alt="Premium hardwood grain detail"
                 fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover"
               />
             </div>

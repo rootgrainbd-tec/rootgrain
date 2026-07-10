@@ -22,7 +22,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -34,9 +34,10 @@ export function Navigation({ config }: { config: SiteConfig }) {
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           isScrolled
-            ? "bg-[var(--cream)]/95 backdrop-blur-md shadow-sm"
+            ? "bg-[var(--cream)]/95 backdrop-blur-sm shadow-sm"
             : "bg-transparent"
         }`}
+        style={{ willChange: isScrolled ? "backdrop-filter" : "auto" }}
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className={`flex items-center justify-between transition-all duration-500 ${isScrolled ? "h-16" : "h-28"}`}>
@@ -94,7 +95,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
                             transition={{ duration: 0.2 }}
                             className="absolute top-1/2 left-1/2 -translate-x-1/2 mt-8 pt-6 pb-2 w-64"
                           >
-                            <div className="bg-[var(--cream)]/90 backdrop-blur-md border border-[var(--walnut-light)]/20 shadow-xl shadow-[var(--walnut-dark)]/5 flex flex-col py-4">
+                            <div className="bg-[var(--cream)]/90 backdrop-blur-sm border border-[var(--walnut-light)]/20 shadow-xl shadow-[var(--walnut-dark)]/5 flex flex-col py-4">
                               <Link 
                                 href="/collection"
                                 className="px-6 py-2 text-sm text-[var(--walnut)] hover:text-[var(--gold)] hover:bg-[var(--parchment)] transition-colors"

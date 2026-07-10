@@ -78,6 +78,7 @@ export function CraftsmanshipSection({ steps }: { steps?: SanityCraftsmanshipSte
             src="/images/craftsmanship-detail.png"
             alt="Artisan hands at work"
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1280px"
             className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--walnut-dark)]/40 to-transparent" />

@@ -47,6 +47,7 @@ export function LifestyleInteriorsSection({ data }: { data?: SanityHomepage | an
             src={data?.lifestyleImage ? urlForImage(data.lifestyleImage).url() : "/images/lifestyle-interior.png"}
             alt="RootGrain furniture in a warm Japandi-style interior"
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1280px"
             className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--walnut-dark)]/30 to-transparent" />
@@ -73,6 +74,7 @@ export function LifestyleInteriorsSection({ data }: { data?: SanityHomepage | an
               src="/images/craft-finishing.png"
               alt="Artisan finishing process"
               fill
+              sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover transition-transform duration-700 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-[var(--walnut-dark)]/0 group-hover:bg-[var(--walnut-dark)]/20 transition-colors duration-500" />
@@ -92,6 +94,7 @@ export function LifestyleInteriorsSection({ data }: { data?: SanityHomepage | an
               src="/images/product-decor.png"
               alt="Artisan home decor pieces"
               fill
+              sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover transition-transform duration-700 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-[var(--walnut-dark)]/0 group-hover:bg-[var(--walnut-dark)]/20 transition-colors duration-500" />

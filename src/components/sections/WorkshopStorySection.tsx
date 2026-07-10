@@ -84,6 +84,7 @@ export function WorkshopStorySection({ data, stats }: { data?: SanityWorkshop | 
                 src={data?.workshopImage ? urlForImage(data.workshopImage).url() : "/images/workshop-interior.png"}
                 alt="RootGrain Workshop"
                 fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[var(--walnut-dark)]/60 to-transparent" />

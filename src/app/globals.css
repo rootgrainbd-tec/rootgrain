@@ -160,6 +160,12 @@
   html {
     /* Removed scroll-behavior: smooth; because it conflicts with Framer Motion useScroll */
   }
+
+  /* Auto-skip rendering for off-screen sections */
+  .cv-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 800px;
+  }
 }
 
 /* RootGrain Custom Typography */
@@ -174,6 +180,7 @@
 /* Heritage Grain Texture Overlay */
 .grain-overlay {
   position: relative;
+  contain: content;
 }
 
 .grain-overlay::before {
@@ -184,11 +191,15 @@
   opacity: 0.03;
   pointer-events: none;
   mix-blend-mode: multiply;
+  contain: layout style paint;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Premium Hover Effects */
 .hover-lift {
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
 }
 
 .hover-lift:hover {

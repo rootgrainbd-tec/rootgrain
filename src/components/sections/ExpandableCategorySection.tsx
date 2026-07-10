@@ -99,10 +99,9 @@ export function ExpandableCategorySection({
           {/* Right Side: Product Grid */}
           <div className="flex-1">
             <motion.div 
-              layout
               className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 min-h-[400px]"
             >
-              <AnimatePresence mode="popLayout">
+              <AnimatePresence mode="wait">
                 {filteredProducts.length === 0 ? (
                   <motion.div
                     key="empty"
@@ -117,11 +116,10 @@ export function ExpandableCategorySection({
                   filteredProducts.map((product, index) => (
                     <motion.div
                       key={product.id}
-                      layout
-                      initial={{ opacity: 0, scale: 0.95 }}
+                      initial={{ opacity: 0, scale: 0.97 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.4, delay: index * 0.05 }}
+                      exit={{ opacity: 0, scale: 0.97 }}
+                      transition={{ duration: 0.3, delay: index * 0.04 }}
                       className="group cursor-pointer flex flex-col"
                     >
                       <div className="relative aspect-[4/5] overflow-hidden mb-4 bg-[var(--parchment)]">
@@ -129,6 +127,7 @@ export function ExpandableCategorySection({
                           src={product.image || "/placeholder.jpg"}
                           alt={product.name}
                           fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           className="object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                         <Link href={`/product/${product.slug}`} className="absolute inset-0 z-10">

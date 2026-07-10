@@ -20,8 +20,9 @@ export function CartSheet({ isScrolled }: CartSheetProps) {
   const items = useCartStore((state) => state.items);
   const removeItem = useCartStore((state) => state.removeItem);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
-  const totalItems = useCartStore((state) => state.totalItems());
-  const totalPrice = useCartStore((state) => state.totalPrice());
+  
+  const totalItems = items.reduce((total, item) => total + item.quantity, 0);
+  const totalPrice = items.reduce((total, item) => total + (item.price * item.quantity), 0);
 
   // Prevent hydration mismatch by only rendering after mount
   useEffect(() => {

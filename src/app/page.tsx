@@ -58,12 +58,24 @@ export default async function RootGrainHome() {
     <main className="min-h-screen">
       <Navigation config={SITE_CONFIG} />
       <HeroSection data={homepage} />
-      <CraftsmanshipSection steps={craftsmanshipSteps} />
-      <ExpandableCategorySection products={products} tabGroups={SITE_CONFIG.categoryGroups || []} />
-      <WorkshopStorySection data={workshop} stats={homepage?.statsItems} />
-      <MaterialPhilosophySection data={homepage} />
-      <LifestyleInteriorsSection data={homepage} />
-      <TestimonialsSection testimonials={testimonials} />
+      <div className="cv-auto">
+        <CraftsmanshipSection steps={craftsmanshipSteps} />
+      </div>
+      <div className="cv-auto">
+        <ExpandableCategorySection products={products} tabGroups={SITE_CONFIG.categoryGroups || []} />
+      </div>
+      <div className="cv-auto">
+        <WorkshopStorySection data={workshop} stats={homepage?.statsItems} />
+      </div>
+      <div className="cv-auto">
+        <MaterialPhilosophySection data={homepage} />
+      </div>
+      <div className="cv-auto">
+        <LifestyleInteriorsSection data={homepage} />
+      </div>
+      <div className="cv-auto">
+        <TestimonialsSection testimonials={testimonials} />
+      </div>
       <Footer config={SITE_CONFIG} />
     </main>
   );
