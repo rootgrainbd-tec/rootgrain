@@ -55,8 +55,8 @@ export function Footer({ config }: { config: SiteConfig }) {
     <footer id="contact" className="bg-[var(--walnut-dark)] text-[var(--ivory)]">
       {/* Newsletter Section */}
       <div className="border-b border-[var(--ivory)]/10">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
             <div>
               <h3 className="font-serif text-3xl mb-4">
                 Join the RootGrain Circle
@@ -95,11 +95,11 @@ export function Footer({ config }: { config: SiteConfig }) {
       </div>
 
       {/* Main Footer */}
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-2 mb-6">
+            <div className="flex items-center gap-2 mb-4">
               <div className="relative w-[83px] h-[83px]">
                 <Image
                   src="/images/rootgrain-logo.svg"
@@ -115,7 +115,7 @@ export function Footer({ config }: { config: SiteConfig }) {
                 </span>
               </div>
             </div>
-            <p className="text-[var(--ivory)]/60 text-sm leading-relaxed mb-6">
+            <p className="text-[var(--ivory)]/60 text-sm leading-relaxed mb-4">
               Handcrafted heirloom furniture for those who value authenticity, 
               craftsmanship, and the timeless beauty of natural wood.
             </p>
@@ -134,7 +134,7 @@ export function Footer({ config }: { config: SiteConfig }) {
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-serif text-lg mb-6">Explore</h4>
+            <h4 className="font-serif text-lg mb-4">Explore</h4>
             <ul className="space-y-3 text-[var(--ivory)]/60 text-sm">
               <li><a href="#collection" className="hover:text-[var(--gold)] transition-colors">Signature Collection</a></li>
               <li><a href="#craftsmanship" className="hover:text-[var(--gold)] transition-colors">Our Craftsmanship</a></li>
@@ -146,7 +146,7 @@ export function Footer({ config }: { config: SiteConfig }) {
 
           {/* Categories */}
           <div>
-            <h4 className="font-serif text-lg mb-6">Categories</h4>
+            <h4 className="font-serif text-lg mb-4">Categories</h4>
             <ul className="space-y-3 text-[var(--ivory)]/60 text-sm">
               <li><a href="#" className="hover:text-[var(--gold)] transition-colors">Dining Tables</a></li>
               <li><a href="#" className="hover:text-[var(--gold)] transition-colors">Coffee Tables</a></li>
@@ -158,7 +158,7 @@ export function Footer({ config }: { config: SiteConfig }) {
 
           {/* Contact */}
           <div>
-            <h4 className="font-serif text-lg mb-6">Visit Our Atelier</h4>
+            <h4 className="font-serif text-lg mb-4">Visit Our Atelier</h4>
             <ul className="space-y-4 text-[var(--ivory)]/60 text-sm">
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-[var(--gold)] flex-shrink-0 mt-0.5" />
@@ -181,7 +181,7 @@ export function Footer({ config }: { config: SiteConfig }) {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-[var(--ivory)]/10 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="border-t border-[var(--ivory)]/10 mt-10 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-[var(--ivory)]/40 text-sm">
             {config.legal.copyright} {config.legal.origin}
           </p>
