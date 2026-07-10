@@ -112,15 +112,15 @@ export default function TrackOrderPage() {
                       
                       return (
                         <div key={index} className="flex flex-col md:flex-row items-center md:justify-between relative z-10">
-                          <div className={\`hidden md:block w-5/12 text-right pr-8 \${isActive ? 'text-[var(--walnut-dark)]' : 'text-gray-400'}\`}>
+                          <div className={`hidden md:block w-5/12 text-right pr-8 ${isActive ? 'text-[var(--walnut-dark)]' : 'text-gray-400'}`}>
                             {isCurrent && <span className="font-bold text-sm bg-[var(--gold)]/10 text-[var(--gold)] px-2 py-1 rounded">CURRENT STATUS</span>}
                           </div>
                           
-                          <div className={\`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-4 border-white shadow-sm \${isActive ? 'bg-[var(--gold)] text-white' : 'bg-gray-200 text-gray-400'}\`}>
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-4 border-white shadow-sm ${isActive ? 'bg-[var(--gold)] text-white' : 'bg-gray-200 text-gray-400'}`}>
                             <Icon className="w-5 h-5" />
                           </div>
                           
-                          <div className={\`md:w-5/12 md:pl-8 text-center md:text-left mt-4 md:mt-0 \${isActive ? 'text-[var(--walnut-dark)]' : 'text-gray-400'}\`}>
+                          <div className={`md:w-5/12 md:pl-8 text-center md:text-left mt-4 md:mt-0 ${isActive ? 'text-[var(--walnut-dark)]' : 'text-gray-400'}`}>
                             <h4 className="font-bold">{step.title}</h4>
                             <p className="text-sm opacity-80">{step.description}</p>
                           </div>
