@@ -139,7 +139,9 @@ export function Navigation({ config }: { config: SiteConfig }) {
 
             {/* Icons - Right Side */}
             <div className="flex items-center gap-4 lg:gap-6 h-full shrink-0">
-              <UserNav isScrolled={isDarkText} />
+              <div className="hidden lg:block">
+                <UserNav isScrolled={isDarkText} />
+              </div>
               <button 
                 aria-label="Search" 
                 onClick={() => setIsSearchOpen(true)}
@@ -214,7 +216,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="font-serif text-2xl text-[var(--ivory)]/70 hover:text-[var(--gold)] transition-colors"
                     >
-                      Login
+                      Sign In
                     </motion.a>
                     <motion.a
                       href="/register"
@@ -224,7 +226,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="font-serif text-2xl text-[var(--ivory)]/70 hover:text-[var(--gold)] transition-colors"
                     >
-                      Register
+                      Sign Up
                     </motion.a>
                   </>
                 ) : (
