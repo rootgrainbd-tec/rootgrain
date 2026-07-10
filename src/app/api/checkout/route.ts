@@ -143,6 +143,21 @@ export async function POST(request: Request) {
     // Send order confirmation email without blocking the response
     sendOrderConfirmationEmail(order, address.email).catch(console.error);
 
+    // Mark any pending abandoned carts as RECOVERED
+    try {
+      await prisma.abandonedCart.updateMany({
+        where: {
+          email: address.email,
+          status: { in: ["PENDING", "EMAIL_SENT"] }
+        },
+        data: {
+          status: "RECOVERED"
+        }
+      });
+    } catch (e) {
+      console.error("Failed to update abandoned cart:", e);
+    }
+
     return NextResponse.json({ success: true, orderId: order.id, orderNumber: order.orderNumber });
   } catch (error: any) {
     console.error("Checkout Error:", error);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface MonthlyData {
   month: string;
@@ -8,34 +8,54 @@ interface MonthlyData {
 }
 
 export function RevenueChart({ data }: { data: MonthlyData[] }) {
-  const maxRevenue = useMemo(() => {
-    return Math.max(...data.map(d => d.revenue), 1000); // minimum scale of 1000
-  }, [data]);
-
   if (data.length === 0) {
     return <div className="text-[var(--walnut-light)]">No revenue data available.</div>;
   }
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-[var(--walnut-dark)] text-white p-3 rounded shadow-lg border border-[var(--gold)]/20">
+          <p className="font-semibold text-[var(--gold)] mb-1">{label}</p>
+          <p>Revenue: ৳{payload[0].value.toLocaleString()}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="w-full h-64 flex items-end gap-2 sm:gap-6 pt-8 pb-4">
-      {data.map((item, i) => {
-        const heightPct = Math.max((item.revenue / maxRevenue) * 100, 2); // min height 2%
-        return (
-          <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-            <div className="w-full relative flex flex-col justify-end h-full">
-              {/* Tooltip */}
-              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[var(--walnut-dark)] text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                ৳{item.revenue.toLocaleString()}
-              </div>
-              <div 
-                className="w-full bg-[var(--gold)]/80 hover:bg-[var(--gold)] transition-all rounded-t-sm"
-                style={{ height: `${heightPct}%` }}
-              />
-            </div>
-            <span className="text-xs text-[var(--walnut-light)] font-medium uppercase">{item.month}</span>
-          </div>
-        );
-      })}
+    <div className="w-full h-[300px] mt-4">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+          <XAxis 
+            dataKey="month" 
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: '#735238', fontSize: 12, fontWeight: 500 }}
+            dy={10}
+          />
+          <YAxis 
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: '#735238', fontSize: 12 }}
+            tickFormatter={(value) => `৳${value >= 1000 ? (value/1000).toFixed(0) + 'k' : value}`}
+            dx={-10}
+          />
+          <Tooltip cursor={{ fill: 'rgba(212, 175, 55, 0.1)' }} content={<CustomTooltip />} />
+          <Bar 
+            dataKey="revenue" 
+            fill="var(--gold)" 
+            radius={[4, 4, 0, 0]}
+            maxBarSize={50}
+            animationDuration={1500}
+          />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }

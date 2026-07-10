@@ -65,3 +65,36 @@ export async function updateOrderStatus(id: string, status: OrderStatus, advance
     return { success: false, error: "Database error" };
   }
 }
+
+export async function updateStoreSettings(delayHours: number, discountPercent: number) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== "ADMIN") {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const existing = await prisma.storeSettings.findFirst();
+    if (existing) {
+      await prisma.storeSettings.update({
+        where: { id: existing.id },
+        data: {
+          abandonedCartDelayHours: delayHours,
+          abandonedCartDiscountPercent: discountPercent
+        }
+      });
+    } else {
+      await prisma.storeSettings.create({
+        data: {
+          abandonedCartDelayHours: delayHours,
+          abandonedCartDiscountPercent: discountPercent
+        }
+      });
+    }
+
+    revalidatePath("/admin/settings");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update settings:", error);
+    return { success: false, error: "Database error" };
+  }
+}

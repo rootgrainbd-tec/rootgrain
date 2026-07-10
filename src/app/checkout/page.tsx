@@ -197,6 +197,15 @@ export default function CheckoutPage() {
                     type="email"
                     value={address.email} 
                     onChange={e => setAddress({...address, email: e.target.value})} 
+                    onBlur={() => {
+                      if (address.email && items.length > 0) {
+                        fetch("/api/cart/sync", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ email: address.email, cartItems: items })
+                        }).catch(() => {});
+                      }
+                    }}
                     required 
                   />
                 </div>

@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { generateInvoicePDF } from "./pdfGenerator";
 
 const transporter = nodemailer.createTransport({
   host: "smtp.resend.com",
@@ -137,14 +138,23 @@ export async function sendOrderConfirmationEmail(order: any, customerEmail: stri
 
     const html = getBaseTemplate(`Order Confirmation - ${order.orderNumber}`, content);
 
+    const pdfBuffer = await generateInvoicePDF(order);
+
     await transporter.sendMail({
       from: SENDER,
       to: customerEmail,
       subject: `Order Confirmation - ${order.orderNumber} | Rootgrain`,
       html,
+      attachments: [
+        {
+          filename: `Invoice_${order.orderNumber}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf'
+        }
+      ]
     });
     
-    console.log(`[EMAIL] Order confirmation sent to ${customerEmail}`);
+    console.log(`[EMAIL] Order confirmation sent to ${customerEmail} with PDF invoice`);
   } catch (error) {
     console.error("[EMAIL ERROR] Failed to send order confirmation:", error);
   }
@@ -202,5 +212,80 @@ export async function sendOrderStatusUpdateEmail(order: any, customerEmail: stri
     console.log(`[EMAIL] Status update (${status}) sent to ${customerEmail}`);
   } catch (error) {
     console.error("[EMAIL ERROR] Failed to send status update:", error);
+  }
+}
+
+export async function sendAbandonedCartEmail(customerEmail: string, items: any[], promoCode: string, discountPercent: number) {
+  try {
+    const itemsHtml = getOrderItemsHtml(items);
+    
+    const content = `
+      <h2>We saved your cart!</h2>
+      <p>Hi there,</p>
+      <p>We noticed you left some beautiful furniture in your cart. We've saved it for you!</p>
+      
+      <div class="order-summary" style="margin-top: 25px;">
+        <h3 style="margin-top: 0; color: ${BRAND_COLOR};">Your Saved Items:</h3>
+        ${itemsHtml}
+      </div>
+
+      <div style="background-color: #f8f9fa; border: 2px dashed ${BRAND_COLOR}; padding: 20px; text-align: center; margin: 30px 0; border-radius: 8px;">
+        <p style="margin: 0 0 10px 0; font-size: 16px;">Come back and complete your order with a <strong>${discountPercent}% discount</strong>!</p>
+        <p style="margin: 0; font-size: 14px; color: #555;">Use promo code at checkout:</p>
+        <div style="font-size: 24px; font-weight: bold; color: ${BRAND_COLOR}; letter-spacing: 2px; margin-top: 10px;">${promoCode}</div>
+      </div>
+
+      <div style="text-align: center;">
+        <a href="https://rootgrain.bd/checkout" class="btn">Complete My Order</a>
+      </div>
+    `;
+
+    const html = getBaseTemplate(`Complete Your Rootgrain Order`, content);
+
+    await transporter.sendMail({
+      from: SENDER,
+      to: customerEmail,
+      subject: `You left something behind! (Here's ${discountPercent}% off) | Rootgrain`,
+      html,
+    });
+    
+    console.log(`[EMAIL] Abandoned cart recovery email sent to ${customerEmail}`);
+  } catch (error) {
+    console.error("[EMAIL ERROR] Failed to send abandoned cart email:", error);
+  }
+}
+
+export async function sendPasswordResetEmail(email: string, resetLink: string) {
+  try {
+    const content = `
+      <h2>Reset Your Password</h2>
+      <p>We received a request to reset the password for your Rootgrain account.</p>
+      <p>If you didn't make this request, you can safely ignore this email.</p>
+      
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${resetLink}" class="btn">Reset Password</a>
+      </div>
+      
+      <p style="font-size: 13px; color: #666;">
+        Or copy and paste this link into your browser:<br>
+        <a href="${resetLink}" style="color: ${BRAND_COLOR};">${resetLink}</a>
+      </p>
+      <p style="font-size: 13px; color: #666; margin-top: 20px;">
+        This link will expire in 1 hour for your security.
+      </p>
+    `;
+
+    const html = getBaseTemplate(`Reset Your Password`, content);
+
+    await transporter.sendMail({
+      from: SENDER,
+      to: email,
+      subject: `Reset Your Password | Rootgrain`,
+      html,
+    });
+    
+    console.log(`[EMAIL] Password reset email sent to ${email}`);
+  } catch (error) {
+    console.error("[EMAIL ERROR] Failed to send password reset email:", error);
   }
 }
