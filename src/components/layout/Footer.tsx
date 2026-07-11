@@ -136,10 +136,10 @@ export function Footer({ config }: { config: SiteConfig }) {
           <div className="col-span-1">
             <h4 className="font-serif text-lg mb-4">Explore</h4>
             <ul className="space-y-3 text-[var(--ivory)]/60 text-sm">
-              <li><a href="#collection" className="hover:text-[var(--gold)] transition-colors">Signature Collection</a></li>
-              <li><a href="#craftsmanship" className="hover:text-[var(--gold)] transition-colors">Our Craftsmanship</a></li>
-              <li><a href="#workshop" className="hover:text-[var(--gold)] transition-colors">Workshop Story</a></li>
-              <li><a href="#philosophy" className="hover:text-[var(--gold)] transition-colors">Material Philosophy</a></li>
+              <li><Link href="/#collection" className="hover:text-[var(--gold)] transition-colors">Signature Collection</Link></li>
+              <li><Link href="/#craftsmanship" className="hover:text-[var(--gold)] transition-colors">Our Craftsmanship</Link></li>
+              <li><Link href="/#workshop" className="hover:text-[var(--gold)] transition-colors">Workshop Story</Link></li>
+              <li><Link href="/#philosophy" className="hover:text-[var(--gold)] transition-colors">Material Philosophy</Link></li>
               <li><a href="#" className="hover:text-[var(--gold)] transition-colors">Custom Commissions</a></li>
             </ul>
           </div>
