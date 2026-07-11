@@ -184,7 +184,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              <div className="flex flex-col items-center justify-center flex-1 gap-6 py-8 overflow-y-auto">
+              <div className="flex flex-col items-center justify-center flex-1 gap-6 py-8 overflow-y-auto" data-lenis-prevent>
                 {NAV_LINKS.map((link, index) => (
                   <motion.a
                     key={link.href}
