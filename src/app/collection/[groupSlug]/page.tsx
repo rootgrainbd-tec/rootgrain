@@ -69,7 +69,7 @@ export default async function CategoryGroupPage(
 
   // Fetch Paginated Products
   const sanityProducts = await client.fetch(`*[${queryFilter}] | order(_createdAt desc) [$start...$end] {
-    _id, title, slug, category->{name}, price, comparePrice, woodType, dimensions, heroImage, description, inStock, featured, availability
+    _id, title, slug, category->{name}, price, comparePrice, woodType, dimensions, heroImage, shortDescription, inStock, featured, availability
   }`, { categories: group.categories || [], start, end });
 
   // Hardcode wood types so all options always appear
@@ -85,7 +85,7 @@ export default async function CategoryGroupPage(
     wood: (p.woodType || p.wood) as WoodType,
     dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
     image: p.heroImage ? urlForImage(p.heroImage).url() : '',
-    description: p.description || '',
+    description: p.shortDescription || '',
     inStock: p.inStock ?? true,
     featured: p.featured ?? false,
   }));

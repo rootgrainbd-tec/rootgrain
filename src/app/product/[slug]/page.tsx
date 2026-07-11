@@ -19,7 +19,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const resolvedParams = await params;
   const SITE_CONFIG = await getSiteConfig();
   const product = await client.fetch(`*[_type == "product" && slug.current == $slug][0] {
-    _id, name, title, category->{name}, price, comparePrice, woodType, wood, dimensions, heroImage, galleryImages, fullDescription, shortDescription, description, availability, inStock
+    _id, name, title, category->{name}, price, comparePrice, woodType, wood, dimensions, heroImage, galleryImages, fullDescription, shortDescription, availability, inStock
   }`, { slug: resolvedParams.slug });
 
   let relatedProducts: Product[] = [];
@@ -50,7 +50,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const wood = product.wood || product.woodType;
   const dimensionsStr = product.dimensionsStr || (product.dimensions ? `${product.dimensions.length} x ${product.dimensions.width} x ${product.dimensions.height} ${product.dimensions.unit}` : null);
   const heroUrl = product.heroUrl || (product.heroImage ? urlForImage(product.heroImage).url() : "/placeholder.jpg");
-  const desc = product.description || product.shortDescription || '';
+  const desc = product.shortDescription || '';
   const isAvailable = product.inStock ?? (product.availability === 'Available');
 
   return (

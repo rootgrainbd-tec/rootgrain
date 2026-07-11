@@ -63,7 +63,7 @@ export default async function CollectionPage(
 
   // Fetch Paginated Products
   const sanityProducts: SanityProduct[] = await client.fetch(`*[${queryFilter}] | order(_createdAt desc) [$start...$end] {
-    _id, title, slug, category->{name}, price, comparePrice, woodType, dimensions, heroImage, description, inStock, featured, availability
+    _id, title, slug, category->{name}, price, comparePrice, woodType, dimensions, heroImage, shortDescription, inStock, featured, availability
   }`, { start, end });
 
   // Fetch all categories for the filter dropdown (so even empty ones show up)
@@ -82,7 +82,7 @@ export default async function CollectionPage(
     wood: (p.woodType || p.wood) as WoodType,
     dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
     image: p.heroImage ? urlForImage(p.heroImage).url() : '',
-    description: p.description || '',
+    description: p.shortDescription || '',
     inStock: p.inStock ?? true,
     featured: p.featured ?? false,
   }));
