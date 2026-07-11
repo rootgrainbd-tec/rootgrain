@@ -140,7 +140,6 @@ export function Footer({ config }: { config: SiteConfig }) {
               <li><Link href="/#craftsmanship" className="hover:text-[var(--gold)] transition-colors">Our Craftsmanship</Link></li>
               <li><Link href="/#workshop" className="hover:text-[var(--gold)] transition-colors">Workshop Story</Link></li>
               <li><Link href="/#philosophy" className="hover:text-[var(--gold)] transition-colors">Material Philosophy</Link></li>
-              <li><a href="#" className="hover:text-[var(--gold)] transition-colors">Custom Commissions</a></li>
             </ul>
           </div>
 
