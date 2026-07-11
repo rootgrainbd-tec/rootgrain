@@ -59,6 +59,13 @@ export default defineType({
       group: 'basic',
     }),
     defineField({
+      name: 'comparePrice',
+      title: 'Compare Price / Previous Price (BDT)',
+      type: 'number',
+      group: 'basic',
+      description: 'Original price before discount (shows as crossed-out price)',
+    }),
+    defineField({
       name: 'availability',
       title: 'Availability',
       type: 'string',
@@ -70,6 +77,14 @@ export default defineType({
           { title: 'Sold', value: 'Sold' },
         ],
       },
+    }),
+    defineField({
+      name: 'inStock',
+      title: 'In Stock',
+      type: 'boolean',
+      group: 'basic',
+      description: 'Uncheck this to mark the product as out of stock',
+      initialValue: true,
     }),
     defineField({
       name: 'shortDescription',

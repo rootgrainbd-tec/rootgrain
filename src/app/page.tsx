@@ -49,9 +49,9 @@ export default async function RootGrainHome() {
 
   const testimonials = sanityTestimonials.map((t: any) => ({
     quote: t.quote,
-    author: t.author,
-    location: t.location,
-    piece: t.piece,
+    author: t.clientName,
+    location: t.clientLocation,
+    piece: t.productPurchased,
   }));
 
   return (
