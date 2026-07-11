@@ -55,8 +55,8 @@ export function Footer({ config }: { config: SiteConfig }) {
     <footer id="contact" className="bg-[var(--walnut-dark)] text-[var(--ivory)]">
       {/* Newsletter Section */}
       <div className="border-b border-[var(--ivory)]/10">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8 md:py-10">
+          <div className="grid lg:grid-cols-2 gap-6 md:gap-8 items-center">
             <div>
               <h3 className="font-serif text-3xl mb-4">
                 Join the RootGrain Circle
@@ -95,10 +95,10 @@ export function Footer({ config }: { config: SiteConfig }) {
       </div>
 
       {/* Main Footer */}
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8 md:py-10">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10 md:gap-8">
           {/* Brand */}
-          <div className="lg:col-span-1">
+          <div className="col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <div className="relative w-[83px] h-[83px]">
                 <Image
@@ -133,7 +133,7 @@ export function Footer({ config }: { config: SiteConfig }) {
           </div>
 
           {/* Quick Links */}
-          <div>
+          <div className="col-span-1">
             <h4 className="font-serif text-lg mb-4">Explore</h4>
             <ul className="space-y-3 text-[var(--ivory)]/60 text-sm">
               <li><a href="#collection" className="hover:text-[var(--gold)] transition-colors">Signature Collection</a></li>
@@ -145,7 +145,7 @@ export function Footer({ config }: { config: SiteConfig }) {
           </div>
 
           {/* Categories */}
-          <div>
+          <div className="col-span-1">
             <h4 className="font-serif text-lg mb-4">Categories</h4>
             <ul className="space-y-3 text-[var(--ivory)]/60 text-sm">
               <li><a href="#" className="hover:text-[var(--gold)] transition-colors">Dining Tables</a></li>
@@ -157,7 +157,7 @@ export function Footer({ config }: { config: SiteConfig }) {
           </div>
 
           {/* Contact */}
-          <div>
+          <div className="col-span-2 lg:col-span-1">
             <h4 className="font-serif text-lg mb-4">Visit Our Atelier</h4>
             <ul className="space-y-4 text-[var(--ivory)]/60 text-sm">
               <li className="flex items-start gap-3">
@@ -181,11 +181,11 @@ export function Footer({ config }: { config: SiteConfig }) {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-[var(--ivory)]/10 mt-10 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="border-t border-[var(--ivory)]/10 mt-8 md:mt-10 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
           <p className="text-[var(--ivory)]/40 text-sm">
             {config.legal.copyright} {config.legal.origin}
           </p>
-          <div className="flex gap-8 text-[var(--ivory)]/40 text-sm">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[var(--ivory)]/40 text-sm">
             <Link href="/privacy" className="hover:text-[var(--ivory)] transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-[var(--ivory)] transition-colors">Terms of Service</Link>
             <a href="#" className="hover:text-[var(--ivory)] transition-colors">Care Guide</a>
