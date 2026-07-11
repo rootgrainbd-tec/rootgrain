@@ -148,11 +148,13 @@ export function Footer({ config }: { config: SiteConfig }) {
           <div className="col-span-1">
             <h4 className="font-serif text-lg mb-4">Categories</h4>
             <ul className="space-y-3 text-[var(--ivory)]/60 text-sm">
-              <li><a href="#" className="hover:text-[var(--gold)] transition-colors">Dining Tables</a></li>
-              <li><a href="#" className="hover:text-[var(--gold)] transition-colors">Coffee Tables</a></li>
-              <li><a href="#" className="hover:text-[var(--gold)] transition-colors">Chairs &amp; Seating</a></li>
-              <li><a href="#" className="hover:text-[var(--gold)] transition-colors">Console Tables</a></li>
-              <li><a href="#" className="hover:text-[var(--gold)] transition-colors">Home Decor</a></li>
+              {config.categoryGroups?.map((group) => (
+                <li key={group.id}>
+                  <Link href={`/collection/${group.slug}`} className="hover:text-[var(--gold)] transition-colors">
+                    {group.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
