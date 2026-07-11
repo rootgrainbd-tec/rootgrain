@@ -33,6 +33,7 @@ export function HeroSection({ data }: { data?: SanityHomepage }) {
           sizes="100vw"
           className="object-cover"
           priority
+          unoptimized
         />
       </motion.div>
 
