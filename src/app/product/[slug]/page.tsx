@@ -11,9 +11,56 @@ import { ProductReviews } from "@/components/product/ProductReviews";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
 import { RecentlyViewed } from "@/components/product/RecentlyViewed";
 import { RecentlyViewedTracker } from "@/components/product/RecentlyViewedTracker";
+import type { Metadata } from "next";
 import type { Product, ProductCategory, WoodType } from "@/types/product";
 
 export const revalidate = 60;
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const resolvedParams = await params;
+  const product = await client.fetch(`*[_type == "product" && slug.current == $slug][0] {
+    name, title, shortDescription, heroImage
+  }`, { slug: resolvedParams.slug });
+
+  if (!product) {
+    return {
+      title: "Product Not Found",
+    };
+  }
+
+  const name = product.name || product.title || "Product";
+  const description = product.shortDescription || "Handcrafted wooden furniture by RootGrain.";
+  const imageUrl = product.heroImage ? urlForImage(product.heroImage).url() : undefined;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rootgrain.com";
+
+  return {
+    title: `${name} | RootGrain`,
+    description,
+    alternates: {
+      canonical: `${appUrl}/product/${resolvedParams.slug}`,
+    },
+    openGraph: {
+      title: `${name} | RootGrain`,
+      description,
+      url: `${appUrl}/product/${resolvedParams.slug}`,
+      type: "website",
+      images: imageUrl ? [
+        {
+          url: imageUrl,
+          width: 800,
+          height: 800,
+          alt: name,
+        }
+      ] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${name} | RootGrain`,
+      description,
+      images: imageUrl ? [imageUrl] : undefined,
+    },
+  };
+}
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;

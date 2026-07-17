@@ -13,7 +13,10 @@ export class OrderRepository {
   static async getOrderById(id: string) {
     return prisma.order.findUnique({
       where: { id },
-      include: { items: true, user: true },
+      include: { 
+        items: true, 
+        user: { select: { id: true, name: true, email: true } } 
+      },
     });
   }
 

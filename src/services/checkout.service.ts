@@ -1,4 +1,5 @@
 import "server-only";
+import { randomInt } from "crypto";
 import { CheckoutPayload } from "@/validations/checkout.schema";
 import { ProductRepository } from "@/repositories/product.repository";
 import { ShippingRepository } from "@/repositories/shipping.repository";
@@ -10,7 +11,7 @@ import { logger } from "@/lib/logger";
 
 function generateOrderNumber() {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const random = Math.floor(100000 + Math.random() * 900000);
+  const random = randomInt(100000, 1000000);
   return `RG-${date}-${random}`;
 }
 

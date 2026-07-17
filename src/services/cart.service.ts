@@ -1,4 +1,5 @@
 import "server-only";
+import { randomBytes } from "crypto";
 import { CartRepository } from "@/repositories/cart.repository";
 import { logger } from "@/lib/logger";
 
@@ -41,7 +42,8 @@ export class CartService {
       const processedIds = [];
 
       for (const cart of cartsToRecover) {
-        const code = `COMEBACK-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+        const randomString = randomBytes(3).toString("hex").toUpperCase();
+        const code = `COMEBACK-${randomString}`;
         
         const expiry = new Date();
         expiry.setDate(expiry.getDate() + 3);

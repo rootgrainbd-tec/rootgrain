@@ -2,6 +2,19 @@ import nodemailer from "nodemailer";
 import { generateInvoicePDF } from "./pdfGenerator";
 import { logger } from "./logger";
 
+function escapeHtml(unsafe: string) {
+  return (unsafe || "").replace(/[&<"'>]/g, function (m) {
+    switch (m) {
+      case "&": return "&amp;";
+      case "<": return "&lt;";
+      case ">": return "&gt;";
+      case '"': return "&quot;";
+      case "'": return "&#039;";
+      default: return m;
+    }
+  });
+}
+
 const transporter = nodemailer.createTransport({
   host: "smtp.resend.com",
   port: 465,
@@ -76,7 +89,7 @@ function getOrderItemsHtml(items: any[]) {
   items.forEach(item => {
     html += `
         <tr>
-          <td>${item.productName}</td>
+          <td>${escapeHtml(item.productName)}</td>
           <td>${item.quantity}</td>
           <td style="text-align: right;">৳${item.total.toLocaleString()}</td>
         </tr>
@@ -93,7 +106,7 @@ function getOrderItemsHtml(items: any[]) {
 
 export async function sendOrderConfirmationEmail(order: any, customerEmail: string) {
   try {
-    const customerName = order.shippingAddress?.name || "Customer";
+    const customerName = escapeHtml(order.shippingAddress?.name || "Customer");
     const itemsHtml = getOrderItemsHtml(order.items);
     const advanceRequired = order.total * 0.2;
 
@@ -163,7 +176,7 @@ export async function sendOrderConfirmationEmail(order: any, customerEmail: stri
 
 export async function sendOrderStatusUpdateEmail(order: any, customerEmail: string, status: string) {
   try {
-    const customerName = order.shippingAddress?.name || "Customer";
+    const customerName = escapeHtml(order.shippingAddress?.name || "Customer");
     let statusMessage = "Your order status has been updated.";
     let heading = "Order Update";
     
