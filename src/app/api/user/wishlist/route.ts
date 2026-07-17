@@ -1,38 +1,13 @@
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { withAuth, successResponse } from "@/lib/api-utils";
+import { userService } from "@/services/user.service";
 
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-    
-    const data = await req.json();
-    
-    if (!data.productId) {
-      return NextResponse.json({ message: "Missing productId" }, { status: 400 });
-    }
+export const GET = withAuth(async (req, ctx, session) => {
+  const wishlistItems = await userService.getWishlist(session.user.id);
+  return successResponse({ wishlistItems });
+});
 
-    // Upsert or create to avoid Unique constraint error if they click twice
-    const wishlistItem = await prisma.wishlist.upsert({
-      where: {
-        userId_productId: {
-          userId: session.user.id,
-          productId: data.productId
-        }
-      },
-      update: {},
-      create: {
-        userId: session.user.id,
-        productId: data.productId
-      }
-    });
-
-    return NextResponse.json({ wishlistItem }, { status: 200 });
-  } catch (error) {
-    return NextResponse.json({ message: String(error) }, { status: 500 });
-  }
-}
+export const POST = withAuth(async (req, ctx, session) => {
+  const data = await req.json();
+  const wishlistItem = await userService.addWishlistItem(session.user.id, data.productId);
+  return successResponse({ wishlistItem });
+});

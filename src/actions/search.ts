@@ -1,6 +1,7 @@
 "use server";
 
 import { client } from "../../sanity/lib/client";
+import { logger } from "@/lib/logger";
 import { SanityProduct } from "@/types/sanity";
 import { unstable_noStore as noStore } from "next/cache";
 
@@ -33,7 +34,7 @@ export async function searchProducts(query: string): Promise<SanityProduct[]> {
     { cache: "no-store", next: { revalidate: 0 } }
   );
 
-  console.log(`Search for "${searchTerm}" returned ${products.length} products.`);
+  logger.info({ searchTerm, resultCount: products.length }, "Search completed");
 
   return products;
 }

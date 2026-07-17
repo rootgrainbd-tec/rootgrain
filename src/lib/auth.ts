@@ -1,4 +1,5 @@
-import { NextAuthOptions } from "next-auth";
+import { DefaultSession, NextAuthOptions } from "next-auth";
+import { logger } from "./logger";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import prisma from "@/lib/prisma";
 import GoogleProvider from "next-auth/providers/google";
@@ -7,6 +8,7 @@ import EmailProvider from "next-auth/providers/email";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import type { Adapter } from "next-auth/adapters";
+import { Role } from "@prisma/client";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as Adapter,
@@ -74,7 +76,7 @@ export const authOptions: NextAuthOptions = {
             WHERE "userId" IS NULL 
             AND "shippingAddress"->>'email' = ${user.email}
           `;
-          console.log(`Linked guest orders for ${user.email} via OAuth`);
+          logger.info({ email: user.email }, "Linked guest orders via OAuth");
         } catch (e) {
           console.error("Failed to link guest orders on OAuth:", e);
         }
@@ -85,14 +87,14 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub as string;
-        (session.user as any).role = token.role as string;
+        (session.user as any).role = token.role as Role;
       }
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
-        token.role = (user as any).role || "USER";
+        token.role = (user as any).role || Role.USER;
       }
       return token;
     }

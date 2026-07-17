@@ -7,22 +7,24 @@ interface MonthlyData {
   revenue: number;
 }
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-[var(--gold)]/30 rounded-md shadow-md">
+        <p className="font-medium text-[var(--walnut-dark)] mb-1">{label}</p>
+        <p className="text-[var(--gold)] font-bold">
+          ৳{payload[0].value.toLocaleString()}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export function RevenueChart({ data }: { data: MonthlyData[] }) {
   if (data.length === 0) {
     return <div className="text-[var(--walnut-light)]">No revenue data available.</div>;
   }
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-[var(--walnut-dark)] text-white p-3 rounded shadow-lg border border-[var(--gold)]/20">
-          <p className="font-semibold text-[var(--gold)] mb-1">{label}</p>
-          <p>Revenue: ৳{payload[0].value.toLocaleString()}</p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="w-full h-[300px] mt-4">

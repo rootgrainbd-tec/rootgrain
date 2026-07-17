@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { generateInvoicePDF } from "./pdfGenerator";
+import { logger } from "./logger";
 
 const transporter = nodemailer.createTransport({
   host: "smtp.resend.com",
@@ -154,9 +155,9 @@ export async function sendOrderConfirmationEmail(order: any, customerEmail: stri
       ]
     });
     
-    console.log(`[EMAIL] Order confirmation sent to ${customerEmail} with PDF invoice`);
+    logger.info({ customerEmail }, "[EMAIL] Order confirmation sent with PDF invoice");
   } catch (error) {
-    console.error("[EMAIL ERROR] Failed to send order confirmation:", error);
+    logger.error({ err: error }, "[EMAIL ERROR] Failed to send order confirmation");
   }
 }
 
@@ -209,9 +210,9 @@ export async function sendOrderStatusUpdateEmail(order: any, customerEmail: stri
       html,
     });
 
-    console.log(`[EMAIL] Status update (${status}) sent to ${customerEmail}`);
+    logger.info({ customerEmail, status }, "[EMAIL] Status update sent");
   } catch (error) {
-    console.error("[EMAIL ERROR] Failed to send status update:", error);
+    logger.error({ err: error }, "[EMAIL ERROR] Failed to send status update");
   }
 }
 
@@ -249,9 +250,9 @@ export async function sendAbandonedCartEmail(customerEmail: string, items: any[]
       html,
     });
     
-    console.log(`[EMAIL] Abandoned cart recovery email sent to ${customerEmail}`);
+    logger.info({ customerEmail }, "[EMAIL] Abandoned cart recovery email sent");
   } catch (error) {
-    console.error("[EMAIL ERROR] Failed to send abandoned cart email:", error);
+    logger.error({ err: error }, "[EMAIL ERROR] Failed to send abandoned cart email");
   }
 }
 
@@ -284,8 +285,8 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
       html,
     });
     
-    console.log(`[EMAIL] Password reset email sent to ${email}`);
+    logger.info({ email }, "[EMAIL] Password reset email sent");
   } catch (error) {
-    console.error("[EMAIL ERROR] Failed to send password reset email:", error);
+    logger.error({ err: error }, "[EMAIL ERROR] Failed to send password reset email");
   }
 }

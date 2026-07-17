@@ -1,49 +1,16 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import bcrypt from "bcryptjs";
+import { AuthService } from "@/services/auth.service";
+import { handleAppError, successResponse } from "@/lib/api-utils";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password } = await req.json();
-
-    if (!name || !email || !password) {
-      return NextResponse.json({ message: "Missing fields" }, { status: 400 });
-    }
-
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    });
-
-    if (existingUser) {
-      return NextResponse.json({ message: "User already exists" }, { status: 400 });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-      },
-    });
-
-    // Link previous guest orders to this newly created account
-    try {
-      await prisma.$executeRaw`
-        UPDATE "Order"
-        SET "userId" = ${user.id}
-        WHERE "userId" IS NULL 
-        AND "shippingAddress"->>'email' = ${email}
-      `;
-      console.log(`Linked guest orders for ${email}`);
-    } catch (e) {
-      console.error("Failed to link guest orders:", e);
-    }
-
-    return NextResponse.json({ message: "User created", user }, { status: 201 });
+    const data = await req.json();
+    const user = await AuthService.registerUser(data);
+    return successResponse(user, "User created", { status: 201 });
   } catch (error) {
-    console.error("Registration error:", error);
-    return NextResponse.json({ message: String(error) }, { status: 500 });
+    logger.error({ err: error }, "Registration error");
+    return handleAppError(error);
   }
 }
+
