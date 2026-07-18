@@ -1,46 +1,29 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { CartService } from "@/services/cart.service";
+import { logger } from "@/lib/logger";
+import { z } from "zod";
+
+const cartSyncSchema = z.object({
+  email: z.string().email(),
+  cartItems: z.array(z.any()).min(1),
+});
 
 export async function POST(req: Request) {
   try {
-    const { email, cartItems } = await req.json();
+    const body = await req.json();
+    const validationResult = cartSyncSchema.safeParse(body);
 
-    if (!email || !cartItems || cartItems.length === 0) {
-      return NextResponse.json({ success: false, message: "Missing data" }, { status: 400 });
+    if (!validationResult.success) {
+      return NextResponse.json({ success: false, message: "Invalid data" }, { status: 400 });
     }
 
-    // Check if there is already a PENDING cart for this email
-    const existing = await prisma.abandonedCart.findFirst({
-      where: {
-        email: email,
-        status: "PENDING"
-      }
-    });
+    const { email, cartItems } = validationResult.data;
 
-    if (existing) {
-      // Update existing cart
-      await prisma.abandonedCart.update({
-        where: { id: existing.id },
-        data: {
-          cartItems,
-          lastActive: new Date()
-        }
-      });
-    } else {
-      // Create new abandoned cart entry
-      await prisma.abandonedCart.create({
-        data: {
-          email,
-          cartItems,
-          status: "PENDING",
-          lastActive: new Date()
-        }
-      });
-    }
+    await CartService.syncCart(email, cartItems);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Cart sync error:", error);
+    logger.error({ err: error }, "Cart sync route error");
     return NextResponse.json({ success: false, message: "Failed to sync cart" }, { status: 500 });
   }
 }

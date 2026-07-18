@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import { LayoutDashboard, MessageSquare, Users, ShoppingCart, Truck, Star, Ticket, Mail, Settings } from "lucide-react";
+import { Role } from "@prisma/client";
 
 export default async function AdminLayout({
   children,
@@ -11,7 +12,7 @@ export default async function AdminLayout({
 }) {
   const session = await getServerSession(authOptions);
 
-  if (!session || (session.user as any).role !== "ADMIN") {
+  if (!session || (session.user as any).role !== Role.ADMIN) {
     redirect("/");
   }
 

@@ -1,14 +1,7 @@
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { successResponse } from "@/lib/api-utils";
+import { ShippingService } from "@/services/shipping.service";
 
 export async function GET() {
-  try {
-    const rates = await prisma.shippingRate.findMany({
-      orderBy: { district: 'asc' }
-    });
-    
-    return NextResponse.json(rates);
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch shipping rates" }, { status: 500 });
-  }
+  const rates = await ShippingService.getAllRates();
+  return successResponse({ rates });
 }

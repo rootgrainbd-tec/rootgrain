@@ -27,10 +27,6 @@ export default function ShippingSettingsPage() {
   const [perItemRate, setPerItemRate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchRates();
-  }, []);
-
   const fetchRates = async () => {
     try {
       const res = await fetch("/api/admin/shipping");
@@ -44,6 +40,10 @@ export default function ShippingSettingsPage() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchRates();
+  }, []);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();

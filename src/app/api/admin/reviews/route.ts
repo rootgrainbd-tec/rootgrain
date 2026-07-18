@@ -1,46 +1,16 @@
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { withAdmin, successResponse } from "@/lib/api-utils";
+import { adminService } from "@/services/admin.service";
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session || (session.user as any).role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export const GET = withAdmin(async () => {
+  const reviews = await adminService.getReviews();
+  return successResponse({ reviews });
+});
 
-  try {
-    const reviews = await prisma.review.findMany({
-      include: {
-        user: { select: { name: true, email: true } },
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-    return NextResponse.json(reviews);
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch reviews" }, { status: 500 });
-  }
-}
+export const PUT = withAdmin(async (req: Request) => {
+  const body = await req.json();
+  const { id, status } = body;
 
-export async function PUT(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session || (session.user as any).role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const review = await adminService.updateReviewStatus(id, status);
 
-  try {
-    const body = await req.json();
-    const { id, status } = body;
-
-    if (!id || !status) return NextResponse.json({ error: "Missing data" }, { status: 400 });
-
-    const review = await prisma.review.update({
-      where: { id },
-      data: { status }
-    });
-
-    return NextResponse.json(review);
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to update review" }, { status: 500 });
-  }
-}
+  return successResponse({ review });
+});

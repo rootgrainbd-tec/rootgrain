@@ -51,6 +51,7 @@ export function ProductGallery({ heroUrl, galleryImages, productName }: ProductG
             src={mainImage}
             alt={productName}
             fill
+            sizes="(max-width: 768px) 100vw, 50vw"
             className="object-contain p-4 transition-all duration-300 group-hover:opacity-0"
             priority
           />
@@ -72,6 +73,7 @@ export function ProductGallery({ heroUrl, galleryImages, productName }: ProductG
                   src={imgUrl}
                   alt={`${productName} thumbnail ${i+1}`}
                   fill
+                  sizes="25vw"
                   className="object-contain p-2"
                 />
               </button>

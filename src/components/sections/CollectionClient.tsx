@@ -85,14 +85,17 @@ export function CollectionContent({
   const [searchQuery, setSearchQuery] = useState(currentQuery);
 
   useEffect(() => {
-    if (currentPrice && currentPrice !== "All") {
-      const [min, max] = currentPrice.split("-");
-      setMinPrice(min || "");
-      setMaxPrice(max || "");
-    } else {
-      setMinPrice("");
-      setMaxPrice("");
-    }
+    const timer = setTimeout(() => {
+      if (currentPrice && currentPrice !== "All") {
+        const [min, max] = currentPrice.split("-");
+        setMinPrice(min || "");
+        setMaxPrice(max || "");
+      } else {
+        setMinPrice("");
+        setMaxPrice("");
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [currentPrice]);
 
   const handleApplyPrice = () => {

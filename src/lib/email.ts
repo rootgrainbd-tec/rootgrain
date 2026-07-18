@@ -1,5 +1,19 @@
 import nodemailer from "nodemailer";
 import { generateInvoicePDF } from "./pdfGenerator";
+import { logger } from "./logger";
+
+function escapeHtml(unsafe: string) {
+  return (unsafe || "").replace(/[&<"'>]/g, function (m) {
+    switch (m) {
+      case "&": return "&amp;";
+      case "<": return "&lt;";
+      case ">": return "&gt;";
+      case '"': return "&quot;";
+      case "'": return "&#039;";
+      default: return m;
+    }
+  });
+}
 
 const transporter = nodemailer.createTransport({
   host: "smtp.resend.com",
@@ -75,7 +89,7 @@ function getOrderItemsHtml(items: any[]) {
   items.forEach(item => {
     html += `
         <tr>
-          <td>${item.productName}</td>
+          <td>${escapeHtml(item.productName)}</td>
           <td>${item.quantity}</td>
           <td style="text-align: right;">৳${item.total.toLocaleString()}</td>
         </tr>
@@ -92,7 +106,7 @@ function getOrderItemsHtml(items: any[]) {
 
 export async function sendOrderConfirmationEmail(order: any, customerEmail: string) {
   try {
-    const customerName = order.shippingAddress?.name || "Customer";
+    const customerName = escapeHtml(order.shippingAddress?.name || "Customer");
     const itemsHtml = getOrderItemsHtml(order.items);
     const advanceRequired = order.total * 0.2;
 
@@ -154,15 +168,15 @@ export async function sendOrderConfirmationEmail(order: any, customerEmail: stri
       ]
     });
     
-    console.log(`[EMAIL] Order confirmation sent to ${customerEmail} with PDF invoice`);
+    logger.info({ customerEmail }, "[EMAIL] Order confirmation sent with PDF invoice");
   } catch (error) {
-    console.error("[EMAIL ERROR] Failed to send order confirmation:", error);
+    logger.error({ err: error }, "[EMAIL ERROR] Failed to send order confirmation");
   }
 }
 
 export async function sendOrderStatusUpdateEmail(order: any, customerEmail: string, status: string) {
   try {
-    const customerName = order.shippingAddress?.name || "Customer";
+    const customerName = escapeHtml(order.shippingAddress?.name || "Customer");
     let statusMessage = "Your order status has been updated.";
     let heading = "Order Update";
     
@@ -209,9 +223,9 @@ export async function sendOrderStatusUpdateEmail(order: any, customerEmail: stri
       html,
     });
 
-    console.log(`[EMAIL] Status update (${status}) sent to ${customerEmail}`);
+    logger.info({ customerEmail, status }, "[EMAIL] Status update sent");
   } catch (error) {
-    console.error("[EMAIL ERROR] Failed to send status update:", error);
+    logger.error({ err: error }, "[EMAIL ERROR] Failed to send status update");
   }
 }
 
@@ -249,9 +263,9 @@ export async function sendAbandonedCartEmail(customerEmail: string, items: any[]
       html,
     });
     
-    console.log(`[EMAIL] Abandoned cart recovery email sent to ${customerEmail}`);
+    logger.info({ customerEmail }, "[EMAIL] Abandoned cart recovery email sent");
   } catch (error) {
-    console.error("[EMAIL ERROR] Failed to send abandoned cart email:", error);
+    logger.error({ err: error }, "[EMAIL ERROR] Failed to send abandoned cart email");
   }
 }
 
@@ -284,8 +298,8 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
       html,
     });
     
-    console.log(`[EMAIL] Password reset email sent to ${email}`);
+    logger.info({ email }, "[EMAIL] Password reset email sent");
   } catch (error) {
-    console.error("[EMAIL ERROR] Failed to send password reset email:", error);
+    logger.error({ err: error }, "[EMAIL ERROR] Failed to send password reset email");
   }
 }

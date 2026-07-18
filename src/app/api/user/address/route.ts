@@ -1,51 +1,13 @@
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { withAuth, successResponse } from "@/lib/api-utils";
+import { userService } from "@/services/user.service";
 
-export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-    
-    const addresses = await prisma.address.findMany({
-      where: { userId: session.user.id },
-      orderBy: { isDefault: 'desc' }
-    });
+export const GET = withAuth(async (req, ctx, session) => {
+  const addresses = await userService.getAddresses(session.user.id);
+  return successResponse({ addresses });
+});
 
-    return NextResponse.json(addresses, { status: 200 });
-  } catch (error) {
-    return NextResponse.json({ message: String(error) }, { status: 500 });
-  }
-}
-
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-    
-    const data = await req.json();
-    
-    // Create the address
-    const address = await prisma.address.create({
-      data: {
-        userId: session.user.id,
-        name: data.name || "Home",
-        phone: data.phone,
-        division: data.division,
-        district: data.district,
-        street: data.street,
-        postCode: data.postCode,
-        isDefault: data.isDefault || false
-      }
-    });
-
-    return NextResponse.json({ address }, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ message: String(error) }, { status: 500 });
-  }
-}
+export const POST = withAuth(async (req, ctx, session) => {
+  const data = await req.json();
+  const address = await userService.createAddress(session.user.id, data);
+  return successResponse({ address }, "Address created");
+});

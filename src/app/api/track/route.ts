@@ -1,28 +1,15 @@
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { successResponse, handleAppError } from "@/lib/api-utils";
+import { OrderService } from "@/services/order.service";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const orderNumber = searchParams.get("orderNumber");
 
-    if (!orderNumber) {
-      return NextResponse.json({ success: false, error: "Missing order number" }, { status: 400 });
-    }
+    const order = await OrderService.getOrderDetails(orderNumber as string);
 
-    const order = await prisma.order.findUnique({
-      where: { orderNumber },
-      include: { items: true }
-    });
-
-    if (!order) {
-      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 });
-    }
-
-    // Return the safe order data
-    return NextResponse.json({ success: true, order });
+    return successResponse({ order });
   } catch (error) {
-    console.error("Track Error:", error);
-    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 });
+    return handleAppError(error);
   }
 }

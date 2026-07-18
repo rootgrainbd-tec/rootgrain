@@ -9,9 +9,13 @@ import Link from "next/link";
 import { UserNav } from "@/components/layout/UserNav";
 import { NAV_LINKS } from "@/data/site-config";
 import type { SiteConfig } from "@/types/site";
-import { CartSheet } from "./CartSheet";
-import { SearchCommand } from "./SearchCommand";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
+
+const CartSheet = dynamic(() => import('./CartSheet').then((mod) => mod.CartSheet), {
+  loading: () => <div className="w-5 h-5 flex items-center justify-center"><ShoppingBag className="w-5 h-5 opacity-50" /></div>,
+});
+const SearchCommand = dynamic(() => import('./SearchCommand').then((mod) => mod.SearchCommand));
 
 export function Navigation({ config }: { config: SiteConfig }) {
   const { data: session } = useSession();

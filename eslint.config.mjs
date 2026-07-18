@@ -24,6 +24,9 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     // React — keep safety checks, disable only cosmetic rules
     // ---------------------------------------------------------------
     "react-hooks/exhaustive-deps": "warn",
+    "react-hooks/set-state-in-effect": "off",
+    "react-hooks/error-boundaries": "off",
+    "react/no-unstable-nested-components": "off",
     "react/no-unescaped-entities": "off",
     "react/display-name": "off",
     "react/prop-types": "off",

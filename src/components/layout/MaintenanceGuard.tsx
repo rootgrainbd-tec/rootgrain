@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
 import { MaintenanceScreen } from "./MaintenanceScreen";
+import { Role } from "@prisma/client";
 
 export async function MaintenanceGuard({ children }: { children: React.ReactNode }) {
   const headersList = await headers();
@@ -21,7 +22,7 @@ export async function MaintenanceGuard({ children }: { children: React.ReactNode
       const session = await getServerSession(authOptions);
       
       // If user is not logged in or not an ADMIN, show Maintenance screen
-      if (!session || (session.user as any).role !== "ADMIN") {
+      if (!session || (session.user as any).role !== Role.ADMIN) {
         return <MaintenanceScreen />;
       }
     }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { SyncService } from "../../../services/sync.service";
+import { logger } from "../../../lib/logger";
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,7 +9,7 @@ export async function POST(req: NextRequest) {
     
     // Check Authorization header for Bearer token
     if (authHeader !== `Bearer ${process.env.SANITY_WEBHOOK_SECRET}`) {
-      console.warn("Invalid webhook secret");
+      logger.warn("Invalid webhook secret attempted for revalidation");
       return NextResponse.json({ message: "Invalid secret" }, { status: 401 });
     }
 
@@ -20,6 +22,8 @@ export async function POST(req: NextRequest) {
       revalidatePath("/");
       if (slug?.current) {
         revalidatePath(`/product/${slug.current}`);
+        // Synchronize the product with the relational database
+        await SyncService.syncProduct(slug.current);
       }
     } else if (_type === "category") {
       revalidatePath("/collection");
@@ -31,10 +35,11 @@ export async function POST(req: NextRequest) {
       revalidatePath("/", "layout");
     }
 
-    console.log(`[WEBHOOK] Successfully revalidated for type: ${_type}`);
+    logger.info({ type: _type }, "[WEBHOOK] Successfully processed");
     return NextResponse.json({ revalidated: true, now: Date.now() });
   } catch (err) {
-    console.error("[WEBHOOK ERROR] Revalidation failed:", err);
-    return NextResponse.json({ message: "Error revalidating" }, { status: 500 });
+    logger.error({ err }, "[WEBHOOK ERROR] Processing failed");
+    const details = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ message: "Error processing webhook", details }, { status: 500 });
   }
 }

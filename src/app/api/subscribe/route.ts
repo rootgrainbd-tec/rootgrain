@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { client } from "../../../../sanity/lib/client";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -28,11 +29,12 @@ export async function POST(req: Request) {
       { message: "Subscribed successfully" },
       { status: 200 }
     );
-  } catch (error: any) {
-    console.error("Subscription error:", error);
+  } catch (error) {
+    logger.error({ err: error }, "Subscription error");
     return NextResponse.json(
       { message: "Failed to subscribe" },
       { status: 500 }
     );
   }
 }
+
