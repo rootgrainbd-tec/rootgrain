@@ -1,29 +1,39 @@
 import { NextResponse } from "next/server";
-import { client } from "../../../../sanity/lib/client";
+import prisma from "@/lib/prisma";
 import { logger } from "@/lib/logger";
+import { Prisma } from "@prisma/client";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { email } = body;
 
-    if (!email || !email.includes("@")) {
+    if (!email || typeof email !== "string" || !email.includes("@")) {
       return NextResponse.json(
         { message: "Valid email is required" },
         { status: 400 }
       );
     }
 
-    // Use token if available, otherwise it might fail if dataset is not public write
-    const writeClient = client.withConfig({
-      token: process.env.SANITY_API_WRITE_TOKEN,
-    });
+    const normalizedEmail = email.trim().toLowerCase();
 
-    await writeClient.create({
-      _type: "subscriber",
-      email: email,
-      subscribedAt: new Date().toISOString(),
-    });
+    try {
+      await prisma.subscriber.create({
+        data: {
+          email: normalizedEmail,
+        },
+      });
+    } catch (dbError) {
+      // Handle unique constraint violation gracefully
+      if (dbError instanceof Prisma.PrismaClientKnownRequestError && dbError.code === "P2002") {
+        logger.info("Duplicate subscription attempt handled gracefully");
+        return NextResponse.json(
+          { message: "Subscribed successfully" },
+          { status: 200 }
+        );
+      }
+      throw dbError; // rethrow to be caught by the outer catch
+    }
 
     return NextResponse.json(
       { message: "Subscribed successfully" },
