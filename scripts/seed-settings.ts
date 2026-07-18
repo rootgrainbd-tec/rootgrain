@@ -39,7 +39,7 @@ async function seedSettings() {
     siteTitle: "RootGrain",
     tagline: "Artisan Furniture",
     description: "RootGrain crafts heirloom-quality wooden furniture using time-honored artisan techniques. Each piece tells a story of craftsmanship, permanence, and timeless beauty.",
-    phone: "+88 01917389253",
+    phone: "+8801632300103",
     email: "rootgrainbd@gmail.com",
     hours: "Saturday - Thursday: 10 am - 11 pm",
     address: {

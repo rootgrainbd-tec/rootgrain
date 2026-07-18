@@ -167,7 +167,9 @@ export function Footer({ config }: { config: SiteConfig }) {
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-[var(--gold)] flex-shrink-0" />
-                <span>{config.support.phone}</span>
+                <a href={`tel:${config.support.phone.tel}`} className="hover:text-[var(--gold)] transition-colors">
+                  {config.support.phone.display}
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-[var(--gold)] flex-shrink-0" />

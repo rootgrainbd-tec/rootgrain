@@ -5,8 +5,13 @@ export interface SiteConfig {
   description: string;
   url: string;
   support: {
-    /** Primary support phone — 01305-993024 */
-    phone: string;
+    /** Primary support phone */
+    phone: {
+      raw: string;
+      display: string;
+      tel: string;
+      whatsapp: string;
+    };
     email: string;
     hours: string;
   };

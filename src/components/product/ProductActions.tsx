@@ -15,9 +15,10 @@ interface ProductActionsProps {
     image: string;
     isAvailable: boolean;
   };
+  whatsappNumber: string;
 }
 
-export function ProductActions({ product }: ProductActionsProps) {
+export function ProductActions({ product, whatsappNumber }: ProductActionsProps) {
   const [addingToWishlist, setAddingToWishlist] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
 
@@ -79,7 +80,7 @@ export function ProductActions({ product }: ProductActionsProps) {
             Add to Cart
           </Button>
         ) : (
-          <InquiryDialog product={product} />
+          <InquiryDialog product={product} whatsappNumber={whatsappNumber} />
         )}
         <Button 
           onClick={handleAddToWishlist}

@@ -2,10 +2,9 @@
 
 import { MessageCircle } from "lucide-react";
 
-export function WhatsAppButton() {
-  const phoneNumber = "8801632300103"; // Official RootGrain WhatsApp number
+export function WhatsAppButton({ whatsappNumber }: { whatsappNumber: string }) {
   const message = encodeURIComponent("Hi RootGrain! I'm interested in your furniture.");
-  const url = `https://wa.me/${phoneNumber}?text=${message}`;
+  const url = `https://wa.me/${whatsappNumber}?text=${message}`;
 
   return (
     <a

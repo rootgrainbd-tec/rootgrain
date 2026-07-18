@@ -55,11 +55,15 @@ import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import { MaintenanceGuard } from "@/components/layout/MaintenanceGuard";
 import Script from "next/script";
 
-export default function RootLayout({
+import { getSiteConfig } from "@/data/site-config";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const config = await getSiteConfig();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -103,7 +107,7 @@ export default function RootLayout({
             </MaintenanceGuard>
             <Toaster />
             <SonnerToaster position="bottom-right" richColors />
-            <WhatsAppButton />
+            <WhatsAppButton whatsappNumber={config.support.phone.whatsapp} />
           </SmoothScroll>
         </AuthProviders>
       </body>

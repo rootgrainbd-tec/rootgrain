@@ -114,7 +114,7 @@ export default async function InvoicePage(props: { searchParams: Promise<{ order
           <div className="flex items-center justify-center gap-2 mt-1">
             {config.support?.email && <span>Email: {config.support.email}</span>}
             {config.support?.email && config.support?.phone && <span>|</span>}
-            {config.support?.phone && <span>Phone: {config.support.phone}</span>}
+            {config.support?.phone && <span>Phone: {config.support.phone.display}</span>}
           </div>
         </div>
       </div>

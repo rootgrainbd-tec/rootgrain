@@ -163,6 +163,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 image: heroUrl,
                 isAvailable: isAvailable
               }}
+              whatsappNumber={SITE_CONFIG.support.phone.whatsapp}
             />
           </div>
         </div>

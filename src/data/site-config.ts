@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { SiteConfig } from "@/types/site";
 import type { NavLink } from "@/types/content";
 
@@ -13,7 +14,29 @@ export const NAV_LINKS: NavLink[] = [
   { href: "/#contact", label: "Contact" },
 ];
 
-export async function getSiteConfig(): Promise<SiteConfig> {
+const FALLBACK_PHONE = "+8801632300103";
+
+function parsePhone(rawPhone: string) {
+  const digits = rawPhone.replace(/\D/g, "");
+  let normalized = digits;
+  if (normalized.startsWith("01") && normalized.length === 11) {
+    normalized = "88" + normalized;
+  }
+  
+  let display = rawPhone;
+  if (normalized.length === 13 && normalized.startsWith("8801")) {
+    display = `0${normalized.slice(3, 5)}-${normalized.slice(5, 7)}-${normalized.slice(7, 10)}-${normalized.slice(10, 13)}`;
+  }
+  
+  return {
+    raw: rawPhone,
+    display,
+    tel: `+${normalized}`,
+    whatsapp: normalized,
+  };
+}
+
+export const getSiteConfig = cache(async function getSiteConfig(): Promise<SiteConfig> {
   const [sanityConfig, categoryGroupsRaw] = await Promise.all([
     client.fetch(`*[_type == "siteSettings"][0]`),
     client.fetch(`*[_type == "categoryGroup"] | order(order asc) {
@@ -37,7 +60,7 @@ export async function getSiteConfig(): Promise<SiteConfig> {
       tagline: "Artisan Furniture",
       description: "RootGrain crafts heirloom-quality wooden furniture.",
       url: "https://rootgrain.bd",
-      support: { phone: "", email: "", hours: "" },
+      support: { phone: parsePhone(FALLBACK_PHONE), email: "", hours: "" },
       address: { line1: "", line2: "" },
       social: {},
       legal: { copyright: "", origin: "" },
@@ -45,13 +68,15 @@ export async function getSiteConfig(): Promise<SiteConfig> {
     };
   }
 
+  const rawPhone = sanityConfig.phone || FALLBACK_PHONE;
+
   return {
     name: sanityConfig.siteTitle || "RootGrain",
     tagline: sanityConfig.tagline || "Artisan Furniture",
     description: sanityConfig.description || "RootGrain crafts heirloom-quality wooden furniture.",
     url: "https://rootgrain.bd",
     support: {
-      phone: sanityConfig.phone || "",
+      phone: parsePhone(rawPhone),
       email: sanityConfig.email || "",
       hours: sanityConfig.hours || "",
     },
@@ -70,4 +95,4 @@ export async function getSiteConfig(): Promise<SiteConfig> {
     },
     categoryGroups
   };
-}
+});

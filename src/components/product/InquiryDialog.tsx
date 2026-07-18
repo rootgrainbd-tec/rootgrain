@@ -14,9 +14,10 @@ interface InquiryDialogProps {
     id: string;
     name: string;
   };
+  whatsappNumber: string;
 }
 
-export function InquiryDialog({ product }: InquiryDialogProps) {
+export function InquiryDialog({ product, whatsappNumber }: InquiryDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -26,7 +27,6 @@ export function InquiryDialog({ product }: InquiryDialogProps) {
   });
 
   const productUrl = typeof window !== "undefined" ? window.location.href : "";
-  const whatsappNumber = "8801632300103"; 
 
   const handleWhatsApp = () => {
     const text = encodeURIComponent(`Hello RootGrain, I want to inquire about the product: ${product.name}\nLink: ${productUrl}`);
