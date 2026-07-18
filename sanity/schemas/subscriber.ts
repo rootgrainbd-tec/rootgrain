@@ -4,6 +4,7 @@ export default defineType({
   name: "subscriber",
   title: "Subscribers",
   type: "document",
+  readOnly: true,
   fields: [
     defineField({
       name: "email",

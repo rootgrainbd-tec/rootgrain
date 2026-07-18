@@ -14,4 +14,12 @@ export default defineConfig({
     structureTool({ structure }),
     visionTool(),
   ],
+  document: {
+    newDocumentOptions: (prev, { creationContext }) => {
+      if (creationContext.type === 'global') {
+        return prev.filter((templateItem) => templateItem.templateId !== 'subscriber')
+      }
+      return prev
+    },
+  },
 })

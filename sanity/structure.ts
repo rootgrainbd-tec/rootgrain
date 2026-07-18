@@ -26,9 +26,9 @@ export const structure: StructureResolver = (S) =>
 
       S.divider(),
 
-      // Filter out the singletons from the main list
+      // Filter out the singletons and decommissioned schemas from the main list
       ...S.documentTypeListItems().filter(
         (listItem) =>
-          !['siteSettings', 'homepage'].includes(listItem.getId() as string)
+          !['siteSettings', 'homepage', 'subscriber'].includes(listItem.getId() as string)
       ),
     ])
