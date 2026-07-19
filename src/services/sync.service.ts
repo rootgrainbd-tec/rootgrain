@@ -14,8 +14,9 @@ export class SyncService {
       // Fetch the latest product data from Sanity
       const sanityProduct = await client.fetch(
         `*[_type == "product" && slug.current == $slug][0] {
-          "id": slug.current,
+          _id,
           "name": title,
+          "slug": slug.current,
           category,
           price,
           wood,
@@ -27,13 +28,16 @@ export class SyncService {
         { slug }
       );
 
-      if (!sanityProduct) {
-        logger.warn({ slug }, "Product not found in Sanity during sync");
+      if (!sanityProduct || !sanityProduct._id || !sanityProduct.slug) {
+        logger.warn({ slug }, "Product not found or missing required fields in Sanity during sync");
         return null;
       }
 
-      // Upsert into Prisma
-      const dbProduct = await ProductRepository.upsertProduct(slug, sanityProduct);
+      // Normalize draft ID to canonical published ID
+      const canonicalSanityId = sanityProduct._id.replace(/^drafts\./, "");
+
+      // Upsert into Prisma using immutable sanityId
+      const dbProduct = await ProductRepository.upsertProductBySanityId(canonicalSanityId, sanityProduct);
       
       logger.info({ slug, dbProductId: dbProduct.id }, "Product successfully synced");
       return dbProduct;

@@ -3,12 +3,20 @@ import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
 export class ProductRepository {
-  static async upsertProduct(slug: string, data: Partial<Prisma.ProductCreateInput>) {
-    // This assumes slug is the unique identifier
+  static async upsertProductBySanityId(sanityId: string, data: Partial<Prisma.ProductCreateInput> & { slug: string }) {
+    if (!sanityId) throw new Error("sanityId is required");
+
+    // Handle Prisma unique slug collision explicitly
+    const existingWithSlug = await prisma.product.findUnique({ where: { slug: data.slug } });
+    if (existingWithSlug && existingWithSlug.sanityId !== sanityId) {
+      throw new Error(`Identity Collision: slug ${data.slug} is already in use by product with sanityId ${existingWithSlug.sanityId}`);
+    }
+
     return prisma.product.upsert({
-      where: { slug },
+      where: { sanityId },
       update: {
         name: data.name ?? "",
+        slug: data.slug,
         category: data.category ?? "Uncategorized",
         price: data.price ?? 0,
         wood: data.wood ?? "Unknown",
@@ -19,8 +27,9 @@ export class ProductRepository {
         isActive: true,
       },
       create: {
+        sanityId,
         name: data.name ?? "Unknown",
-        slug,
+        slug: data.slug,
         category: data.category ?? "Uncategorized",
         price: data.price ?? 0,
         wood: data.wood ?? "Unknown",
