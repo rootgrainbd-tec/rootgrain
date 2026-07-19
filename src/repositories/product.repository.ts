@@ -47,4 +47,24 @@ export class ProductRepository {
       where: { slug: { in: slugs } }
     });
   }
+
+  static async archiveProductBySanityId(sanityId: string) {
+    if (!sanityId) throw new Error("sanityId is required");
+    const existing = await prisma.product.findUnique({ where: { sanityId } });
+    
+    if (!existing) {
+      return "NO_OP";
+    }
+    
+    if (!existing.isActive) {
+      return "NO_OP";
+    }
+
+    await prisma.product.update({
+      where: { sanityId },
+      data: { isActive: false },
+    });
+
+    return "ARCHIVED";
+  }
 }
