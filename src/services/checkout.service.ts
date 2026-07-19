@@ -73,8 +73,8 @@ export class CheckoutService {
       if (!dbProd) {
         throw new NotFoundError(`Product not found: ${item.id}`);
       }
-      if (!dbProd.inStock) {
-        throw new ValidationError(`Product ${dbProd.name} is currently out of stock.`);
+      if (!dbProd.isActive || !dbProd.inStock) {
+        throw new ValidationError(`Product ${dbProd.name} is currently unavailable.`);
       }
 
       const itemTotal = dbProd.price * item.quantity;

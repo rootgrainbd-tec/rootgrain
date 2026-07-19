@@ -9,9 +9,14 @@ export class ProductRepository {
       where: { slug },
       update: {
         name: data.name ?? "",
+        category: data.category ?? "Uncategorized",
         price: data.price ?? 0,
+        wood: data.wood ?? "Unknown",
+        dimensions: data.dimensions ?? "Unknown",
+        image: data.image ?? "",
+        description: data.description ?? "",
         inStock: data.inStock ?? true,
-        // Update other fields as needed based on Sanity sync
+        isActive: true,
       },
       create: {
         name: data.name ?? "Unknown",
@@ -23,6 +28,7 @@ export class ProductRepository {
         image: data.image ?? "",
         description: data.description ?? "",
         inStock: data.inStock ?? true,
+        isActive: true,
       },
     });
   }
