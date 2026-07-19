@@ -10,6 +10,7 @@ datasource db {
 
 model Product {
   id           String      @id @default(cuid())
+  sanityId     String?     @unique
   name         String
   slug         String      @unique
   category     String      
