@@ -43,39 +43,49 @@ export class SyncService {
     const canonicalSanityId = rawSanityId.replace(/^drafts\./, "");
     logger.info({ sanityId: canonicalSanityId }, "Reconciling product by canonical sanityId");
 
+    // Phase 3 - For lifecycle-authoritative reads require useCdn: false
+    const authoritativeClient = client.withConfig({ useCdn: false });
+    
+    const query = `*[_type == "product" && _id == $id && !(_id in path("drafts.**"))][0] {
+      _id,
+      "name": title,
+      "slug": slug.current,
+      category,
+      price,
+      wood,
+      dimensions,
+      "image": image.asset->url,
+      description,
+      "inStock": availability != "Sold"
+    }`;
+
     let sanityProduct = null;
     try {
-      // Authoritative published Sanity query
-      // _id filter naturally ignores "drafts.*" if we only pass canonical ID, 
-      // but we add !(_id in path('drafts.**')) for strict safety.
-      sanityProduct = await client.fetch(
-        `*[_type == "product" && _id == $id && !(_id in path("drafts.**"))][0] {
-          _id,
-          "name": title,
-          "slug": slug.current,
-          category,
-          price,
-          wood,
-          dimensions,
-          "image": image.asset->url,
-          description,
-          "inStock": availability != "Sold"
-        }`,
-        { id: canonicalSanityId }
-      );
+      sanityProduct = await authoritativeClient.fetch(query, { id: canonicalSanityId });
     } catch (error) {
-      // 3C. QUERY ERROR
       logger.error({ err: error, sanityId: canonicalSanityId }, "Sanity query failed during reconciliation");
-      throw error; // ERROR != ABSENT. Do not archive.
+      throw error;
     }
 
     if (!sanityProduct || !sanityProduct.slug) {
-      // 3B. SUCCESS + ABSENT
-      // To mitigate stale-result races (Phase 14), we could do a secondary check, 
-      // but if the query successfully returned null, we proceed to archive.
-      logger.info({ sanityId: canonicalSanityId }, "Product absent in Sanity. Archiving.");
-      const archiveResult = await ProductRepository.archiveProductBySanityId(canonicalSanityId);
-      return archiveResult as ReconciliationResult; // Returns ARCHIVED or NO_OP
+      logger.info({ sanityId: canonicalSanityId }, "First query absent. Performing confirmation query to mitigate stale-result race.");
+      
+      let confirmationProduct = null;
+      try {
+        confirmationProduct = await authoritativeClient.fetch(query, { id: canonicalSanityId });
+      } catch (error) {
+        logger.error({ err: error, sanityId: canonicalSanityId }, "Sanity confirmation query failed");
+        throw error;
+      }
+
+      if (!confirmationProduct || !confirmationProduct.slug) {
+        logger.info({ sanityId: canonicalSanityId }, "Product confirmed absent in Sanity. Archiving.");
+        const archiveResult = await ProductRepository.archiveProductBySanityId(canonicalSanityId);
+        return archiveResult as ReconciliationResult;
+      }
+
+      logger.info({ sanityId: canonicalSanityId }, "Race mitigated: Product was republished before archive. Proceeding with upsert.");
+      sanityProduct = confirmationProduct;
     }
 
     // 3A. SUCCESS + FOUND
