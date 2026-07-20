@@ -50,12 +50,12 @@ export class SyncService {
       _id,
       "name": title,
       "slug": slug.current,
-      category,
+      "category": category->name,
       price,
-      wood,
+      "wood": woodType,
       dimensions,
-      "image": image.asset->url,
-      description,
+      "image": heroImage.asset->url,
+      "description": shortDescription,
       "inStock": availability != "Sold"
     }`;
 
@@ -93,6 +93,20 @@ export class SyncService {
     // To accurately return CREATED / UPDATED / REACTIVATED, we peek first:
     const existing = await prisma.product.findUnique({ where: { sanityId: canonicalSanityId } });
     
+    // Format dimensions object to a string before passing to Prisma
+    if (sanityProduct.dimensions && typeof sanityProduct.dimensions === 'object') {
+      const d = sanityProduct.dimensions;
+      sanityProduct.dimensions = d.length && d.width && d.height 
+        ? `${d.length}" L × ${d.width}" W × ${d.height}" H`
+        : "Unknown";
+    }
+
+    // Validate required fields explicitly to prevent silent fallbacks for malformed data
+    if (!sanityProduct.name) throw new Error("Missing required field: name/title");
+    if (sanityProduct.price === null || sanityProduct.price === undefined) throw new Error("Missing required field: price");
+    if (!sanityProduct.category) throw new Error("Missing required field: category");
+    if (!sanityProduct.image) throw new Error("Missing required field: image/heroImage");
+
     await ProductRepository.upsertProductBySanityId(canonicalSanityId, sanityProduct);
 
     if (!existing) {
