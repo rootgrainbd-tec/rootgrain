@@ -2,13 +2,17 @@ import { NextResponse } from "next/server";
 import { CartService } from "@/services/cart.service";
 import { logger } from "@/lib/logger";
 
-// Verify secret to ensure only cron can call this endpoint
-const CRON_SECRET = process.env.CRON_SECRET || "default_cron_secret";
-
 export async function GET(request: Request) {
+  const cronSecret = process.env.CRON_SECRET;
+  
+  if (!cronSecret || cronSecret.trim() === "") {
+    logger.error("CRON_SECRET is missing or empty. Configuration error.");
+    return new NextResponse("Server Configuration Error", { status: 500 });
+  }
+
   const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${CRON_SECRET}` && process.env.NODE_ENV === "production") {
-    // return new NextResponse("Unauthorized", { status: 401 });
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return new NextResponse("Unauthorized", { status: 401 });
   }
 
   try {
