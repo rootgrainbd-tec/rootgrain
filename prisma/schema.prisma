@@ -200,6 +200,7 @@ model User {
   addresses     Address[]
   wishlists     Wishlist[]
   reviews       Review[]
+  abandonedCarts AbandonedCart[]
 }
 
 model VerificationToken {
@@ -322,16 +323,22 @@ model StoreSettings {
 }
 
 model AbandonedCart {
-  id         String              @id @default(cuid())
-  email      String
-  cartItems  Json                // Store the cart contents
-  lastActive DateTime            @default(now())
-  status     AbandonedCartStatus @default(PENDING)
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
+  id                 String              @id @default(cuid())
+  cartSessionId      String?             @unique
+  userId             String?
+  email              String
+  cartItems          Json                // Store the cart contents
+  lastActive         DateTime            @default(now())
+  status             AbandonedCartStatus @default(PENDING)
+  isRecoveryEligible Boolean             @default(false)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  user               User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([email])
   @@index([status])
+  @@index([userId])
 }
 
 model PasswordResetToken {
