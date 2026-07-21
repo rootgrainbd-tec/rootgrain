@@ -3,10 +3,15 @@ import { CartService } from "@/services/cart.service";
 import { logger } from "@/lib/logger";
 import { z } from "zod";
 
+const cartItemSchema = z.object({
+  productId: z.string().uuid(),
+  quantity: z.number().int().min(1).max(99),
+}).strip(); // Strips unknown fields like price, title, etc.
+
 const cartSyncSchema = z.object({
-  email: z.string().email(),
-  cartItems: z.array(z.any()).min(1),
-});
+  email: z.string().email().optional().or(z.literal('')),
+  cartItems: z.array(cartItemSchema).max(50),
+}).strip();
 
 export async function POST(req: Request) {
   try {
@@ -14,12 +19,13 @@ export async function POST(req: Request) {
     const validationResult = cartSyncSchema.safeParse(body);
 
     if (!validationResult.success) {
-      return NextResponse.json({ success: false, message: "Invalid data" }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Invalid cart payload" }, { status: 400 });
     }
 
     const { email, cartItems } = validationResult.data;
 
-    await CartService.syncCart(email, cartItems);
+    // Service handles identity resolution, normalization, transitions, and persistence
+    await CartService.processSyncRequest(cartItems, email || "");
 
     return NextResponse.json({ success: true });
   } catch (error) {

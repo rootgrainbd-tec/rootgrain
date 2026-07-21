@@ -20,7 +20,7 @@ import prisma from "../src/lib/prisma";
 import { ValidCartIdentity, CartItem } from "../src/types/cart";
 import { generateCartSessionId } from "../src/lib/cart-session";
 
-const dummyCartItems: CartItem[] = [{ id: "prod-1", name: "Product 1", price: 10, image: "", quantity: 1 }];
+const dummyCartItems: CartItem[] = [{ productId: "63f92d47-f350-4202-b203-b09b5523da56", quantity: 1 }];
 
 test('SECURITY-H2-A2 Cart Identity Invariants', async (t) => {
   let testUserId = "";

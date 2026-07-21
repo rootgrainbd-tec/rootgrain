@@ -46,23 +46,66 @@ export class CartService {
   }
 
   /**
-   * @deprecated Kept for public route backward compatibility.
-   * Will be hardened in A3 to use proper ValidCartIdentity.
+   * Resolves identity, normalizes cart items, handles guest->auth transitions,
+   * and delegates to the repository.
    */
-  static async syncCart(email: string, cartItems: CartItem[]) {
-    try {
-      const existingCart = await CartRepository.findPendingCartByEmail(email);
+  static async processSyncRequest(
+    cartItems: { productId: string; quantity: number }[],
+    email: string
+  ) {
+    const { getServerSession } = await import("next-auth/next");
+    const { authOptions } = await import("@/lib/auth");
+    const { 
+      getGuestCartSessionId, 
+      setGuestCartSessionId, 
+      generateCartSessionId, 
+      destroyGuestCartSessionId 
+    } = await import("@/lib/cart-session");
 
-      if (existingCart) {
-        await CartRepository.updateAbandonedCart(existingCart.id, cartItems);
-        logger.info({ email, cartId: existingCart.id }, "Updated existing abandoned cart (legacy)");
-      } else {
-        const newCart = await CartRepository.createAbandonedCart(email, cartItems);
-        logger.info({ email, cartId: newCart.id }, "Created new abandoned cart (legacy)");
+    // 1. Normalize duplicate productIds
+    const itemMap = new Map<string, number>();
+    for (const item of cartItems) {
+      const existingQty = itemMap.get(item.productId) || 0;
+      const newQty = existingQty + item.quantity;
+      itemMap.set(item.productId, newQty > 99 ? 99 : newQty);
+    }
+    const normalizedCartItems = Array.from(itemMap.entries()).map(([productId, quantity]) => ({
+      productId,
+      quantity,
+    }));
+
+    // 2. Resolve Identity
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
+
+    if (userId) {
+      // Authenticated Flow
+      const guestSessionId = await getGuestCartSessionId();
+      if (guestSessionId) {
+        const transition = await this.transitionGuestToAuthenticated(guestSessionId, userId);
+        if (transition.status === "claimed" || transition.status === "no_guest_cart") {
+          await destroyGuestCartSessionId();
+        }
       }
-    } catch (error) {
-      logger.error({ err: error, email }, "Failed to sync cart (legacy)");
-      throw error;
+      
+      await this.syncIdentityCart(
+        { kind: "authenticated", userId },
+        normalizedCartItems,
+        email || ""
+      );
+    } else {
+      // Guest Flow
+      let guestSessionId = await getGuestCartSessionId();
+      if (!guestSessionId) {
+        guestSessionId = generateCartSessionId();
+        await setGuestCartSessionId(guestSessionId);
+      }
+
+      await this.syncIdentityCart(
+        { kind: "guest", cartSessionId: guestSessionId },
+        normalizedCartItems,
+        email || ""
+      );
     }
   }
 
