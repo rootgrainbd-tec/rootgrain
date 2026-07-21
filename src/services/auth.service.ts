@@ -3,7 +3,8 @@ import { AuthRepository } from "@/repositories/auth.repository";
 import { AppError, ValidationError } from "@/lib/errors/AppError";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
-import { sendPasswordResetEmail } from "@/lib/email";
+import crypto from "crypto";
+import { sendPasswordResetEmail, sendVerificationEmail, sendLoginAttemptEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
 
 export class AuthService {
@@ -17,25 +18,70 @@ export class AuthService {
     const existingUser = await AuthRepository.getUserByEmail(email);
 
     if (existingUser) {
-      throw new ValidationError("User already exists");
+      if (existingUser.emailVerified) {
+        // Enumeration protection: Send login attempt email instead of token
+        await sendLoginAttemptEmail(email);
+        return { message: "If the email is valid, a verification link has been sent." };
+      }
+      // If user exists but isn't verified, we can just resend a verification token
+      // or update their password if they are trying to register again.
+      // For safety, let's update their password and send a new token.
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await AuthRepository.updateUserPassword(email, hashedPassword);
+    } else {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await AuthRepository.createUser({
+        name,
+        email,
+        password: hashedPassword,
+      });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Generate secure token (256-bit entropy)
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 3600000); // 1 hour
 
-    const user = await AuthRepository.createUser({
-      name,
-      email,
-      password: hashedPassword,
-    });
+    await AuthRepository.deleteVerificationTokensByIdentifier(email);
+    await AuthRepository.createVerificationToken(email, token, expires);
 
+    const verifyLink = `${process.env.NEXT_PUBLIC_APP_URL || "https://rootgrain.bd"}/api/auth/verify?token=${token}`;
+    await sendVerificationEmail(email, verifyLink);
+
+    return { message: "If the email is valid, a verification link has been sent." };
+  }
+
+  static async verifyEmail(token: string) {
+    if (!token) {
+      throw new ValidationError("Token is required");
+    }
+
+    const verificationToken = await AuthRepository.getVerificationToken(token);
+
+    if (!verificationToken) {
+      throw new ValidationError("Invalid or expired token");
+    }
+
+    if (verificationToken.expires < new Date()) {
+      await AuthRepository.deleteVerificationToken(token);
+      throw new ValidationError("Invalid or expired token");
+    }
+
+    // Atomic verify and delete
+    await AuthRepository.verifyUserEmail(verificationToken.identifier);
+    await AuthRepository.deleteVerificationToken(token);
+    
+    // Link guest orders now that email is verified
     try {
-      await AuthRepository.linkGuestOrdersToUser(email, user.id);
-      logger.info({ email }, "Linked guest orders");
+      const user = await AuthRepository.getUserByEmail(verificationToken.identifier);
+      if (user) {
+        await AuthRepository.linkGuestOrdersToUser(user.email!, user.id);
+        logger.info({ email: user.email }, "Linked guest orders after email verification");
+      }
     } catch (e) {
-      logger.error({ err: e }, "Failed to link guest orders");
+      logger.error({ err: e, email: verificationToken.identifier }, "Failed to link guest orders");
     }
 
-    return user;
+    return { message: "Email verified successfully" };
   }
 
   static async initiatePasswordReset(email: string) {

@@ -6,10 +6,10 @@ import { logger } from "@/lib/logger";
 export async function POST(req: Request) {
   try {
     const data = await req.json();
-    const result = await AuthService.registerUser(data);
-    return successResponse(null, result.message, { status: 201 });
+    const result = await AuthService.verifyEmail(data.token);
+    return successResponse(null, result.message, { status: 200 });
   } catch (error) {
-    logger.error({ err: error }, "Registration error");
+    logger.error({ err: error }, "Email verification error");
     return handleAppError(error);
   }
 }

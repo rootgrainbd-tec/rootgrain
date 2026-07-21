@@ -35,12 +35,12 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-      allowDangerousEmailAccountLinking: true,
+      allowDangerousEmailAccountLinking: false,
     }),
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID as string,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
-      allowDangerousEmailAccountLinking: true,
+      allowDangerousEmailAccountLinking: false,
     }),
     EmailProvider({
       server: process.env.EMAIL_SERVER as string,
@@ -63,6 +63,10 @@ export const authOptions: NextAuthOptions = {
 
         if (!user || !user.password) {
           throw new Error("Invalid credentials");
+        }
+
+        if (!user.emailVerified) {
+          throw new Error("EMAIL_NOT_VERIFIED");
         }
 
         const isCorrectPassword = await bcrypt.compare(
@@ -96,6 +100,41 @@ export const authOptions: NextAuthOptions = {
     }
   },
   callbacks: {
+    async signIn({ user, account }) {
+      if (account && account.provider !== "credentials" && user.email) {
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email },
+          include: {
+            accounts: true,
+            orders: true,
+            addresses: true,
+            reviews: true
+          }
+        });
+
+        if (
+          existingUser &&
+          existingUser.emailVerified === null &&
+          existingUser.accounts.length === 0 &&
+          existingUser.orders.length === 0 &&
+          existingUser.addresses.length === 0 &&
+          existingUser.reviews.length === 0 &&
+          existingUser.password !== null
+        ) {
+          // Unverified credential account blocking OAuth flow. Safe to replace.
+          try {
+            await prisma.$transaction([
+              prisma.session.deleteMany({ where: { userId: existingUser.id } }),
+              prisma.user.delete({ where: { id: existingUser.id } })
+            ]);
+            logger.info({ email: user.email }, "Safely replaced unverified credential account during OAuth sign-in");
+          } catch (error) {
+            logger.error({ err: error, email: user.email }, "Failed to replace unverified account");
+          }
+        }
+      }
+      return true;
+    },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub as string;

@@ -59,4 +59,39 @@ export class AuthRepository {
       where: { id },
     });
   }
+
+  static async getVerificationToken(token: string) {
+    return prisma.verificationToken.findUnique({
+      where: { token },
+    });
+  }
+
+  static async createVerificationToken(identifier: string, token: string, expires: Date) {
+    return prisma.verificationToken.create({
+      data: {
+        identifier,
+        token,
+        expires,
+      },
+    });
+  }
+
+  static async deleteVerificationTokensByIdentifier(identifier: string) {
+    return prisma.verificationToken.deleteMany({
+      where: { identifier },
+    });
+  }
+
+  static async deleteVerificationToken(token: string) {
+    return prisma.verificationToken.delete({
+      where: { token },
+    });
+  }
+
+  static async verifyUserEmail(email: string) {
+    return prisma.user.update({
+      where: { email },
+      data: { emailVerified: new Date() },
+    });
+  }
 }

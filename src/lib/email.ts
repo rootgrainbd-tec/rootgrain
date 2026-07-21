@@ -303,3 +303,69 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
     logger.error({ err: error }, "[EMAIL ERROR] Failed to send password reset email");
   }
 }
+
+export async function sendVerificationEmail(email: string, verifyLink: string) {
+  try {
+    const content = `
+      <h2>Verify Your Email Address</h2>
+      <p>Thank you for registering with Rootgrain!</p>
+      <p>Please click the button below to verify your email address and activate your account.</p>
+      
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${verifyLink}" class="btn">Verify Email</a>
+      </div>
+      
+      <p style="font-size: 13px; color: #666;">
+        Or copy and paste this link into your browser:<br>
+        <a href="${verifyLink}" style="color: ${BRAND_COLOR};">${verifyLink}</a>
+      </p>
+      <p style="font-size: 13px; color: #666; margin-top: 20px;">
+        This link will expire in 1 hour. If you didn't create an account, you can safely ignore this email.
+      </p>
+    `;
+
+    const html = getBaseTemplate(`Verify Your Email`, content);
+
+    await transporter.sendMail({
+      from: SENDER,
+      to: email,
+      subject: `Verify Your Email | Rootgrain`,
+      html,
+    });
+    
+    logger.info({ email }, "[EMAIL] Verification email sent");
+  } catch (error) {
+    logger.error({ err: error }, "[EMAIL ERROR] Failed to send verification email");
+  }
+}
+
+export async function sendLoginAttemptEmail(email: string) {
+  try {
+    const content = `
+      <h2>Registration Attempt</h2>
+      <p>We noticed a recent registration attempt using your email address.</p>
+      <p>You already have an active account with us. Please log in using your existing credentials or social login.</p>
+      
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://rootgrain.bd"}/login" class="btn">Log In</a>
+      </div>
+      
+      <p style="font-size: 13px; color: #666; margin-top: 20px;">
+        If you didn't make this request, your account is still secure and you don't need to take any action.
+      </p>
+    `;
+
+    const html = getBaseTemplate(`Registration Attempt`, content);
+
+    await transporter.sendMail({
+      from: SENDER,
+      to: email,
+      subject: `Registration Attempt | Rootgrain`,
+      html,
+    });
+    
+    logger.info({ email }, "[EMAIL] Enumeration protection login attempt email sent");
+  } catch (error) {
+    logger.error({ err: error }, "[EMAIL ERROR] Failed to send enumeration protection email");
+  }
+}
