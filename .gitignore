@@ -71,3 +71,5 @@ examples/
 # Uploaded user assets (track selectively)
 # ========================
 upload/
+.vercel
+.env*.local

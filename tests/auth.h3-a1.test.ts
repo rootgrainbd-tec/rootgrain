@@ -128,16 +128,17 @@ describe("SECURITY-H3-A1: Identity Hardening & Pre-ATO Prevention", () => {
       const existingUser = await prisma.user.findUnique({ where: { email: "victim3@test.com" } });
       
       // Manually add an order (simulate guest checkout linking)
+      const testOrderId = "order_" + Math.random().toString(36).substring(7);
       await prisma.order.create({
         data: {
-          id: "order_test_1",
-          orderNumber: "ORD-123",
+          id: testOrderId,
+          orderNumber: "ORD-" + testOrderId,
           userId: existingUser!.id,
           subtotal: 1000,
           shippingCost: 100,
           total: 1100,
           balanceDue: 1100,
-          status: OrderStatus.PENDING,
+          status: OrderStatus.PENDING_ADVANCE,
           items: {},
           shippingAddress: { name: "Test", phone: "123", division: "Test", district: "Test", street: "Test" }
         }
