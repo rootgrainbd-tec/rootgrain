@@ -9,26 +9,33 @@ import { format } from "date-fns";
 
 export default function TrackOrderPage() {
   const [orderNumber, setOrderNumber] = useState("");
+  const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [order, setOrder] = useState<any>(null);
 
   const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orderNumber) {
-      toast.error("Please enter an Order Number");
+    if (!orderNumber || !email) {
+      toast.error("Please enter both Order Number and Email Address");
       return;
     }
 
     setIsLoading(true);
     setOrder(null);
     try {
-      const res = await fetch(`/api/track?orderNumber=${encodeURIComponent(orderNumber)}`);
+      const res = await fetch(`/api/track`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ orderNumber, email })
+      });
       const data = await res.json();
       
       if (res.ok && data.success) {
-        setOrder(data.order);
+        setOrder(data.data.order);
       } else {
-        toast.error(data.error || "Order not found. Please check your details.");
+        toast.error(data.error?.message || "Order not found. Please check your details.");
       }
     } catch (error) {
       toast.error("Failed to track order");
@@ -61,7 +68,7 @@ export default function TrackOrderPage() {
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-10">
           <h1 className="text-4xl font-serif text-[var(--walnut-dark)] mb-4">Track Your Order</h1>
-          <p className="text-gray-600">Enter your order number below to see the current status of your furniture.</p>
+          <p className="text-gray-600">Enter your order number and billing email to see the current status of your furniture.</p>
         </div>
 
         <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
@@ -72,6 +79,17 @@ export default function TrackOrderPage() {
                 placeholder="e.g. RG-20260710-123456" 
                 value={orderNumber}
                 onChange={e => setOrderNumber(e.target.value)}
+                className="h-12"
+                required
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium mb-1 text-gray-700">Billing/Shipping Email</label>
+              <Input 
+                type="email"
+                placeholder="email@example.com" 
+                value={email}
+                onChange={e => setEmail(e.target.value)}
                 className="h-12"
                 required
               />

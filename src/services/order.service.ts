@@ -5,15 +5,38 @@ import { OrderStatus, Prisma } from "@prisma/client";
 import { sendOrderStatusUpdateEmail } from "@/lib/email";
 
 export class OrderService {
-  static async getOrderDetails(orderNumber: string) {
+  static async getOrderDetails(orderNumber: string, email?: string, userId?: string) {
     if (!orderNumber) {
       throw new AppError("Missing order number", 400);
     }
 
     const order = await OrderRepository.getOrderByNumber(orderNumber);
 
+    // Enumeration resistance: treat not found or unauthorized as the same generic 401 error
     if (!order) {
-      throw new AppError("Order not found", 404);
+      throw new AppError("Order not found or unauthorized access", 401);
+    }
+
+    let isAuthorized = false;
+
+    // Condition 1: Authenticated owner
+    if (userId && order.userId === userId) {
+      isAuthorized = true;
+    }
+
+    // Condition 2: Guest verifier (email)
+    if (!isAuthorized && email) {
+      const shippingEmail = (order.shippingAddress as any)?.email;
+      
+      const normalizedInputEmail = email.trim().toLowerCase();
+      
+      if (shippingEmail && shippingEmail.trim().toLowerCase() === normalizedInputEmail) {
+        isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized) {
+      throw new AppError("Order not found or unauthorized access", 401);
     }
 
     return order;

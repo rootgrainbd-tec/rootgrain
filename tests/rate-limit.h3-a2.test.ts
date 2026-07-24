@@ -91,6 +91,22 @@ describe("SECURITY-H3-A2 Rate Limiting", () => {
       expect(res.headers.get("X-RateLimit-Limit")).toBe(RATE_LIMIT_POLICIES["register"].limit.toString());
       expect(res.headers.has("Retry-After")).toBe(true);
     });
+
+    it("Applies L2 rate limiting for tracking POST with JSON body", async () => {
+      const email = "track@example.com";
+      const req = new NextRequest("http://localhost/api/track", {
+        method: "POST",
+        headers: { 
+          "x-forwarded-for": "10.0.0.1",
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({ email, orderNumber: "RG-123" })
+      });
+      const res = await middleware(req);
+      // track is FAIL_OPEN, so it succeeds locally, returns NextResponse.next() which has status 200
+      expect(res.status).toBe(200);
+      expect(res.headers.get("X-RateLimit-Limit")).toBe(RATE_LIMIT_POLICIES["track"].limit.toString());
+    });
     
     it("Resolves identity only when required (L2)", async () => {
       const req = new NextRequest("http://localhost/api/user/profile", {
