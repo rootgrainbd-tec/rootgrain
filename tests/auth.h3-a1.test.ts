@@ -1,9 +1,19 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import prisma from "@/lib/prisma";
 import { AuthService } from "@/services/auth.service";
 import { authOptions } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import { OrderStatus } from "@prisma/client";
+
+// Mock external email boundary to ensure deterministic isolation and prevent SMTP timeouts
+vi.mock("@/lib/email", () => ({
+  sendVerificationEmail: vi.fn().mockResolvedValue(true),
+  sendLoginAttemptEmail: vi.fn().mockResolvedValue(true),
+  sendPasswordResetEmail: vi.fn().mockResolvedValue(true),
+  sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true),
+  sendOrderStatusUpdateEmail: vi.fn().mockResolvedValue(true),
+  sendAbandonedCartEmail: vi.fn().mockResolvedValue(true),
+}));
 
 describe("SECURITY-H3-A1: Identity Hardening & Pre-ATO Prevention", () => {
   beforeEach(async () => {
@@ -128,16 +138,17 @@ describe("SECURITY-H3-A1: Identity Hardening & Pre-ATO Prevention", () => {
       const existingUser = await prisma.user.findUnique({ where: { email: "victim3@test.com" } });
       
       // Manually add an order (simulate guest checkout linking)
+      const testOrderId = "order_" + Math.random().toString(36).substring(7);
       await prisma.order.create({
         data: {
-          id: "order_test_1",
-          orderNumber: "ORD-123",
+          id: testOrderId,
+          orderNumber: "ORD-" + testOrderId,
           userId: existingUser!.id,
           subtotal: 1000,
           shippingCost: 100,
           total: 1100,
           balanceDue: 1100,
-          status: OrderStatus.PENDING,
+          status: OrderStatus.PENDING_ADVANCE,
           items: {},
           shippingAddress: { name: "Test", phone: "123", division: "Test", district: "Test", street: "Test" }
         }
