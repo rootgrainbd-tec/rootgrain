@@ -18,6 +18,7 @@ export type RateLimitCategory =
   | "product_search"
   | "product_detail"
   | "contact"
+  | "track"
   | "cron_internal";
 
 export type FailureStrategy = "FAIL_CLOSED" | "FAIL_OPEN" | "DEGRADED_MODE";
@@ -45,6 +46,7 @@ export const RATE_LIMIT_POLICIES: Record<RateLimitCategory, RateLimitPolicy> = {
   product_search: { limit: 200, window: "1 m", failureStrategy: "FAIL_OPEN" },
   product_detail: { limit: 300, window: "1 m", failureStrategy: "FAIL_OPEN" },
   contact: { limit: 3, window: "1 h", failureStrategy: "FAIL_OPEN" },
+  track: { limit: 10, window: "1 h", failureStrategy: "FAIL_OPEN" },
   cron_internal: { limit: 5, window: "1 m", failureStrategy: "FAIL_OPEN" }
 };
 

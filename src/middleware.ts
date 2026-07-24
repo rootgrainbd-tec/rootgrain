@@ -48,6 +48,9 @@ export async function middleware(req: NextRequest) {
     category = "cron_internal";
   } else if (pathname === "/api/inquiry") {
     category = "contact";
+  } else if (pathname === "/api/track") {
+    category = "track";
+    requireL2Auth = true;
   }
   
   const isL2Only = ["wishlist", "reviews", "profile", "admin_api"].includes(category || "");
