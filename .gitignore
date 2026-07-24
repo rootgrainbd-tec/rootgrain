@@ -73,3 +73,4 @@ examples/
 upload/
 .vercel
 .env*.local
+.env.*.test
