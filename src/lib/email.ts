@@ -104,11 +104,24 @@ function getOrderItemsHtml(items: any[]) {
   return html;
 }
 
-export async function sendOrderConfirmationEmail(order: any, customerEmail: string) {
+export async function sendOrderConfirmationEmail(order: any, customerEmail: string, rawGuestToken?: string) {
   try {
     const customerName = escapeHtml(order.shippingAddress?.name || "Customer");
     const itemsHtml = getOrderItemsHtml(order.items);
     const advanceRequired = order.total * 0.2;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rootgrain.bd";
+
+    let trackButtonHtml = '';
+    // Only generate tracking links for guest orders (not authenticated)
+    if (!order.userId) {
+      if (rawGuestToken) {
+        // New guest orders with capability token
+        trackButtonHtml = `<a href="${baseUrl}/track?orderNumber=${order.orderNumber}#token=${rawGuestToken}" class="btn" style="margin-right: 10px;">Track Order</a>`;
+      } else {
+        // Legacy guest orders (or if token generation was bypassed)
+        trackButtonHtml = `<a href="${baseUrl}/track?orderNumber=${order.orderNumber}" class="btn" style="margin-right: 10px;">Track Order</a>`;
+      }
+    }
 
     const content = `
       <h2>Thank you for your order!</h2>
@@ -146,7 +159,8 @@ export async function sendOrderConfirmationEmail(order: any, customerEmail: stri
       <p>Our representative will contact you shortly to confirm the advance payment details. Once the advance is received, production will begin.</p>
       
       <div style="text-align: center;">
-        <a href="https://rootgrain.bd" class="btn">Visit Website</a>
+        ${trackButtonHtml}
+        <a href="${baseUrl}" class="btn">Visit Website</a>
       </div>
     `;
 

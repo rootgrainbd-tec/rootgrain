@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Search, CheckCircle2, Package, Truck, Home } from "lucide-react";
@@ -12,6 +12,57 @@ export default function TrackOrderPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [order, setOrder] = useState<any>(null);
+
+  // We do not store the token in state to minimize its lifetime.
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const urlOrderNum = params.get("orderNumber");
+    
+    const hash = window.location.hash;
+    let extractedToken = "";
+    if (hash && hash.startsWith("#token=")) {
+      extractedToken = hash.replace("#token=", "");
+      // Immediately strip token from URL to prevent Referer leakage
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+
+    const autoTrack = async (num: string, token: string) => {
+      setIsLoading(true);
+      setOrder(null);
+      try {
+        const res = await fetch(`/api/track`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderNumber: num, token })
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.success) {
+          setOrder(data.data.order);
+        } else {
+          toast.error(data.error?.message || "Order not found. Please check your details.");
+        }
+      } catch (error) {
+        toast.error("Failed to track order");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (urlOrderNum) {
+      setOrderNumber(urlOrderNum);
+      
+      if (extractedToken) {
+        // Auto-submit using capability token
+        autoTrack(urlOrderNum, extractedToken);
+      }
+    }
+  }, []);
+
+
 
   const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
