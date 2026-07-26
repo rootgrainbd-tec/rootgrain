@@ -9,6 +9,7 @@ import { CartRepository } from "@/repositories/cart.repository";
 import { ValidationError, NotFoundError } from "@/lib/errors/AppError";
 import { logger } from "@/lib/logger";
 import { generateGuestTrackingToken, hashGuestTrackingToken } from "@/lib/capability-token";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 
 function generateOrderNumber() {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -170,8 +171,8 @@ export class CheckoutService {
 
     logger.info({ orderId: order.id, orderNumber: order.orderNumber }, "Order created successfully");
 
-    // 5. Fire background jobs (To be replaced with Inngest)
-    // sendOrderConfirmationEmail(order, address.email).catch(console.error);
+    // 5. Fire background jobs
+    sendOrderConfirmationEmail(order, address.email, rawGuestToken).catch(console.error);
 
     // 6. Recover abandoned cart
     try {

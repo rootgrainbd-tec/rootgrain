@@ -13,12 +13,12 @@ export async function POST(request: Request) {
       throw new AppError("Invalid JSON body", 400);
     }
 
-    const { orderNumber, email } = body;
+    const { orderNumber, email, token } = body;
 
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
 
-    const order = await OrderService.getOrderDetails(orderNumber as string, email as string | undefined, userId);
+    const order = await OrderService.getOrderDetails(orderNumber as string, email as string | undefined, userId, token as string | undefined);
 
     // Response Minimization (Phase 7): Return only fields required by the UI
     // Ensure internal IDs that are strictly not needed by UI are omitted if possible.

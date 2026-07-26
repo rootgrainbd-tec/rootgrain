@@ -3,9 +3,10 @@ import { OrderRepository } from "@/repositories/order.repository";
 import { AppError, ValidationError, NotFoundError } from "@/lib/errors/AppError";
 import { OrderStatus, Prisma } from "@prisma/client";
 import { sendOrderStatusUpdateEmail } from "@/lib/email";
+import { verifyGuestTrackingToken } from "@/lib/capability-token";
 
 export class OrderService {
-  static async getOrderDetails(orderNumber: string, email?: string, userId?: string) {
+  static async getOrderDetails(orderNumber: string, email?: string, userId?: string, token?: string) {
     if (!orderNumber) {
       throw new AppError("Missing order number", 400);
     }
@@ -24,14 +25,21 @@ export class OrderService {
       isAuthorized = true;
     }
 
-    // Condition 2: Guest verifier (email)
-    if (!isAuthorized && email) {
-      const shippingEmail = (order.shippingAddress as any)?.email;
-      
-      const normalizedInputEmail = email.trim().toLowerCase();
-      
-      if (shippingEmail && shippingEmail.trim().toLowerCase() === normalizedInputEmail) {
-        isAuthorized = true;
+    // Condition 2: Guest verifier (Dual mode: capability token OR legacy email)
+    if (!isAuthorized) {
+      if (order.guestTokenHash) {
+        // New guest order: Requires valid capability token
+        if (token && verifyGuestTrackingToken(token, order.guestTokenHash)) {
+          isAuthorized = true;
+        }
+      } else if (email) {
+        // Legacy guest order (before Slice 2): Requires matching email
+        const shippingEmail = (order.shippingAddress as any)?.email;
+        const normalizedInputEmail = email.trim().toLowerCase();
+        
+        if (shippingEmail && shippingEmail.trim().toLowerCase() === normalizedInputEmail) {
+          isAuthorized = true;
+        }
       }
     }
 
