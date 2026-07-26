@@ -8,6 +8,7 @@ import { OrderRepository } from "@/repositories/order.repository";
 import { CartRepository } from "@/repositories/cart.repository";
 import { ValidationError, NotFoundError } from "@/lib/errors/AppError";
 import { logger } from "@/lib/logger";
+import { generateGuestTrackingToken, hashGuestTrackingToken } from "@/lib/capability-token";
 
 function generateOrderNumber() {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -130,7 +131,17 @@ export class CheckoutService {
     const total = subtotal + shippingCost - discountAmount;
     const balanceDue = total;
 
-    // 4. Create Order
+    // 4. Generate guest tracking capability token if applicable
+    let guestTokenHash: string | undefined;
+    let rawGuestToken: string | undefined;
+    
+    // Only generate for GUEST orders (no userId)
+    if (!userId) {
+      rawGuestToken = generateGuestTrackingToken();
+      guestTokenHash = hashGuestTrackingToken(rawGuestToken);
+    }
+
+    // 5. Create Order
     const order = await OrderRepository.createOrder({
       orderNumber: generateOrderNumber(),
       user: userId ? { connect: { id: userId } } : undefined,
@@ -140,6 +151,7 @@ export class CheckoutService {
       balanceDue,
       promoCode,
       discountAmount,
+      guestTokenHash,
       status: "PENDING_ADVANCE",
       logistics: "PRIVATE_FREIGHT",
       shippingAddress: {
@@ -168,6 +180,6 @@ export class CheckoutService {
       logger.error({ err: e, email: address.email }, "Failed to update abandoned cart");
     }
 
-    return order;
+    return { order, rawGuestToken };
   }
 }

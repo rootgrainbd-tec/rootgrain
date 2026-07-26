@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const userId = session?.user ? session.user.id : null;
 
     // 2. Process checkout via Service
-    const order = await CheckoutService.processCheckout(payload, userId);
+    const { order } = await CheckoutService.processCheckout(payload, userId);
 
     return successResponse({ orderId: order.id, orderNumber: order.orderNumber });
   } catch (error) {
