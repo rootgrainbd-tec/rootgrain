@@ -38,7 +38,10 @@ function parsePhone(rawPhone: string) {
 
 export const getSiteConfig = cache(async function getSiteConfig(): Promise<SiteConfig> {
   const [sanityConfig, categoryGroupsRaw] = await Promise.all([
-    client.fetch(`*[_type == "siteSettings"][0]`),
+    client.fetch(`*[_type == "siteSettings"][0] {
+      ...,
+      "logoUrl": logo.asset->url
+    }`),
     client.fetch(`*[_type == "categoryGroup"] | order(order asc) {
       _id,
       title,
@@ -54,45 +57,91 @@ export const getSiteConfig = cache(async function getSiteConfig(): Promise<SiteC
     categories: g.categories || [],
   })) || [];
 
-  if (!sanityConfig) {
-    return {
-      name: "RootGrain",
-      tagline: "Artisan Furniture",
-      description: "RootGrain crafts heirloom-quality wooden furniture.",
-      url: "https://rootgrain.bd",
-      support: { phone: parsePhone(FALLBACK_PHONE), email: "", hours: "" },
-      address: { line1: "", line2: "" },
-      social: {},
-      legal: { copyright: "", origin: "" },
-      categoryGroups
-    };
-  }
-
-  const rawPhone = sanityConfig.phone || FALLBACK_PHONE;
+  const rawPhone = sanityConfig?.phone || FALLBACK_PHONE;
+  const siteUrl = sanityConfig?.websiteUrl || process.env.NEXT_PUBLIC_APP_URL || "https://rootgrain.bd";
 
   return {
-    name: sanityConfig.siteTitle || "RootGrain",
-    tagline: sanityConfig.tagline || "Artisan Furniture",
-    description: sanityConfig.description || "RootGrain crafts heirloom-quality wooden furniture.",
-    url: "https://rootgrain.bd",
+    name: sanityConfig?.siteTitle || "RootGrain",
+    tagline: sanityConfig?.tagline || "",
+    description: sanityConfig?.description || "",
+    url: siteUrl,
+    logoUrl: sanityConfig?.logoUrl || "",
     support: {
       phone: parsePhone(rawPhone),
-      email: sanityConfig.email || "",
-      hours: sanityConfig.hours || "",
+      email: sanityConfig?.email || "",
+      hours: sanityConfig?.hours || "",
     },
     address: {
-      line1: sanityConfig.address?.line1 || "",
-      line2: sanityConfig.address?.line2 || "",
+      line1: sanityConfig?.address?.line1 || "",
+      line2: sanityConfig?.address?.line2 || "",
     },
     social: {
-      instagram: sanityConfig.socialLinks?.instagram,
-      facebook: sanityConfig.socialLinks?.facebook,
-      twitter: sanityConfig.socialLinks?.twitter,
+      instagram: sanityConfig?.socialLinks?.instagram,
+      facebook: sanityConfig?.socialLinks?.facebook,
+      twitter: sanityConfig?.socialLinks?.twitter,
+      youtube: sanityConfig?.socialLinks?.youtube,
+      linkedin: sanityConfig?.socialLinks?.linkedin,
+      pinterest: sanityConfig?.socialLinks?.pinterest,
     },
     legal: {
-      copyright: sanityConfig.copyright || "",
-      origin: sanityConfig.origin || "",
+      copyright: sanityConfig?.copyright || "",
+      origin: sanityConfig?.origin || "",
     },
     categoryGroups
   };
 });
+
+export async function getFreshSiteConfig(): Promise<SiteConfig> {
+  const [sanityConfig, categoryGroupsRaw] = await Promise.all([
+    client.fetch(`*[_type == "siteSettings"][0] {
+      ...,
+      "logoUrl": logo.asset->url
+    }`, {}, { cache: 'no-store', next: { revalidate: 0 } }),
+    client.fetch(`*[_type == "categoryGroup"] | order(order asc) {
+      _id,
+      title,
+      "slug": slug.current,
+      "categories": categories[]->name
+    }`, {}, { cache: 'no-store', next: { revalidate: 0 } })
+  ]);
+  
+  const categoryGroups = categoryGroupsRaw?.map((g: any) => ({
+    id: g._id,
+    label: g.title,
+    slug: g.slug,
+    categories: g.categories || [],
+  })) || [];
+
+  const rawPhone = sanityConfig?.phone || FALLBACK_PHONE;
+  const siteUrl = sanityConfig?.websiteUrl || process.env.NEXT_PUBLIC_APP_URL || "https://rootgrain.bd";
+
+  return {
+    name: sanityConfig?.siteTitle || "RootGrain",
+    tagline: sanityConfig?.tagline || "",
+    description: sanityConfig?.description || "",
+    url: siteUrl,
+    logoUrl: sanityConfig?.logoUrl || "",
+    support: {
+      phone: parsePhone(rawPhone),
+      email: sanityConfig?.email || "",
+      hours: sanityConfig?.hours || "",
+    },
+    address: {
+      line1: sanityConfig?.address?.line1 || "",
+      line2: sanityConfig?.address?.line2 || "",
+    },
+    social: {
+      instagram: sanityConfig?.socialLinks?.instagram,
+      facebook: sanityConfig?.socialLinks?.facebook,
+      twitter: sanityConfig?.socialLinks?.twitter,
+      youtube: sanityConfig?.socialLinks?.youtube,
+      linkedin: sanityConfig?.socialLinks?.linkedin,
+      pinterest: sanityConfig?.socialLinks?.pinterest,
+    },
+    legal: {
+      copyright: sanityConfig?.copyright || "",
+      origin: sanityConfig?.origin || "",
+    },
+    categoryGroups
+  };
+}

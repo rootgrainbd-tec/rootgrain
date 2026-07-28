@@ -1,6 +1,9 @@
 import nodemailer from "nodemailer";
 import { generateInvoicePDF } from "./pdfGenerator";
 import { logger } from "./logger";
+import { getFreshSiteConfig } from "@/data/site-config";
+import { EmailTheme } from "./email/theme";
+import type { SiteConfig } from "@/types/site";
 
 function escapeHtml(unsafe: string) {
   return (unsafe || "").replace(/[&<"'>]/g, function (m) {
@@ -25,11 +28,36 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const SENDER = '"Rootgrain" <support@rootgrain.bd>';
-const BRAND_COLOR = "#5D4037";
-const BG_COLOR = "#fcfaf8";
+async function getEmailSender(config: SiteConfig) {
+  const fromEmail = process.env.RESEND_FROM_EMAIL || "support@rootgrain.bd";
+  return `"${config.name || 'Rootgrain'}" <${fromEmail}>`;
+}
 
-function getBaseTemplate(title: string, content: string) {
+function buildSocialLinksHtml(config: SiteConfig) {
+  const socialHtml = [];
+  const platforms = ['instagram', 'facebook', 'twitter', 'youtube', 'linkedin', 'pinterest'] as const;
+  
+  for (const platform of platforms) {
+    if (config.social?.[platform]) {
+      socialHtml.push(`<a href="${config.social[platform]}" style="margin: 0 5px; display: inline-block;">
+        <img src="${config.url}/email-icons/${platform}.png" alt="${platform}" width="24" height="24" style="display: block; border: 0;" />
+      </a>`);
+    }
+  }
+  return socialHtml.join('\n');
+}
+
+async function getBaseTemplate(title: string, content: string, config: SiteConfig) {
+  const currentYear = new Date().getFullYear();
+  const logoHtml = config.logoUrl 
+    ? `<img src="${config.logoUrl}" alt="${config.name || 'Rootgrain'}" style="max-height: 40px; border: 0;" />`
+    : `<h1>${config.name || 'Rootgrain'}</h1>`;
+    
+  const socialLinksHtml = buildSocialLinksHtml(config);
+  const supportEmailHtml = config.support?.email 
+    ? `<p>Need help? Contact us at <a href="mailto:${config.support.email}" style="color: ${EmailTheme.primary};">${config.support.email}</a></p>` 
+    : '';
+
   return `
     <!DOCTYPE html>
     <html>
@@ -37,33 +65,35 @@ function getBaseTemplate(title: string, content: string) {
       <meta charset="utf-8">
       <title>${title}</title>
       <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
-        .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .header { background-color: ${BRAND_COLOR}; padding: 30px; text-align: center; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: ${EmailTheme.background}; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 40px auto; background-color: ${EmailTheme.containerBg}; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .header { background-color: ${EmailTheme.primary}; padding: 30px; text-align: center; }
         .header h1 { color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; }
-        .content { padding: 40px 30px; color: #333333; line-height: 1.6; }
-        .footer { background-color: ${BG_COLOR}; padding: 20px; text-align: center; color: #777777; font-size: 14px; border-top: 1px solid #eeeeee; }
-        .btn { display: inline-block; background-color: ${BRAND_COLOR}; color: #ffffff !important; text-decoration: none; padding: 12px 25px; border-radius: 4px; font-weight: bold; margin-top: 20px; }
-        .order-summary { background-color: ${BG_COLOR}; border: 1px solid #eeeeee; border-radius: 6px; padding: 20px; margin: 25px 0; }
+        .content { padding: 40px 30px; color: ${EmailTheme.textDark}; line-height: 1.6; }
+        .footer { background-color: ${EmailTheme.footerBg}; padding: 20px; text-align: center; color: ${EmailTheme.textMuted}; font-size: 14px; border-top: 1px solid ${EmailTheme.border}; }
+        .btn { display: inline-block; background-color: ${EmailTheme.primary}; color: #ffffff !important; text-decoration: none; padding: 12px 25px; border-radius: 4px; font-weight: bold; margin-top: 20px; }
+        .order-summary { background-color: ${EmailTheme.footerBg}; border: 1px solid ${EmailTheme.border}; border-radius: 6px; padding: 20px; margin: 25px 0; }
         .items-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .items-table th, .items-table td { padding: 10px; text-align: left; border-bottom: 1px solid #eeeeee; font-size: 14px;}
+        .items-table th, .items-table td { padding: 10px; text-align: left; border-bottom: 1px solid ${EmailTheme.border}; font-size: 14px;}
         .items-table th { color: #555555; text-transform: uppercase; font-size: 12px;}
         .total-row td { font-weight: bold; border-bottom: none; padding-top: 15px; }
-        h2 { color: ${BRAND_COLOR}; margin-top: 0; }
+        h2 { color: ${EmailTheme.primary}; margin-top: 0; }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          <h1>Rootgrain</h1>
+          ${logoHtml}
         </div>
         <div class="content">
           ${content}
         </div>
         <div class="footer">
-          <p>Rootgrain Furniture | Handcrafted in Bangladesh</p>
-          <p>Need help? Contact us at <a href="mailto:support@rootgrain.bd" style="color: ${BRAND_COLOR};">support@rootgrain.bd</a></p>
-          <p style="margin-top: 10px;"><a href="https://rootgrain.bd" style="color: ${BRAND_COLOR}; text-decoration: none;">www.rootgrain.bd</a></p>
+          ${config.tagline ? `<p>${config.tagline}</p>` : `<p>${config.name || 'Rootgrain'} | Handcrafted in Bangladesh</p>`}
+          ${supportEmailHtml}
+          <p style="margin-top: 10px;"><a href="${config.url}" style="color: ${EmailTheme.primary}; text-decoration: none;">${config.url.replace(/^https?:\/\//, '')}</a></p>
+          ${socialLinksHtml ? `<div style="margin-top: 15px;">${socialLinksHtml}</div>` : ''}
+          <p style="margin-top: 15px; font-size: 12px;">&copy; ${currentYear} ${config.name || 'Rootgrain'}. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -106,19 +136,18 @@ function getOrderItemsHtml(items: any[]) {
 
 export async function sendOrderConfirmationEmail(order: any, customerEmail: string, rawGuestToken?: string) {
   try {
+    const config = await getFreshSiteConfig();
+    const sender = await getEmailSender(config);
     const customerName = escapeHtml(order.shippingAddress?.name || "Customer");
     const itemsHtml = getOrderItemsHtml(order.items);
     const advanceRequired = order.total * 0.2;
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rootgrain.bd";
+    const baseUrl = config.url;
 
     let trackButtonHtml = '';
-    // Only generate tracking links for guest orders (not authenticated)
     if (!order.userId) {
       if (rawGuestToken) {
-        // New guest orders with capability token
         trackButtonHtml = `<a href="${baseUrl}/track?orderNumber=${order.orderNumber}#token=${rawGuestToken}" class="btn" style="margin-right: 10px;">Track Order</a>`;
       } else {
-        // Legacy guest orders (or if token generation was bypassed)
         trackButtonHtml = `<a href="${baseUrl}/track?orderNumber=${order.orderNumber}" class="btn" style="margin-right: 10px;">Track Order</a>`;
       }
     }
@@ -129,7 +158,7 @@ export async function sendOrderConfirmationEmail(order: any, customerEmail: stri
       <p>We've successfully received your order <strong>#${order.orderNumber}</strong>. It is currently being processed.</p>
       
       <div class="order-summary">
-        <h3 style="margin-top: 0; color: ${BRAND_COLOR}; border-bottom: 2px solid ${BRAND_COLOR}; padding-bottom: 10px; display: inline-block;">Order Summary</h3>
+        <h3 style="margin-top: 0; color: ${EmailTheme.primary}; border-bottom: 2px solid ${EmailTheme.primary}; padding-bottom: 10px; display: inline-block;">Order Summary</h3>
         ${itemsHtml}
         <table style="width: 100%; margin-top: 15px; font-size: 14px;">
           <tr>
@@ -151,8 +180,8 @@ export async function sendOrderConfirmationEmail(order: any, customerEmail: stri
           </tr>
         </table>
         
-        <div style="background-color: #f5ece9; padding: 15px; border-radius: 4px; margin-top: 15px; border-left: 4px solid ${BRAND_COLOR};">
-          <p style="margin: 0; color: ${BRAND_COLOR}; font-weight: bold;">Advance Required (20%): ৳${advanceRequired.toLocaleString()}</p>
+        <div style="background-color: #f5ece9; padding: 15px; border-radius: 4px; margin-top: 15px; border-left: 4px solid ${EmailTheme.primary};">
+          <p style="margin: 0; color: ${EmailTheme.primary}; font-weight: bold;">Advance Required (20%): ৳${advanceRequired.toLocaleString()}</p>
         </div>
       </div>
 
@@ -164,14 +193,14 @@ export async function sendOrderConfirmationEmail(order: any, customerEmail: stri
       </div>
     `;
 
-    const html = getBaseTemplate(`Order Confirmation - ${order.orderNumber}`, content);
-
+    const html = await getBaseTemplate(`Order Confirmation - ${order.orderNumber}`, content, config);
     const pdfBuffer = await generateInvoicePDF(order);
 
     await transporter.sendMail({
-      from: SENDER,
+      from: sender,
+      ...(config.support?.email && { replyTo: config.support.email }),
       to: customerEmail,
-      subject: `Order Confirmation - ${order.orderNumber} | Rootgrain`,
+      subject: `Order Confirmation - ${order.orderNumber} | ${config.name || 'Rootgrain'}`,
       html,
       attachments: [
         {
@@ -190,6 +219,8 @@ export async function sendOrderConfirmationEmail(order: any, customerEmail: stri
 
 export async function sendOrderStatusUpdateEmail(order: any, customerEmail: string, status: string) {
   try {
+    const config = await getFreshSiteConfig();
+    const sender = await getEmailSender(config);
     const customerName = escapeHtml(order.shippingAddress?.name || "Customer");
     let statusMessage = "Your order status has been updated.";
     let heading = "Order Update";
@@ -202,7 +233,7 @@ export async function sendOrderStatusUpdateEmail(order: any, customerEmail: stri
       statusMessage = "Your order has been <strong>Dispatched</strong> and is on its way to you! Our delivery team will contact you soon.";
     } else if (status === "DELIVERED") {
       heading = "Order Delivered!";
-      statusMessage = "Your order has been marked as <strong>Delivered</strong>. Thank you for choosing Rootgrain to furnish your home!";
+      statusMessage = "Your order has been marked as <strong>Delivered</strong>. Thank you for choosing us to furnish your home!";
     }
 
     const itemsHtml = getOrderItemsHtml(order.items);
@@ -212,7 +243,7 @@ export async function sendOrderStatusUpdateEmail(order: any, customerEmail: stri
       <p>Hi ${customerName},</p>
       <p>An update on your order <strong>#${order.orderNumber}</strong>:</p>
       
-      <div style="background-color: #f8f9fa; padding: 20px; border-left: 4px solid ${BRAND_COLOR}; margin: 25px 0; border-radius: 0 4px 4px 0;">
+      <div style="background-color: #f8f9fa; padding: 20px; border-left: 4px solid ${EmailTheme.primary}; margin: 25px 0; border-radius: 0 4px 4px 0;">
         <p style="margin: 0; font-size: 16px; line-height: 1.5;">${statusMessage}</p>
       </div>
 
@@ -224,16 +255,17 @@ export async function sendOrderStatusUpdateEmail(order: any, customerEmail: stri
       ` : ''}
 
       <div style="text-align: center; margin-top: 30px;">
-        <a href="https://rootgrain.bd" class="btn">Visit Website</a>
+        <a href="${config.url}" class="btn">Visit Website</a>
       </div>
     `;
 
-    const html = getBaseTemplate(`Order Update - ${order.orderNumber}`, content);
+    const html = await getBaseTemplate(`Order Update - ${order.orderNumber}`, content, config);
 
     await transporter.sendMail({
-      from: SENDER,
+      from: sender,
+      ...(config.support?.email && { replyTo: config.support.email }),
       to: customerEmail,
-      subject: `Order Update: ${status} - ${order.orderNumber} | Rootgrain`,
+      subject: `Order Update: ${status} - ${order.orderNumber} | ${config.name || 'Rootgrain'}`,
       html,
     });
 
@@ -245,6 +277,8 @@ export async function sendOrderStatusUpdateEmail(order: any, customerEmail: stri
 
 export async function sendAbandonedCartEmail(customerEmail: string, items: any[], promoCode: string, discountPercent: number) {
   try {
+    const config = await getFreshSiteConfig();
+    const sender = await getEmailSender(config);
     const itemsHtml = getOrderItemsHtml(items);
     
     const content = `
@@ -253,27 +287,28 @@ export async function sendAbandonedCartEmail(customerEmail: string, items: any[]
       <p>We noticed you left some beautiful furniture in your cart. We've saved it for you!</p>
       
       <div class="order-summary" style="margin-top: 25px;">
-        <h3 style="margin-top: 0; color: ${BRAND_COLOR};">Your Saved Items:</h3>
+        <h3 style="margin-top: 0; color: ${EmailTheme.primary};">Your Saved Items:</h3>
         ${itemsHtml}
       </div>
 
-      <div style="background-color: #f8f9fa; border: 2px dashed ${BRAND_COLOR}; padding: 20px; text-align: center; margin: 30px 0; border-radius: 8px;">
+      <div style="background-color: #f8f9fa; border: 2px dashed ${EmailTheme.primary}; padding: 20px; text-align: center; margin: 30px 0; border-radius: 8px;">
         <p style="margin: 0 0 10px 0; font-size: 16px;">Come back and complete your order with a <strong>${discountPercent}% discount</strong>!</p>
         <p style="margin: 0; font-size: 14px; color: #555;">Use promo code at checkout:</p>
-        <div style="font-size: 24px; font-weight: bold; color: ${BRAND_COLOR}; letter-spacing: 2px; margin-top: 10px;">${promoCode}</div>
+        <div style="font-size: 24px; font-weight: bold; color: ${EmailTheme.primary}; letter-spacing: 2px; margin-top: 10px;">${promoCode}</div>
       </div>
 
       <div style="text-align: center;">
-        <a href="https://rootgrain.bd/checkout" class="btn">Complete My Order</a>
+        <a href="${config.url}/checkout" class="btn">Complete My Order</a>
       </div>
     `;
 
-    const html = getBaseTemplate(`Complete Your Rootgrain Order`, content);
+    const html = await getBaseTemplate(`Complete Your Order`, content, config);
 
     await transporter.sendMail({
-      from: SENDER,
+      from: sender,
+      ...(config.support?.email && { replyTo: config.support.email }),
       to: customerEmail,
-      subject: `You left something behind! (Here's ${discountPercent}% off) | Rootgrain`,
+      subject: `You left something behind! (Here's ${discountPercent}% off) | ${config.name || 'Rootgrain'}`,
       html,
     });
     
@@ -285,9 +320,11 @@ export async function sendAbandonedCartEmail(customerEmail: string, items: any[]
 
 export async function sendPasswordResetEmail(email: string, resetLink: string) {
   try {
+    const config = await getFreshSiteConfig();
+    const sender = await getEmailSender(config);
     const content = `
       <h2>Reset Your Password</h2>
-      <p>We received a request to reset the password for your Rootgrain account.</p>
+      <p>We received a request to reset the password for your account.</p>
       <p>If you didn't make this request, you can safely ignore this email.</p>
       
       <div style="text-align: center; margin: 30px 0;">
@@ -296,19 +333,20 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
       
       <p style="font-size: 13px; color: #666;">
         Or copy and paste this link into your browser:<br>
-        <a href="${resetLink}" style="color: ${BRAND_COLOR};">${resetLink}</a>
+        <a href="${resetLink}" style="color: ${EmailTheme.primary};">${resetLink}</a>
       </p>
       <p style="font-size: 13px; color: #666; margin-top: 20px;">
         This link will expire in 1 hour for your security.
       </p>
     `;
 
-    const html = getBaseTemplate(`Reset Your Password`, content);
+    const html = await getBaseTemplate(`Reset Your Password`, content, config);
 
     await transporter.sendMail({
-      from: SENDER,
+      from: sender,
+      ...(config.support?.email && { replyTo: config.support.email }),
       to: email,
-      subject: `Reset Your Password | Rootgrain`,
+      subject: `Reset Your Password | ${config.name || 'Rootgrain'}`,
       html,
     });
     
@@ -320,9 +358,11 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
 
 export async function sendVerificationEmail(email: string, verifyLink: string) {
   try {
+    const config = await getFreshSiteConfig();
+    const sender = await getEmailSender(config);
     const content = `
       <h2>Verify Your Email Address</h2>
-      <p>Thank you for registering with Rootgrain!</p>
+      <p>Thank you for registering with ${config.name || 'Rootgrain'}!</p>
       <p>Please click the button below to verify your email address and activate your account.</p>
       
       <div style="text-align: center; margin: 30px 0;">
@@ -331,19 +371,20 @@ export async function sendVerificationEmail(email: string, verifyLink: string) {
       
       <p style="font-size: 13px; color: #666;">
         Or copy and paste this link into your browser:<br>
-        <a href="${verifyLink}" style="color: ${BRAND_COLOR};">${verifyLink}</a>
+        <a href="${verifyLink}" style="color: ${EmailTheme.primary};">${verifyLink}</a>
       </p>
       <p style="font-size: 13px; color: #666; margin-top: 20px;">
         This link will expire in 1 hour. If you didn't create an account, you can safely ignore this email.
       </p>
     `;
 
-    const html = getBaseTemplate(`Verify Your Email`, content);
+    const html = await getBaseTemplate(`Verify Your Email`, content, config);
 
     await transporter.sendMail({
-      from: SENDER,
+      from: sender,
+      ...(config.support?.email && { replyTo: config.support.email }),
       to: email,
-      subject: `Verify Your Email | Rootgrain`,
+      subject: `Verify Your Email | ${config.name || 'Rootgrain'}`,
       html,
     });
     
@@ -355,13 +396,15 @@ export async function sendVerificationEmail(email: string, verifyLink: string) {
 
 export async function sendLoginAttemptEmail(email: string) {
   try {
+    const config = await getFreshSiteConfig();
+    const sender = await getEmailSender(config);
     const content = `
       <h2>Registration Attempt</h2>
       <p>We noticed a recent registration attempt using your email address.</p>
       <p>You already have an active account with us. Please log in using your existing credentials or social login.</p>
       
       <div style="text-align: center; margin: 30px 0;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://rootgrain.bd"}/login" class="btn">Log In</a>
+        <a href="${config.url}/login" class="btn">Log In</a>
       </div>
       
       <p style="font-size: 13px; color: #666; margin-top: 20px;">
@@ -369,12 +412,13 @@ export async function sendLoginAttemptEmail(email: string) {
       </p>
     `;
 
-    const html = getBaseTemplate(`Registration Attempt`, content);
+    const html = await getBaseTemplate(`Registration Attempt`, content, config);
 
     await transporter.sendMail({
-      from: SENDER,
+      from: sender,
+      ...(config.support?.email && { replyTo: config.support.email }),
       to: email,
-      subject: `Registration Attempt | Rootgrain`,
+      subject: `Registration Attempt | ${config.name || 'Rootgrain'}`,
       html,
     });
     
@@ -388,13 +432,19 @@ export async function sendWelcomeEmail(user: { name?: string | null; email?: str
   if (!user.email) return;
 
   try {
+    const config = await getFreshSiteConfig();
+    const sender = await getEmailSender(config);
+    const currentYear = new Date().getFullYear();
+    const siteUrl = config.url;
     const firstName = user.name ? user.name.split(" ")[0] : "there";
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rootgrain.bd";
-
-    const forestGreen = "#2D4A3E";
-    const woodBrown = "#8B5A2B";
-    const cream = "#F9F6F0";
-    const textDark = "#333333";
+    
+    const socialLinksHtml = buildSocialLinksHtml(config);
+    const phoneDisplay = config.support?.phone?.display;
+    const emailDisplay = config.support?.email;
+    
+    const logoHtml = config.logoUrl 
+      ? `<img src="${config.logoUrl}" alt="${config.name || 'Rootgrain'}" style="max-height: 40px; border: 0;" />`
+      : `<h2 style="color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 2px; text-transform: uppercase;">${config.name || 'ROOTGRAIN'}</h2>`;
 
     const html = `
       <!DOCTYPE html>
@@ -402,69 +452,61 @@ export async function sendWelcomeEmail(user: { name?: string | null; email?: str
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Welcome to RootGrain!</title>
+        <title>Welcome to ${config.name || 'Rootgrain'}!</title>
         <style>
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: ${cream}; margin: 0; padding: 0; color: ${textDark}; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: ${EmailTheme.cream}; margin: 0; padding: 0; color: ${EmailTheme.textDark}; }
           .preheader { display: none; max-height: 0px; overflow: hidden; }
-          .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-          .header { background-color: ${forestGreen}; padding: 40px 30px; text-align: center; }
+          .container { max-width: 600px; margin: 40px auto; background-color: ${EmailTheme.containerBg}; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+          .header { background-color: ${EmailTheme.forestGreen}; padding: 40px 30px; text-align: center; }
           .content { padding: 40px 30px; line-height: 1.8; font-size: 16px; }
-          .content h1 { color: ${forestGreen}; font-size: 24px; margin-top: 0; font-weight: 600; }
+          .content h1 { color: ${EmailTheme.forestGreen}; font-size: 24px; margin-top: 0; font-weight: 600; }
           .content p { margin-bottom: 20px; }
           .cta-container { text-align: center; margin: 35px 0; }
-          .btn-primary { display: inline-block; background-color: ${woodBrown}; color: #ffffff !important; text-decoration: none; padding: 14px 28px; border-radius: 4px; font-weight: bold; margin: 0 10px 10px 0; transition: background-color 0.3s; }
-          .btn-secondary { display: inline-block; background-color: transparent; border: 2px solid ${forestGreen}; color: ${forestGreen} !important; text-decoration: none; padding: 12px 26px; border-radius: 4px; font-weight: bold; margin: 0 0 10px 0; }
-          .footer { background-color: ${cream}; padding: 30px; text-align: center; font-size: 14px; border-top: 1px solid #eaddd5; color: #555555; }
-          .footer h3 { color: ${forestGreen}; margin: 0 0 5px 0; font-size: 16px; }
+          .btn-primary { display: inline-block; background-color: ${EmailTheme.accent}; color: #ffffff !important; text-decoration: none; padding: 14px 28px; border-radius: 4px; font-weight: bold; margin: 0 10px 10px 0; transition: background-color 0.3s; }
+          .btn-secondary { display: inline-block; background-color: transparent; border: 2px solid ${EmailTheme.forestGreen}; color: ${EmailTheme.forestGreen} !important; text-decoration: none; padding: 12px 26px; border-radius: 4px; font-weight: bold; margin: 0 0 10px 0; }
+          .footer { background-color: ${EmailTheme.cream}; padding: 30px; text-align: center; font-size: 14px; border-top: 1px solid #eaddd5; color: ${EmailTheme.textMuted}; }
+          .footer h3 { color: ${EmailTheme.forestGreen}; margin: 0 0 5px 0; font-size: 16px; }
           .footer p { margin: 5px 0; }
           .social-links { margin-top: 15px; }
-          .social-links a { color: ${woodBrown}; text-decoration: none; font-weight: bold; margin: 0 10px; }
+          .social-links a { display: inline-block; margin: 0 5px; }
           @media only screen and (max-width: 600px) {
             .container { margin: 20px 10px; width: auto; }
             .btn-primary, .btn-secondary { display: block; margin: 10px auto; width: 80%; }
           }
-          @media (prefers-color-scheme: dark) {
-            body { background-color: #1a1a1a; }
-            .container { background-color: #242424; color: #f0f0f0; }
-            .content, .content p { color: #e0e0e0; }
-            .content h1 { color: #8FBC8F; }
-            .footer { background-color: #1f1f1f; border-top: 1px solid #333; color: #aaaaaa; }
-            .footer h3 { color: #8FBC8F; }
-          }
         </style>
       </head>
       <body>
-        <span class="preheader">Your sustainable journey starts today.</span>
+        <span class="preheader">${config.tagline || 'Your sustainable journey starts today.'}</span>
         <div class="container">
           <div class="header">
-            <h2 style="color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 2px; text-transform: uppercase;">ROOTGRAIN</h2>
+            ${logoHtml}
           </div>
           <div class="content">
-            <h1>Welcome to the RootGrain Family!</h1>
+            <h1>Welcome to the ${config.name || 'Rootgrain'} Family!</h1>
             <p>Hi ${firstName},</p>
-            <p>Thank you for joining RootGrain. We're thrilled to have you with us on this journey towards sustainable, beautiful living.</p>
-            <p>At RootGrain, we believe that <em>every grain tells a story</em>. Our handcrafted furniture is designed to bring the timeless elegance of nature into your home, combining sustainable practices with exceptional craftsmanship.</p>
+            <p>Thank you for joining us. We're thrilled to have you with us on this journey.</p>
+            <p>At ${config.name || 'Rootgrain'}, we believe that every grain tells a story. Our handcrafted furniture is designed to bring the timeless elegance of nature into your home, combining sustainable practices with exceptional craftsmanship.</p>
             <p>Whether you're looking to furnish a new space or find that perfect statement piece, our collection has been curated with you in mind.</p>
             
             <div class="cta-container">
-              <a href="https://rootgrain.bd/products" class="btn-primary">Explore Collection</a>
-              <a href="https://rootgrain.bd" class="btn-secondary">Visit Website</a>
+              <a href="${siteUrl}/collection" class="btn-primary">Explore Collection</a>
+              <a href="${siteUrl}" class="btn-secondary">Visit Website</a>
             </div>
             
             <p style="margin-top: 30px;">We can't wait to see how you style your space!</p>
-            <p>Warmly,<br><strong>The RootGrain Team</strong></p>
+            <p>Warmly,<br><strong>The ${config.name || 'Rootgrain'} Team</strong></p>
           </div>
           <div class="footer">
-            <h3>RootGrain</h3>
-            <p><em>Every Grain Tells a Story.</em></p>
+            <h3>${config.name || 'Rootgrain'}</h3>
+            <p>${config.tagline || 'Every Grain Tells a Story.'}</p>
+            ${phoneDisplay || emailDisplay ? `
             <p style="margin-top: 15px;">
-              <strong>WhatsApp:</strong> 01632-300103<br>
-              <strong>Email:</strong> <a href="mailto:rootgrainbd@gmail.com" style="color: ${woodBrown};">rootgrainbd@gmail.com</a>
+              ${phoneDisplay ? `<strong>WhatsApp:</strong> ${phoneDisplay}<br>` : ''}
+              ${emailDisplay ? `<strong>Email:</strong> <a href="mailto:${emailDisplay}" style="color: ${EmailTheme.accent};">${emailDisplay}</a>` : ''}
             </p>
-            <div class="social-links">
-              <a href="https://instagram.com/rootgrain.bd">Instagram</a>
-            </div>
-            <p style="margin-top: 20px; font-size: 12px; color: #888;">&copy; ${new Date().getFullYear()} RootGrain. All rights reserved.</p>
+            ` : ''}
+            ${socialLinksHtml ? `<div class="social-links">${socialLinksHtml}</div>` : ''}
+            <p style="margin-top: 20px; font-size: 12px; color: #888;">&copy; ${currentYear} ${config.name || 'Rootgrain'}. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -472,9 +514,10 @@ export async function sendWelcomeEmail(user: { name?: string | null; email?: str
     `;
 
     const info = await transporter.sendMail({
-      from: SENDER,
+      from: sender,
+      ...(config.support?.email && { replyTo: config.support.email }),
       to: user.email,
-      subject: "🌿 Welcome to RootGrain!",
+      subject: `🌿 Welcome to ${config.name || 'Rootgrain'}!`,
       html,
     });
     

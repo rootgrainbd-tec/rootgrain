@@ -11,6 +11,20 @@ export default defineType({
       type: 'string',
     }),
     defineField({
+      name: 'logo',
+      title: 'Site Logo',
+      type: 'image',
+      options: {
+        hotspot: true,
+      },
+    }),
+    defineField({
+      name: 'websiteUrl',
+      title: 'Website URL',
+      type: 'url',
+      description: 'The primary URL of the website (e.g., https://rootgrain.bd)',
+    }),
+    defineField({
       name: 'tagline',
       title: 'Tagline',
       type: 'string',
@@ -52,6 +66,9 @@ export default defineType({
         { name: 'instagram', type: 'url', title: 'Instagram URL' },
         { name: 'facebook', type: 'url', title: 'Facebook URL' },
         { name: 'twitter', type: 'url', title: 'Twitter URL' },
+        { name: 'youtube', type: 'url', title: 'YouTube URL' },
+        { name: 'linkedin', type: 'url', title: 'LinkedIn URL' },
+        { name: 'pinterest', type: 'url', title: 'Pinterest URL' },
       ],
     }),
     defineField({

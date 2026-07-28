@@ -4,6 +4,7 @@ export interface SiteConfig {
   tagline: string;
   description: string;
   url: string;
+  logoUrl?: string;
   support: {
     /** Primary support phone */
     phone: {
@@ -23,6 +24,9 @@ export interface SiteConfig {
     instagram?: string;
     facebook?: string;
     twitter?: string;
+    youtube?: string;
+    linkedin?: string;
+    pinterest?: string;
   };
   legal: {
     copyright: string;
