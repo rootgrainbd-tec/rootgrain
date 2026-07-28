@@ -9,6 +9,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import type { Adapter } from "next-auth/adapters";
 import { Role } from "@prisma/client";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as Adapter,
@@ -85,6 +86,12 @@ export const authOptions: NextAuthOptions = {
   events: {
     async createUser({ user }) {
       if (user.email) {
+        try {
+          await sendWelcomeEmail(user);
+        } catch (e) {
+          logger.error({ err: e, email: user.email }, "Failed to send welcome email on OAuth signup");
+        }
+
         try {
           await prisma.$executeRaw`
             UPDATE "Order"

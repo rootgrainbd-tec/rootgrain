@@ -383,3 +383,103 @@ export async function sendLoginAttemptEmail(email: string) {
     logger.error({ err: error }, "[EMAIL ERROR] Failed to send enumeration protection email");
   }
 }
+
+export async function sendWelcomeEmail(user: { name?: string | null; email?: string | null }) {
+  if (!user.email) return;
+
+  try {
+    const firstName = user.name ? user.name.split(" ")[0] : "there";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rootgrain.bd";
+
+    const forestGreen = "#2D4A3E";
+    const woodBrown = "#8B5A2B";
+    const cream = "#F9F6F0";
+    const textDark = "#333333";
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Welcome to RootGrain!</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: ${cream}; margin: 0; padding: 0; color: ${textDark}; }
+          .preheader { display: none; max-height: 0px; overflow: hidden; }
+          .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+          .header { background-color: ${forestGreen}; padding: 40px 30px; text-align: center; }
+          .content { padding: 40px 30px; line-height: 1.8; font-size: 16px; }
+          .content h1 { color: ${forestGreen}; font-size: 24px; margin-top: 0; font-weight: 600; }
+          .content p { margin-bottom: 20px; }
+          .cta-container { text-align: center; margin: 35px 0; }
+          .btn-primary { display: inline-block; background-color: ${woodBrown}; color: #ffffff !important; text-decoration: none; padding: 14px 28px; border-radius: 4px; font-weight: bold; margin: 0 10px 10px 0; transition: background-color 0.3s; }
+          .btn-secondary { display: inline-block; background-color: transparent; border: 2px solid ${forestGreen}; color: ${forestGreen} !important; text-decoration: none; padding: 12px 26px; border-radius: 4px; font-weight: bold; margin: 0 0 10px 0; }
+          .footer { background-color: ${cream}; padding: 30px; text-align: center; font-size: 14px; border-top: 1px solid #eaddd5; color: #555555; }
+          .footer h3 { color: ${forestGreen}; margin: 0 0 5px 0; font-size: 16px; }
+          .footer p { margin: 5px 0; }
+          .social-links { margin-top: 15px; }
+          .social-links a { color: ${woodBrown}; text-decoration: none; font-weight: bold; margin: 0 10px; }
+          @media only screen and (max-width: 600px) {
+            .container { margin: 20px 10px; width: auto; }
+            .btn-primary, .btn-secondary { display: block; margin: 10px auto; width: 80%; }
+          }
+          @media (prefers-color-scheme: dark) {
+            body { background-color: #1a1a1a; }
+            .container { background-color: #242424; color: #f0f0f0; }
+            .content, .content p { color: #e0e0e0; }
+            .content h1 { color: #8FBC8F; }
+            .footer { background-color: #1f1f1f; border-top: 1px solid #333; color: #aaaaaa; }
+            .footer h3 { color: #8FBC8F; }
+          }
+        </style>
+      </head>
+      <body>
+        <span class="preheader">Your sustainable journey starts today.</span>
+        <div class="container">
+          <div class="header">
+            <h2 style="color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 2px; text-transform: uppercase;">ROOTGRAIN</h2>
+          </div>
+          <div class="content">
+            <h1>Welcome to the RootGrain Family!</h1>
+            <p>Hi ${firstName},</p>
+            <p>Thank you for joining RootGrain. We're thrilled to have you with us on this journey towards sustainable, beautiful living.</p>
+            <p>At RootGrain, we believe that <em>every grain tells a story</em>. Our handcrafted furniture is designed to bring the timeless elegance of nature into your home, combining sustainable practices with exceptional craftsmanship.</p>
+            <p>Whether you're looking to furnish a new space or find that perfect statement piece, our collection has been curated with you in mind.</p>
+            
+            <div class="cta-container">
+              <a href="https://rootgrain.bd/products" class="btn-primary">Explore Collection</a>
+              <a href="https://rootgrain.bd" class="btn-secondary">Visit Website</a>
+            </div>
+            
+            <p style="margin-top: 30px;">We can't wait to see how you style your space!</p>
+            <p>Warmly,<br><strong>The RootGrain Team</strong></p>
+          </div>
+          <div class="footer">
+            <h3>RootGrain</h3>
+            <p><em>Every Grain Tells a Story.</em></p>
+            <p style="margin-top: 15px;">
+              <strong>WhatsApp:</strong> 01632-300103<br>
+              <strong>Email:</strong> <a href="mailto:rootgrainbd@gmail.com" style="color: ${woodBrown};">rootgrainbd@gmail.com</a>
+            </p>
+            <div class="social-links">
+              <a href="https://instagram.com/rootgrain.bd">Instagram</a>
+            </div>
+            <p style="margin-top: 20px; font-size: 12px; color: #888;">&copy; ${new Date().getFullYear()} RootGrain. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const info = await transporter.sendMail({
+      from: SENDER,
+      to: user.email,
+      subject: "🌿 Welcome to RootGrain!",
+      html,
+    });
+    
+    logger.info({ email: user.email, messageId: info.messageId }, "[EMAIL] Welcome email sent");
+  } catch (error) {
+    logger.error({ err: error, email: user.email }, "[EMAIL ERROR] Failed to send welcome email");
+  }
+}
