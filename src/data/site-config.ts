@@ -65,7 +65,7 @@ export const getSiteConfig = cache(async function getSiteConfig(): Promise<SiteC
     tagline: sanityConfig?.tagline || "",
     description: sanityConfig?.description || "",
     url: siteUrl,
-    logoUrl: sanityConfig?.logoUrl || "",
+    logoUrl: sanityConfig?.logoUrl || `${siteUrl}/images/rootgrain-logo.png`,
     support: {
       phone: parsePhone(rawPhone),
       email: sanityConfig?.email || "",
@@ -120,7 +120,7 @@ export async function getFreshSiteConfig(): Promise<SiteConfig> {
     tagline: sanityConfig?.tagline || "",
     description: sanityConfig?.description || "",
     url: siteUrl,
-    logoUrl: sanityConfig?.logoUrl || "",
+    logoUrl: sanityConfig?.logoUrl || `${siteUrl}/images/rootgrain-logo.png`,
     support: {
       phone: parsePhone(rawPhone),
       email: sanityConfig?.email || "",
