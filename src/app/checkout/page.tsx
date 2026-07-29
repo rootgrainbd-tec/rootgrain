@@ -92,11 +92,11 @@ export default function CheckoutPage() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setAppliedPromo(data);
+        setAppliedPromo(data.data);
         toast.success("Promo code applied!");
       } else {
         setAppliedPromo(null);
-        toast.error(data.error || "Invalid promo code");
+        toast.error(data.error?.message || "Invalid promo code");
       }
     } catch (error) {
       toast.error("Failed to apply promo code");
