@@ -46,6 +46,7 @@ export class CartRepository {
           cartItems: cartItems as unknown as Prisma.InputJsonValue,
           email,
           lastActive: new Date(),
+          isRecoveryEligible: Boolean(email),
         },
         create: {
           cartSessionId,
@@ -54,7 +55,7 @@ export class CartRepository {
           cartItems: cartItems as unknown as Prisma.InputJsonValue,
           status: "PENDING",
           lastActive: new Date(),
-          isRecoveryEligible: false, // Default
+          isRecoveryEligible: Boolean(email),
         },
       });
     } else {
@@ -69,6 +70,7 @@ export class CartRepository {
             cartItems: cartItems as unknown as Prisma.InputJsonValue,
             email,
             lastActive: new Date(),
+            isRecoveryEligible: Boolean(email),
           }
         });
       } else {
@@ -80,7 +82,7 @@ export class CartRepository {
             cartItems: cartItems as unknown as Prisma.InputJsonValue,
             status: "PENDING",
             lastActive: new Date(),
-            isRecoveryEligible: false, // Default
+            isRecoveryEligible: Boolean(email),
           }
         });
       }

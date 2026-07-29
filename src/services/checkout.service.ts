@@ -1,5 +1,6 @@
 import "server-only";
 import { randomInt } from "crypto";
+import prisma from "@/lib/prisma";
 import { CheckoutPayload } from "@/validations/checkout.schema";
 import { ProductRepository } from "@/repositories/product.repository";
 import { ShippingRepository } from "@/repositories/shipping.repository";
@@ -105,6 +106,7 @@ export class CheckoutService {
 
     // 3. Apply Promo Code
     let discountAmount = 0;
+    let appliedPromo: any = null;
     if (promoCode) {
       const promo = await PromoRepository.getPromoByCode(promoCode);
       if (
@@ -123,7 +125,7 @@ export class CheckoutService {
           discountAmount = subtotal;
         }
 
-        await PromoRepository.incrementPromoUsage(promo.id);
+        appliedPromo = promo;
       } else {
         logger.warn({ promoCode }, "Invalid or expired promo code used during checkout");
       }
@@ -143,30 +145,49 @@ export class CheckoutService {
     }
 
     // 5. Create Order
-    const order = await OrderRepository.createOrder({
-      orderNumber: generateOrderNumber(),
-      user: userId ? { connect: { id: userId } } : undefined,
-      subtotal,
-      shippingCost,
-      total,
-      balanceDue,
-      promoCode,
-      discountAmount,
-      guestTokenHash,
-      status: "PENDING_ADVANCE",
-      logistics: "PRIVATE_FREIGHT",
-      shippingAddress: {
-        name: address.name,
-        email: address.email,
-        phone: address.phone,
-        division,
-        district,
-        street: address.street,
-        postCode: address.postCode,
-      },
-      items: {
-        create: orderItemsData,
-      },
+    const order = await prisma.$transaction(async (tx) => {
+      if (appliedPromo) {
+        const updateResult = await tx.promoCode.updateMany({
+          where: {
+            id: appliedPromo.id,
+            ...(appliedPromo.maxUses !== null ? { currentUses: { lt: appliedPromo.maxUses } } : {})
+          },
+          data: { currentUses: { increment: 1 } }
+        });
+
+        if (updateResult.count === 0) {
+          throw new ValidationError("Promo code is no longer valid or has reached its usage limit.");
+        }
+      }
+
+      return tx.order.create({
+        data: {
+          orderNumber: generateOrderNumber(),
+          user: userId ? { connect: { id: userId } } : undefined,
+          subtotal,
+          shippingCost,
+          total,
+          balanceDue,
+          promoCode: appliedPromo ? promoCode : undefined,
+          discountAmount,
+          guestTokenHash,
+          status: "PENDING_ADVANCE",
+          logistics: "PRIVATE_FREIGHT",
+          shippingAddress: {
+            name: address.name,
+            email: address.email,
+            phone: address.phone,
+            division,
+            district,
+            street: address.street,
+            postCode: address.postCode,
+          },
+          items: {
+            create: orderItemsData,
+          },
+        },
+        include: { items: true },
+      });
     });
 
     logger.info({ orderId: order.id, orderNumber: order.orderNumber }, "Order created successfully");

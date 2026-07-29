@@ -5,12 +5,32 @@ import { ShippingRepository } from '../src/repositories/shipping.repository';
 import { OrderRepository } from '../src/repositories/order.repository';
 import { CartRepository } from '../src/repositories/cart.repository';
 import { verifyGuestTrackingToken } from '../src/lib/capability-token';
+import prisma from '../src/lib/prisma';
 
 vi.mock('../src/repositories/product.repository');
 vi.mock('../src/repositories/shipping.repository');
 vi.mock('../src/repositories/promo.repository');
-vi.mock('../src/repositories/order.repository');
 vi.mock('../src/repositories/cart.repository');
+vi.mock('../src/lib/prisma', () => {
+  return {
+    default: {
+      $transaction: vi.fn(async (cb) => {
+        return await cb({
+          promoCode: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+          order: { create: vi.fn() }
+        });
+      })
+    },
+    prisma: {
+      $transaction: vi.fn(async (cb) => {
+        return await cb({
+          promoCode: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+          order: { create: vi.fn() }
+        });
+      })
+    }
+  }
+});
 vi.mock('../src/lib/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
 }));
@@ -41,9 +61,14 @@ describe('NEXT-SEC-02 Slice 2 - Checkout Token Generation', () => {
 
   it('guest checkout generates token and stores only hash in database', async () => {
     let capturedData: any = null;
-    vi.mocked(OrderRepository.createOrder).mockImplementation(async (data) => {
-      capturedData = data;
-      return { id: 'order-1', orderNumber: data.orderNumber } as any;
+    (prisma as any).$transaction.mockImplementationOnce(async (cb: any) => {
+      return await cb({
+        promoCode: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        order: { create: async (data: any) => {
+          capturedData = data.data;
+          return { id: 'order-1', orderNumber: data.data.orderNumber };
+        }}
+      });
     });
 
     const { order, rawGuestToken } = await CheckoutService.processCheckout(mockPayload, null);
@@ -63,9 +88,14 @@ describe('NEXT-SEC-02 Slice 2 - Checkout Token Generation', () => {
 
   it('authenticated checkout does not generate guest token', async () => {
     let capturedData: any = null;
-    vi.mocked(OrderRepository.createOrder).mockImplementation(async (data) => {
-      capturedData = data;
-      return { id: 'order-2', orderNumber: data.orderNumber } as any;
+    (prisma as any).$transaction.mockImplementationOnce(async (cb: any) => {
+      return await cb({
+        promoCode: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        order: { create: async (data: any) => {
+          capturedData = data.data;
+          return { id: 'order-2', orderNumber: data.data.orderNumber };
+        }}
+      });
     });
 
     const { order, rawGuestToken } = await CheckoutService.processCheckout(mockPayload, 'user-123');
@@ -78,9 +108,9 @@ describe('NEXT-SEC-02 Slice 2 - Checkout Token Generation', () => {
   });
 
   it('rollback on persistence failure (simulated by throwing in createOrder)', async () => {
-    vi.mocked(OrderRepository.createOrder).mockRejectedValue(new Error('DB Error'));
+    (prisma as any).$transaction.mockRejectedValueOnce(new Error('DB Error'));
 
     await expect(CheckoutService.processCheckout(mockPayload, null)).rejects.toThrow('DB Error');
-    // Since createOrder failed, nothing is committed to the database (atomic Prisma implicit transaction)
+    // Since transaction failed, nothing is committed to the database
   });
 });

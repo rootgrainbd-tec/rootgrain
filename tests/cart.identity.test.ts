@@ -27,8 +27,10 @@ test('SECURITY-H2-A2 Cart Identity Invariants', async (t) => {
 
   t.before(async () => {
     // Create a dummy user for foreign key constraints
-    const user = await prisma.user.create({
-      data: {
+    const user = await prisma.user.upsert({
+      where: { email: "test-auth-user@example.com" },
+      update: {},
+      create: {
         email: "test-auth-user@example.com",
         name: "Test User",
       }
@@ -89,19 +91,19 @@ test('SECURITY-H2-A2 Cart Identity Invariants', async (t) => {
     assert.strictEqual(cart?.userId, null);
   });
 
-  await t.test('5. Guest sync keeps isRecoveryEligible=false', async () => {
+  await t.test('5. Guest sync sets isRecoveryEligible=true when email provided', async () => {
     const session = generateCartSessionId();
     const identity: ValidCartIdentity = { kind: "guest", cartSessionId: session };
     await CartRepository.upsertCart(identity, dummyCartItems, "guest@example.com");
     const cart = await prisma.abandonedCart.findUnique({ where: { cartSessionId: session } });
-    assert.strictEqual(cart?.isRecoveryEligible, false);
+    assert.strictEqual(cart?.isRecoveryEligible, true);
   });
 
-  await t.test('6. Authenticated sync keeps isRecoveryEligible=false', async () => {
+  await t.test('6. Authenticated sync sets isRecoveryEligible=true when email provided', async () => {
     const identity: ValidCartIdentity = { kind: "authenticated", userId: testUserId };
     await CartRepository.upsertCart(identity, dummyCartItems, "auth@example.com");
     const cart = await prisma.abandonedCart.findFirst({ where: { userId: testUserId } });
-    assert.strictEqual(cart?.isRecoveryEligible, false);
+    assert.strictEqual(cart?.isRecoveryEligible, true);
   });
 
   await t.test('7. Legacy email sync/reference does not grant eligibility', async () => {
@@ -154,7 +156,7 @@ test('SECURITY-H2-A2 Cart Identity Invariants', async (t) => {
 
   await t.test('12. Recovery processing skips all isRecoveryEligible=false carts', async () => {
     const session = generateCartSessionId();
-    await CartRepository.upsertCart({ kind: "guest", cartSessionId: session }, dummyCartItems, "guest@example.com");
+    await CartRepository.upsertCart({ kind: "guest", cartSessionId: session }, dummyCartItems, ""); // Empty email
     
     const eligibleCarts = await CartRepository.findAbandonedCartsBefore(new Date());
     assert.strictEqual(eligibleCarts.length, 0);
