@@ -17,17 +17,7 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days explicit
   },
-  cookies: {
-    sessionToken: {
-      name: process.env.NEXT_PUBLIC_APP_URL?.startsWith("https://") ? "__Secure-next-auth.session-token" : "next-auth.session-token",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NEXT_PUBLIC_APP_URL?.startsWith("https://") ?? false,
-      },
-    },
-  },
+
   pages: {
     signIn: "/login",
     error: "/login",
