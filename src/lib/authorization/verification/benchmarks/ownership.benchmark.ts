@@ -11,7 +11,7 @@ export class OwnershipBenchmark {
     const resourceData = { ownerId: "customer-1" };
 
     const duration = await BenchmarkValidator.measure(async () => {
-      await resolver.verifyOwnership(context, resourceData);
+      await resolver.verifyOwnership({ ...context, ownerId: resourceData.ownerId });
     }, 1000);
 
     // Ensure evaluation doesn't block CPU

@@ -4,7 +4,7 @@ import { HealthStatus } from '../contracts/health.contract';
 import { ProviderCategory } from '../contracts/provider.contract';
 
 export class PersistenceAdapter implements AdapterContract {
-  readonly adapter_id = 'persistence_base';
+  readonly adapter_id: string = 'persistence_base';
   readonly provider_type = ProviderCategory.PERSISTENCE;
   readonly capabilities = ['read', 'write', 'transaction'];
   

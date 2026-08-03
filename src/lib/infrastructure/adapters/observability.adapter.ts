@@ -4,7 +4,7 @@ import { HealthStatus } from '../contracts/health.contract';
 import { ProviderCategory } from '../contracts/provider.contract';
 
 export class ObservabilityAdapter implements AdapterContract {
-  readonly adapter_id = 'observability_base';
+  readonly adapter_id: string = 'observability_base';
   readonly provider_type = ProviderCategory.OBSERVABILITY;
   readonly capabilities = ['metrics', 'traces', 'logs'];
   

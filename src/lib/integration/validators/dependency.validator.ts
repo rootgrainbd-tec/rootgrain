@@ -1,4 +1,5 @@
-import { DomainIdentifier, INTEGRATION_DOMAINS } from '../constants/integration.constants';
+import { INTEGRATION_DOMAINS } from '../constants/integration.constants';
+import { DomainIdentifier } from '../contracts/domain-contract';
 import { IntegrationException } from '../exceptions/integration.exception';
 
 export class DependencyValidator {

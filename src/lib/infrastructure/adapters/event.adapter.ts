@@ -4,7 +4,7 @@ import { HealthStatus } from '../contracts/health.contract';
 import { ProviderCategory } from '../contracts/provider.contract';
 
 export class EventAdapter implements AdapterContract {
-  readonly adapter_id = 'event_base';
+  readonly adapter_id: string = 'event_base';
   readonly provider_type = ProviderCategory.EVENTS;
   readonly capabilities = ['publish', 'subscribe'];
   

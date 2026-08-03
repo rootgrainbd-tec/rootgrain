@@ -4,7 +4,7 @@ import { RetryPolicy } from '../policies/retry.policy';
 import { TaskResultContract } from '../contracts/task-result.contract';
 import { RetryContract } from '../contracts/retry.contract';
 import { TaskException } from '../exceptions/task.exception';
-import { TaskRegistry } from '../registry/worker.registry'; // We actually need task execution. Note: imported from upper registry logically, assuming application/tasks/task.executor.ts acts here.
+// Task execution would be imported here
 
 export class TaskEngine {
   static async execute(context: ExecutionContext, retryConfig?: RetryContract): Promise<TaskResultContract> {

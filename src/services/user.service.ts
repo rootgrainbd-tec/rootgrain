@@ -1,6 +1,6 @@
 import { userRepository } from "@/repositories/user.repository";
 import { AppError } from "@/lib/errors/AppError";
-import { verifyPassword } from '@/lib/auth/password';
+import { verifyPassword, hashPassword } from '@/lib/auth/password';
 
 export class UserService {
   // --- Profile ---
@@ -132,7 +132,7 @@ export class UserService {
       throw new AppError("Password change failed", 400);
     }
 
-    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    const hashedNewPassword = await hashPassword(newPassword);
     await userRepository.updatePassword(userId, hashedNewPassword);
   }
 }

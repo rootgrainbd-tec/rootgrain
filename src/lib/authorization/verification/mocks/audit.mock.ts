@@ -1,4 +1,4 @@
-import { IAuditService } from "../../middleware/contracts/audit-service";
+import { IAuditService } from "../../contracts/audit-service";
 import { AuthorizationContext } from "../../types/authorization-context";
 import { AuthorizationDecision } from "../../types/authorization-decision";
 

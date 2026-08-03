@@ -4,7 +4,7 @@ import { HealthStatus } from '../contracts/health.contract';
 import { ProviderCategory } from '../contracts/provider.contract';
 
 export class SchedulerAdapter implements AdapterContract {
-  readonly adapter_id = 'scheduler_base';
+  readonly adapter_id: string = 'scheduler_base';
   readonly provider_type = ProviderCategory.SCHEDULER;
   readonly capabilities = ['cron', 'delay'];
   

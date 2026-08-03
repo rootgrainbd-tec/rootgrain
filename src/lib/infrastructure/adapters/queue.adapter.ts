@@ -4,7 +4,7 @@ import { HealthStatus } from '../contracts/health.contract';
 import { ProviderCategory } from '../contracts/provider.contract';
 
 export class QueueAdapter implements AdapterContract {
-  readonly adapter_id = 'queue_base';
+  readonly adapter_id: string = 'queue_base';
   readonly provider_type = ProviderCategory.QUEUE;
   readonly capabilities = ['enqueue', 'dequeue'];
   

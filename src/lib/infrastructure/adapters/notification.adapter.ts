@@ -4,7 +4,7 @@ import { HealthStatus } from '../contracts/health.contract';
 import { ProviderCategory } from '../contracts/provider.contract';
 
 export class NotificationAdapter implements AdapterContract {
-  readonly adapter_id = 'notification_base';
+  readonly adapter_id: string = 'notification_base';
   readonly provider_type = ProviderCategory.NOTIFICATION;
   readonly capabilities = ['email', 'sms'];
   

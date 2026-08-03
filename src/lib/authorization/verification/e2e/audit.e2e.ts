@@ -11,11 +11,11 @@ export class AuditE2E {
     const auditGuard = new AuditGuard(auditService);
     
     // Mock the upstream pipeline to return an allow
-    const mockUpstream = new MockMiddlewareGuard({ allowed: true, reason: "MOCK_ALLOW" });
+    const mockUpstream = new MockMiddlewareGuard({ allowed: true, reason: "MOCK_ALLOW", effect: "ALLOW", resource: "mock", action: "mock", ownerVerified: true, auditRequired: true });
 
     // Execute audit guard which wraps the execution
-    await auditGuard.execute(AuthorizationContextFixture.defaultCustomer, async (ctx) => {
-      return mockUpstream.execute(ctx, async () => ({ allowed: false, reason: "FAIL" }));
+    await auditGuard.execute(AuthorizationContextFixture.defaultCustomer, async () => {
+      return mockUpstream.execute(AuthorizationContextFixture.defaultCustomer, async () => ({ allowed: false, reason: "FAIL", effect: "DENY", resource: "mock", action: "mock", ownerVerified: false, auditRequired: true }));
     });
 
     // Verify it was logged exactly once

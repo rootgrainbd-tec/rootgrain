@@ -4,7 +4,7 @@ import { HTTP_STATUS } from '../constants/api.constants';
 
 export class ExceptionHandler {
   static handle(error: unknown): { statusCode: number; body: ErrorContract } {
-    let statusCode = HTTP_STATUS.INTERNAL_ERROR;
+    let statusCode: number = HTTP_STATUS.INTERNAL_ERROR;
     let code = 'INTERNAL_ERROR';
     let message = 'An unexpected error occurred';
     let details: any[] = [];

@@ -19,4 +19,8 @@ export class MockCache implements ICacheProvider {
   async clear(): Promise<void> {
     this.store.clear();
   }
+
+  async exists(key: string): Promise<boolean> {
+    return this.store.has(key);
+  }
 }
