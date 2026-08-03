@@ -1,0 +1,4 @@
+info:
+  title: Rootgrain API
+  description: API for Resource, Inventory, Production, Orders, Accounting, and Reporting domains.
+  version: 1.0.0

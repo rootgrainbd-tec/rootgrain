@@ -42,6 +42,7 @@ export function ProductActions({ product, whatsappNumber }: ProductActionsProps)
 
   const handleAddToWishlist = async () => {
     setAddingToWishlist(true);
+    console.log(`\n[FRONTEND] Request started for productId:`, product.id);
     try {
       const res = await fetch("/api/user/wishlist", {
         method: "POST",
@@ -51,17 +52,29 @@ export function ProductActions({ product, whatsappNumber }: ProductActionsProps)
         body: JSON.stringify({ productId: product.id }),
       });
 
+      console.log(`[FRONTEND] Response status:`, res.status);
+      console.log(`[FRONTEND] Redirect detected?:`, res.redirected, `(url: ${res.url})`);
+
       if (!res.ok) {
+        const errText = await res.text();
+        console.log(`[FRONTEND] Response body (error):`, errText.slice(0, 200));
+        
         if (res.status === 401) {
           toast.error("Please login to add to wishlist.");
         } else {
-          throw new Error("Failed to add to wishlist");
+          console.log(`[FRONTEND] Throwing error`);
+          throw new Error(`Failed to add to wishlist (Status: ${res.status})`);
         }
         return;
       }
 
+      const successData = await res.json();
+      console.log(`[FRONTEND] Response body (success):`, successData);
+      console.log(`[FRONTEND] Toast message: Added to wishlist!`);
       toast.success("Added to wishlist!");
     } catch (error) {
+      console.log(`[FRONTEND] Error thrown:`, error);
+      console.log(`[FRONTEND] Toast message: Failed to add to wishlist.`);
       toast.error("Failed to add to wishlist.");
     } finally {
       setAddingToWishlist(false);

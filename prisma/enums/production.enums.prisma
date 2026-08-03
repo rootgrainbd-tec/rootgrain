@@ -1,0 +1,14 @@
+enum ProductionStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  ON_HOLD
+}
+
+enum QualityStatus {
+  PENDING
+  PASSED
+  REJECTED
+  CONDITIONALLY_PASSED
+}

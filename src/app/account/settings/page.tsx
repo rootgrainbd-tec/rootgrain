@@ -33,7 +33,7 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
-      {user?.password ? (
+      {user?.passwordHash ? (
         <Card className="border-[var(--walnut)]/20 shadow-sm max-w-2xl">
           <CardHeader>
             <CardTitle className="text-xl font-serif text-[var(--walnut)]">Change Password</CardTitle>

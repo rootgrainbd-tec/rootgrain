@@ -1,0 +1,34 @@
+openapi: 3.1.0
+$ref: './info.yaml'
+servers:
+  $ref: './servers.yaml'
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/resources:
+    $ref: './paths/resources.yaml#/resources'
+  /api/v1/resources/{id}:
+    $ref: './paths/resources.yaml#/resource_by_id'
+  /api/v1/inventory:
+    $ref: './paths/inventory.yaml#/inventory'
+  /api/v1/inventory/adjust:
+    $ref: './paths/inventory.yaml#/inventory_adjust'
+  /api/v1/production/batches:
+    $ref: './paths/production.yaml#/production_batches'
+  /api/v1/production/start:
+    $ref: './paths/production.yaml#/production_start'
+  /api/v1/orders:
+    $ref: './paths/orders.yaml#/orders'
+  /api/v1/accounting/invoices:
+    $ref: './paths/accounting.yaml#/accounting_invoices'
+  /api/v1/reports:
+    $ref: './paths/reporting.yaml#/reports'
+  /api/v1/reports/generate:
+    $ref: './paths/reporting.yaml#/reports_generate'
+components:
+  schemas:
+    $ref: './components/schemas/common.yaml'
+  securitySchemes:
+    $ref: './components/security/bearer.yaml'
+  responses:
+    $ref: './components/responses/common.yaml'

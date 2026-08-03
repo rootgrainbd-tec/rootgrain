@@ -1,0 +1,42 @@
+model Report {
+  id           String            @id @default(uuid())
+  reference    String            @unique
+  category     ReportCategory
+  period       AggregationPeriod
+  
+  created_at   DateTime          @default(now())
+  generated_at DateTime?
+  completed_at DateTime?
+
+  metrics      DashboardMetric[]
+
+  @@index([reference])
+  @@index([category])
+  @@index([period])
+  @@index([created_at])
+}
+
+model DashboardMetric {
+  id            String   @id @default(uuid())
+  report_id     String
+  name          String
+  category      String
+  
+  value         Float
+  average       Float
+  minimum       Float
+  maximum       Float
+  
+  growth_rate   Float
+  variance      Float
+  deviation     Float
+  
+  calculated_at DateTime
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  report        Report   @relation(fields: [report_id], references: [id])
+
+  @@index([report_id])
+  @@index([category])
+}

@@ -53,6 +53,7 @@ import { SmoothScroll } from "@/components/SmoothScroll";
 import { AuthProviders } from "@/components/auth/Providers";
 import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import { MaintenanceGuard } from "@/components/layout/MaintenanceGuard";
+import { VerificationBanner } from "@/components/auth/VerificationBanner";
 import Script from "next/script";
 
 import { getSiteConfig } from "@/data/site-config";
@@ -103,6 +104,7 @@ export default async function RootLayout({
         <AuthProviders>
           <SmoothScroll>
             <MaintenanceGuard>
+              <VerificationBanner />
               {children}
             </MaintenanceGuard>
             <Toaster />

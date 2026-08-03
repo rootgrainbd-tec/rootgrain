@@ -1,141 +1,209 @@
-import "server-only";
-import { AuthRepository } from "@/repositories/auth.repository";
-import { AppError, ValidationError } from "@/lib/errors/AppError";
-import bcrypt from "bcryptjs";
-import { v4 as uuidv4 } from "uuid";
-import crypto from "crypto";
-import { sendPasswordResetEmail, sendVerificationEmail, sendLoginAttemptEmail } from "@/lib/email";
-import { logger } from "@/lib/logger";
+import prisma from '@/lib/prisma';
+import { hashPassword, verifyPassword } from '@/lib/auth/password';
+import { SessionService } from '@/services/session.service';
+import { logAuthEvent } from '@/lib/auth/audit';
+import { AuthProvider, LoginFailureReason, User } from '@prisma/client';
+import { mailer } from '@/lib/auth/mailer';
+import { randomBytes } from 'crypto';
 
 export class AuthService {
-  static async registerUser(data: { name?: string; email?: string; password?: string }) {
-    const { name, email, password } = data;
-
-    if (!name || !email || !password) {
-      throw new ValidationError("Missing fields");
+  /**
+   * Registers a new user with Email/Password.
+   */
+  static async register(data: { name: string; email: string; password: string; phone?: string }) {
+    const existing = await prisma.user.findUnique({ where: { email: data.email } });
+    if (existing) {
+      // Don't leak existence directly, but throw an error the router handles generically
+      throw new Error('Registration failed');
     }
 
-    const existingUser = await AuthRepository.getUserByEmail(email);
+    const passwordHash = await hashPassword(data.password);
 
-    if (existingUser) {
-      if (existingUser.emailVerified) {
-        // Enumeration protection: Send login attempt email instead of token
-        await sendLoginAttemptEmail(email);
-        return { message: "If the email is valid, a verification link has been sent." };
-      }
-      // If user exists but isn't verified, we can just resend a verification token
-      // or update their password if they are trying to register again.
-      // For safety, let's update their password and send a new token.
-      const hashedPassword = await bcrypt.hash(password, 10);
-      await AuthRepository.updateUserPassword(email, hashedPassword);
-    } else {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      await AuthRepository.createUser({
-        name,
-        email,
-        password: hashedPassword,
-      });
-    }
+    const user = await prisma.user.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        passwordHash,
+      },
+    });
 
-    // Generate secure token (256-bit entropy)
-    const token = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 3600000); // 1 hour
+    // Create a credentials account link
+    await prisma.account.create({
+      data: {
+        userId: user.id,
+        provider: AuthProvider.CREDENTIALS,
+        providerAccountId: user.email,
+      },
+    });
 
-    await AuthRepository.deleteVerificationTokensByIdentifier(email);
-    await AuthRepository.createVerificationToken(email, token, expires);
+    // Send Verification Email
+    await this.sendVerificationEmail(user.email);
 
-    const verifyLink = `${process.env.NEXT_PUBLIC_APP_URL || "https://rootgrain.bd"}/api/auth/verify?token=${token}`;
-    await sendVerificationEmail(email, verifyLink);
-
-    return { message: "If the email is valid, a verification link has been sent." };
+    return user;
   }
 
-  static async verifyEmail(token: string) {
-    if (!token) {
-      throw new ValidationError("Token is required");
-    }
-
-    const verificationToken = await AuthRepository.getVerificationToken(token);
-
-    if (!verificationToken) {
-      throw new ValidationError("Invalid or expired token");
-    }
-
-    if (verificationToken.expires < new Date()) {
-      await AuthRepository.deleteVerificationToken(token);
-      throw new ValidationError("Invalid or expired token");
-    }
-
-    // Atomic verify and delete
-    await AuthRepository.verifyUserEmail(verificationToken.identifier);
-    await AuthRepository.deleteVerificationToken(token);
-    
-    // Link guest orders now that email is verified
-    try {
-      const user = await AuthRepository.getUserByEmail(verificationToken.identifier);
-      if (user) {
-        await AuthRepository.linkGuestOrdersToUser(user.email!, user.id);
-        logger.info({ email: user.email }, "Linked guest orders after email verification");
-      }
-    } catch (e) {
-      logger.error({ err: e, email: verificationToken.identifier }, "Failed to link guest orders");
-    }
-
-    return { message: "Email verified successfully" };
-  }
-
-  static async initiatePasswordReset(email: string) {
-    if (!email) {
-      throw new ValidationError("Email is required");
-    }
-
-    const user = await AuthRepository.getUserByEmail(email);
+  /**
+   * Logs a user in, enforces lockout policies, and returns a raw session token if successful.
+   */
+  static async login(email: string, password: string, ipAddress: string, userAgent: string) {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { accounts: true },
+    });
 
     if (!user) {
-      // Don't reveal if a user exists or not for security reasons
-      return { message: "If an account exists, an email will be sent." };
+      logAuthEvent({ email, ipAddress, userAgent, authMethod: AuthProvider.CREDENTIALS, success: false, failureReason: LoginFailureReason.INVALID_CREDENTIALS });
+      return { success: false, error: 'Invalid email or password' };
     }
 
-    const token = uuidv4();
-    const expiresAt = new Date(Date.now() + 3600000); // 1 hour from now
+    // Check Lockout
+    if (user.lockedUntil && new Date() < user.lockedUntil) {
+      logAuthEvent({ userId: user.id, email, ipAddress, userAgent, authMethod: AuthProvider.CREDENTIALS, success: false, failureReason: LoginFailureReason.ACCOUNT_LOCKED });
+      return { success: false, error: 'Account locked. Please try again later or reset your password.' };
+    }
 
-    await AuthRepository.deleteResetTokensByEmail(email);
-    await AuthRepository.createResetToken(email, token, expiresAt);
+    // Check if Credentials login is allowed (has password)
+    if (!user.passwordHash) {
+      logAuthEvent({ userId: user.id, email, ipAddress, userAgent, authMethod: AuthProvider.CREDENTIALS, success: false, failureReason: LoginFailureReason.MISSING_IDENTITY });
+      return { success: false, error: 'Please log in with Google to access this account.' };
+    }
 
-    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL || "https://rootgrain.bd"}/reset-password?token=${token}`;
+    // Verify Password
+    const isValid = await verifyPassword(user.passwordHash, password);
+    if (!isValid) {
+      const newAttempts = user.failedAttempts + 1;
+      const lockedUntil = newAttempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null; // 15 mins
 
-    await sendPasswordResetEmail(email, resetLink);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { failedAttempts: newAttempts, lockedUntil },
+      });
 
-    return { message: "If an account exists, an email will be sent." };
+      logAuthEvent({ userId: user.id, email, ipAddress, userAgent, authMethod: AuthProvider.CREDENTIALS, success: false, failureReason: LoginFailureReason.INVALID_CREDENTIALS });
+      
+      if (lockedUntil) {
+        return { success: false, error: 'Account locked due to too many failed attempts.' };
+      }
+      return { success: false, error: 'Invalid email or password' };
+    }
+
+    // Success! Reset attempts and generate session
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { failedAttempts: 0, lockedUntil: null },
+    });
+
+    const sessionToken = await SessionService.createSession(user.id, false); // RememberMe will be wired later
+
+    logAuthEvent({ userId: user.id, email, ipAddress, userAgent, authMethod: AuthProvider.CREDENTIALS, success: true });
+
+    return { success: true, token: sessionToken, user };
   }
 
-  static async resetPassword(data: { token?: string; password?: string }) {
-    const { token, password } = data;
+  /**
+   * Resends verification email.
+   */
+  static async sendVerificationEmail(email: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user || user.emailVerified) return;
 
-    if (!token || !password) {
-      throw new ValidationError("Missing required fields");
+    // Delete any existing tokens
+    await prisma.verificationToken.deleteMany({ where: { userId: user.id } });
+
+    const token = randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await prisma.verificationToken.create({
+      data: {
+        userId: user.id,
+        token,
+        expiresAt: expires,
+      },
+    });
+
+    await mailer.sendVerificationEmail(email, token);
+  }
+
+  /**
+   * Verifies a user's email.
+   */
+  static async verifyEmail(token: string) {
+    const verificationToken = await prisma.verificationToken.findUnique({ where: { token } });
+    if (!verificationToken) {
+      throw new Error('Invalid or expired token');
     }
 
-    if (password.length < 6) {
-      throw new ValidationError("Password must be at least 6 characters");
+    if (verificationToken.expiresAt < new Date()) {
+      await prisma.verificationToken.delete({ where: { token } });
+      throw new Error('Invalid or expired token');
     }
 
-    const resetToken = await AuthRepository.getResetToken(token);
+    // Update user
+    await prisma.user.update({
+      where: { id: verificationToken.userId },
+      data: { emailVerified: true },
+    });
 
+    // Clean up token
+    await prisma.verificationToken.delete({ where: { token } });
+  }
+
+  /**
+   * Initiates a password reset.
+   */
+  static async initiatePasswordReset(email: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return; // Silent return for enumeration protection
+
+    // Delete existing reset tokens
+    await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
+
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+
+    await prisma.passwordResetToken.create({
+      data: {
+        userId: user.id,
+        token,
+        expiresAt,
+      },
+    });
+
+    await mailer.sendPasswordResetEmail(email, token);
+  }
+
+  /**
+   * Resets password using a token.
+   */
+  static async resetPassword(token: string, newPassword: string) {
+    const resetToken = await prisma.passwordResetToken.findUnique({ where: { token } });
     if (!resetToken) {
-      throw new ValidationError("Invalid or expired token");
+      throw new Error('Invalid or expired token');
     }
 
     if (resetToken.expiresAt < new Date()) {
-      await AuthRepository.deleteResetTokenById(resetToken.id);
-      throw new ValidationError("Token has expired. Please request a new one.");
+      await prisma.passwordResetToken.delete({ where: { id: resetToken.id } });
+      throw new Error('Invalid or expired token');
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const passwordHash = await hashPassword(newPassword);
 
-    await AuthRepository.updateUserPassword(resetToken.email, hashedPassword);
-    await AuthRepository.deleteResetTokenById(resetToken.id);
+    await prisma.user.update({
+      where: { id: resetToken.userId },
+      data: { 
+        passwordHash,
+        failedAttempts: 0, // Unlock account on reset
+        lockedUntil: null
+      },
+    });
 
-    return { message: "Password updated successfully" };
+    // Clean up all active sessions since password changed
+    const user = await prisma.user.findUnique({ where: { id: resetToken.userId } });
+    if (user) {
+      await SessionService.revokeAllSessions(user.id);
+    }
+
+    await prisma.passwordResetToken.delete({ where: { id: resetToken.id } });
   }
 }

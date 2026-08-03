@@ -1,0 +1,22 @@
+production_batches:
+  get:
+    tags: [Production]
+    summary: List production batches
+    operationId: listProductionBatches
+    responses:
+      '200':
+        $ref: '../components/responses/common.yaml#/SuccessResponse'
+production_start:
+  post:
+    tags: [Production]
+    summary: Start a production batch
+    operationId: startProduction
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/production.yaml#/ProductionStart'
+    responses:
+      '201':
+        $ref: '../components/responses/common.yaml#/SuccessResponse'

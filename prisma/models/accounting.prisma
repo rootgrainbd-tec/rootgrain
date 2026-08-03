@@ -1,0 +1,61 @@
+model Invoice {
+  id                 String           @id @default(uuid())
+  invoice_number     String           @unique
+  order_id           String
+  customer_id        String
+  status             AccountingStatus
+  subtotal           Float
+  discount           Float            @default(0)
+  tax                Float            @default(0)
+  total              Float
+
+  paid_amount        Float            @default(0)
+  due_amount         Float
+  outstanding_amount Float
+
+  created_at         DateTime         @default(now())
+  updated_at         DateTime         @updatedAt
+  archived_at        DateTime?
+
+  order              Order            @relation(fields: [order_id], references: [id])
+  payments           Payment[]
+
+  @@index([invoice_number])
+  @@index([customer_id])
+  @@index([order_id])
+  @@index([status])
+  @@index([created_at])
+}
+
+model Payment {
+  id           String      @id @default(uuid())
+  invoice_id   String
+  payment_type PaymentType
+  amount       Float
+  payment_date DateTime
+  reference_id String?
+
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
+
+  invoice      Invoice     @relation(fields: [invoice_id], references: [id])
+
+  @@index([invoice_id])
+}
+
+model JournalEntry {
+  id           String           @id @default(uuid())
+  reference_id String
+  description  String
+  type         JournalEntryType
+  debit        Float            @default(0)
+  credit       Float            @default(0)
+  balance      Float
+
+  created_at   DateTime         @default(now())
+  updated_at   DateTime         @updatedAt
+  archived_at  DateTime?
+
+  @@index([reference_id])
+  @@index([created_at])
+}

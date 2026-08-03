@@ -1,0 +1,22 @@
+inventory:
+  get:
+    tags: [Inventory]
+    summary: List inventory
+    operationId: listInventory
+    responses:
+      '200':
+        $ref: '../components/responses/common.yaml#/SuccessResponse'
+inventory_adjust:
+  post:
+    tags: [Inventory]
+    summary: Adjust inventory quantity
+    operationId: adjustInventory
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/inventory.yaml#/InventoryAdjust'
+    responses:
+      '200':
+        $ref: '../components/responses/common.yaml#/SuccessResponse'

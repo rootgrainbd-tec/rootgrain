@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
 import { checkRateLimit, getAccountTargetKey, RateLimitCategory } from "@/lib/rate-limit";
+import { SESSION_COOKIE_NAME } from "@/lib/auth/cookies";
 
 function getIpKey(req: NextRequest): string {
   const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
@@ -18,24 +18,21 @@ export async function middleware(req: NextRequest) {
   
   let category: RateLimitCategory | null = null;
   let requireL2Auth = false;
-  let requireL2Identity = false;
 
-  if (pathname === "/api/auth/callback/credentials") {
+  if (pathname === "/api/v1/auth/login") {
     category = "credentials";
     requireL2Auth = true;
-  } else if (pathname === "/api/auth/register") {
+  } else if (pathname === "/api/v1/auth/register") {
     category = "register";
-  } else if (pathname === "/api/auth/verify") {
+  } else if (pathname === "/api/v1/auth/verify-email") {
     category = "verify";
-  } else if (pathname === "/api/auth/forgot-password" || pathname === "/api/auth/reset-password") {
+  } else if (pathname === "/api/v1/auth/forgot-password" || pathname === "/api/v1/auth/reset-password") {
     category = "forgot_password";
     requireL2Auth = true;
   } else if (pathname.startsWith("/api/checkout")) {
     category = "checkout";
-    requireL2Identity = true;
   } else if (pathname.startsWith("/api/cart")) {
     category = "cart";
-    requireL2Identity = true;
   } else if (pathname.startsWith("/api/user/wishlist")) {
     category = "wishlist";
   } else if (pathname.startsWith("/api/reviews")) {
@@ -50,7 +47,6 @@ export async function middleware(req: NextRequest) {
     category = "contact";
   } else if (pathname === "/api/track") {
     category = "track";
-    requireL2Auth = true;
   }
   
   const isL2Only = ["wishlist", "reviews", "profile", "admin_api"].includes(category || "");
@@ -65,9 +61,9 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  let token = null;
   let l2Result: any = null;
   
+  // For endpoints like login, if an email is provided in the body, rate limit by that email too.
   if (category && requireL2Auth && req.method === "POST") {
     try {
       const contentType = req.headers.get("content-type") || "";
@@ -90,28 +86,17 @@ export async function middleware(req: NextRequest) {
     } catch (e) {
       console.error("Middleware body parse error", e);
     }
-  } else if (category && (requireL2Identity || isL2Only)) {
-    token = await getToken({ req });
-    if (token?.sub) {
-      l2Result = await checkRateLimit(token.sub, category);
-      if (!l2Result.success) {
-        return buildRateLimitResponse(429, l2Result);
-      }
-    }
   }
 
-  if (!token && (pathname.startsWith("/admin") || pathname.startsWith("/api/admin") || pathname.startsWith("/account") || pathname.startsWith("/api/user"))) {
-    token = await getToken({ req });
-  }
-
+  const hasSession = req.cookies.has(SESSION_COOKIE_NAME);
   const isAdminRoute = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
   const isAccountRoute = pathname.startsWith("/account") || pathname.startsWith("/api/user");
 
-  if (isAdminRoute && token?.role !== "ADMIN") {
-    return NextResponse.redirect(new URL("/", req.url));
-  }
-
-  if (isAccountRoute && !token) {
+  // Soft route protection. Strict checking happens in API handlers / Server Components.
+  if ((isAdminRoute || isAccountRoute) && !hasSession) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     return NextResponse.redirect(new URL("/login", req.url));
   }
 

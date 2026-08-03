@@ -1,0 +1,22 @@
+reports:
+  get:
+    tags: [Reporting]
+    summary: List reports
+    operationId: listReports
+    responses:
+      '200':
+        $ref: '../components/responses/common.yaml#/SuccessResponse'
+reports_generate:
+  post:
+    tags: [Reporting]
+    summary: Generate report
+    operationId: generateReport
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/reporting.yaml#/ReportGenerate'
+    responses:
+      '201':
+        $ref: '../components/responses/common.yaml#/SuccessResponse'

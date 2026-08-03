@@ -56,7 +56,7 @@ describe('NEXT-SEC-02 Slice 2 - Checkout Token Generation', () => {
     vi.clearAllMocks();
     vi.mocked(ProductRepository.findProductsBySlugs).mockResolvedValue([mockProduct as any]);
     vi.mocked(ShippingRepository.getShippingRateByDistrict).mockResolvedValue({ baseRate: 50, perItemRate: 10 } as any);
-    vi.mocked(CartRepository.markCartsAsRecovered).mockResolvedValue();
+    vi.mocked(CartRepository.markCartsAsRecovered).mockResolvedValue({ count: 0 });
   });
 
   it('guest checkout generates token and stores only hash in database', async () => {

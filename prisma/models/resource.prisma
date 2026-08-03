@@ -1,0 +1,21 @@
+model Resource {
+  id          String         @id @default(uuid())
+  sku         String         @unique
+  slug        String         @unique
+  name        String
+  description String?
+  type        ResourceType
+  status      ResourceStatus
+
+  created_at  DateTime       @default(now())
+  updated_at  DateTime       @updatedAt
+  archived_at DateTime?
+
+  // Inverse relations
+  inventories Inventory[]
+
+  @@index([sku])
+  @@index([slug])
+  @@index([status])
+  @@index([created_at])
+}

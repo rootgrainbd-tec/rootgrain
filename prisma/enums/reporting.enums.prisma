@@ -1,0 +1,16 @@
+enum ReportCategory {
+  INVENTORY
+  PRODUCTION
+  SALES
+  ACCOUNTING
+  OPERATIONAL
+  EXECUTIVE
+}
+
+enum AggregationPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}

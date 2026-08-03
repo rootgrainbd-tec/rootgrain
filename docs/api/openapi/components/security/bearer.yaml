@@ -1,0 +1,6 @@
+bearerAuth:
+  type: http
+  scheme: bearer
+  bearerFormat: JWT
+  description: >
+    Provide the JWT issued from Phase 1 Authentication layer.

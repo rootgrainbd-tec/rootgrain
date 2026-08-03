@@ -1,0 +1,22 @@
+enum AccountingStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+  ARCHIVED
+}
+
+enum PaymentType {
+  CREDIT_CARD
+  BANK_TRANSFER
+  CASH
+  CHECK
+  SYSTEM_CREDIT
+}
+
+enum JournalEntryType {
+  DEBIT
+  CREDIT
+}

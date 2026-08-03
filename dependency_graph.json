@@ -1,0 +1,41 @@
+{
+  "domains": [
+    "resources",
+    "inventory",
+    "production",
+    "orders",
+    "accounting",
+    "reporting",
+    "shared"
+  ],
+  "allowed_dependencies": {
+    "resources": ["shared"],
+    "inventory": ["resources", "shared"],
+    "production": ["inventory", "shared"],
+    "orders": ["production", "shared"],
+    "accounting": ["orders", "shared"],
+    "reporting": ["accounting", "shared"]
+  },
+  "prohibited_dependencies": [
+    { "from": "reporting", "to": "accounting" },
+    { "from": "orders", "to": "production" },
+    { "from": "inventory", "to": "reporting" },
+    { "from": "services", "to": "middleware", "layer": true },
+    { "from": "repositories", "to": "middleware", "layer": true }
+  ],
+  "authorization": {
+    "required": "AuthorizationMiddleware",
+    "prohibited": [
+      "Direct resolver access",
+      "Guard bypasses"
+    ]
+  },
+  "repositories": {
+    "allowed": ["repository interfaces"],
+    "prohibited": [
+      "Prisma queries",
+      "SQL execution",
+      "migrations"
+    ]
+  }
+}

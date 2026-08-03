@@ -1,0 +1,17 @@
+OrderCreate:
+  type: object
+  properties:
+    customer_id:
+      type: string
+    items:
+      type: array
+      items:
+        type: object
+        properties:
+          product_id:
+            type: string
+          quantity:
+            type: number
+  required:
+    - customer_id
+    - items

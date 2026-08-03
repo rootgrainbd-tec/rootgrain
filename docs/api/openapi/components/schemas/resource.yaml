@@ -1,0 +1,19 @@
+ResourceCreate:
+  type: object
+  properties:
+    sku:
+      type: string
+    slug:
+      type: string
+    name:
+      type: string
+    type:
+      type: string
+    status:
+      type: string
+  required:
+    - sku
+    - slug
+    - name
+    - type
+    - status

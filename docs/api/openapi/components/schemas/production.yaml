@@ -1,0 +1,13 @@
+ProductionStart:
+  type: object
+  properties:
+    batch_id:
+      type: string
+    inventory_id:
+      type: string
+    target_quantity:
+      type: number
+  required:
+    - batch_id
+    - inventory_id
+    - target_quantity

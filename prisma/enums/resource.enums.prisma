@@ -1,0 +1,13 @@
+enum ResourceType {
+  RAW_MATERIAL
+  PACKAGING
+  FINISHED_GOOD
+  EQUIPMENT
+  LABOR
+}
+
+enum ResourceStatus {
+  ACTIVE
+  INACTIVE
+  DEPRECATED
+}

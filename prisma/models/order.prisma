@@ -1,0 +1,38 @@
+model Order {
+  id            String      @id @default(uuid())
+  order_number  String      @unique
+  customer_id   String
+  status        OrderStatus
+  subtotal      Float
+  tax           Float       @default(0)
+  total         Float
+
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+  archived_at   DateTime?
+
+  lines         OrderLine[]
+  invoices      Invoice[]
+
+  @@index([order_number])
+  @@index([customer_id])
+  @@index([status])
+  @@index([created_at])
+}
+
+model OrderLine {
+  id            String     @id @default(uuid())
+  order_id      String
+  production_id String?
+  quantity      Float
+  unit_price    Float
+  total_price   Float
+
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+
+  order         Order      @relation(fields: [order_id], references: [id])
+  production    Production? @relation(fields: [production_id], references: [id])
+
+  @@index([order_id])
+}

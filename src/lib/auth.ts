@@ -6,7 +6,7 @@ import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import EmailProvider from "next-auth/providers/email";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
+
 import type { Adapter } from "next-auth/adapters";
 import { Role } from "@prisma/client";
 import { sendWelcomeEmail } from "@/lib/email";
@@ -52,7 +52,7 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email }
         });
 
-        if (!user || !user.password) {
+        if (!user || !user.passwordHash) {
           throw new Error("Invalid credentials");
         }
 
@@ -60,9 +60,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error("EMAIL_NOT_VERIFIED");
         }
 
-        const isCorrectPassword = await bcrypt.compare(
-          credentials.password,
-          user.password
+        const { verifyPassword } = await import('@/lib/auth/password');
+        const isCorrectPassword = await verifyPassword(
+          user.passwordHash,
+          credentials.password
         );
 
         if (!isCorrectPassword) {
@@ -116,7 +117,7 @@ export const authOptions: NextAuthOptions = {
           existingUser.orders.length === 0 &&
           existingUser.addresses.length === 0 &&
           existingUser.reviews.length === 0 &&
-          existingUser.password !== null
+          existingUser.passwordHash !== null
         ) {
           // Unverified credential account blocking OAuth flow. Safe to replace.
           try {

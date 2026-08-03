@@ -1,0 +1,6 @@
+export const FEATURE_FLAG_CONSTANTS = {
+  CACHE_TTL_MS: 15 * 60 * 1000, // 15 minutes
+  DEFAULT_MODE: "BOOLEAN" as const,
+  MAX_PERCENTAGE: 100,
+  MIN_PERCENTAGE: 0,
+};

@@ -1,0 +1,21 @@
+accounting_invoices:
+  get:
+    tags: [Accounting]
+    summary: List invoices
+    operationId: listInvoices
+    responses:
+      '200':
+        $ref: '../components/responses/common.yaml#/SuccessResponse'
+  post:
+    tags: [Accounting]
+    summary: Generate invoice
+    operationId: generateInvoice
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/accounting.yaml#/InvoiceGenerate'
+    responses:
+      '201':
+        $ref: '../components/responses/common.yaml#/SuccessResponse'

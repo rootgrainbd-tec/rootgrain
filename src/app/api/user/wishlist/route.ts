@@ -7,7 +7,21 @@ export const GET = withAuth(async (req, ctx, session) => {
 });
 
 export const POST = withAuth(async (req, ctx, session) => {
-  const data = await req.json();
-  const wishlistItem = await userService.addWishlistItem(session.user.id, data.productId);
-  return successResponse({ wishlistItem });
+  console.log(`\n[API] POST /api/user/wishlist`);
+  console.log(`[API] request entered`);
+  console.log(`[API] authenticated user id: ${session.user?.id}`);
+  
+  try {
+    const data = await req.json();
+    console.log(`[API] parsed productId: ${data.productId}`);
+    
+    console.log(`[API] calling repository/service...`);
+    const wishlistItem = await userService.addWishlistItem(session.user.id, data.productId);
+    
+    console.log(`[API] returned result:`, wishlistItem);
+    return successResponse({ wishlistItem });
+  } catch (error) {
+    console.log(`[API] thrown exception:`, error);
+    throw error;
+  }
 });

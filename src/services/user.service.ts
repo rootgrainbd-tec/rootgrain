@@ -1,6 +1,6 @@
 import { userRepository } from "@/repositories/user.repository";
 import { AppError } from "@/lib/errors/AppError";
-import bcrypt from "bcryptjs";
+import { verifyPassword } from '@/lib/auth/password';
 
 export class UserService {
   // --- Profile ---
@@ -81,10 +81,19 @@ export class UserService {
     if (!userId) throw new AppError("Missing User ID", 401);
     if (!productId) throw new AppError("Missing productId", 400);
 
+    console.log(`\n[SERVICE] Entering service addWishlistItem`);
+    console.log(`[SERVICE] User ID: ${userId}`);
+    console.log(`[SERVICE] Product ID: ${productId}`);
     try {
-      return await userRepository.addWishlistItem(userId, productId);
+      const result = await userRepository.addWishlistItem(userId, productId);
+      console.log(`[SERVICE] Repository result:`, result);
+      return result;
     } catch (error) {
-      throw new AppError("Failed to add to wishlist", 500);
+      console.log(`[SERVICE] Caught exception:`, error);
+      if (error instanceof Error) {
+        console.log(`[SERVICE] Full stack trace:`, error.stack);
+      }
+      throw error; // Do NOT mask the exception during investigation.
     }
   }
 
@@ -113,11 +122,11 @@ export class UserService {
 
     const user = await userRepository.findUserWithPassword(userId);
 
-    if (!user || !user.password) {
-      throw new AppError("Password change is not available for this account", 400);
+    if (!user || !user.passwordHash) {
+      throw new Error('Invalid credentials');
     }
 
-    const isCorrectPassword = await bcrypt.compare(currentPassword, user.password);
+    const isCorrectPassword = await verifyPassword(user.passwordHash, currentPassword);
 
     if (!isCorrectPassword) {
       throw new AppError("Password change failed", 400);

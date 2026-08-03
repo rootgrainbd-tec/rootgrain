@@ -1,0 +1,24 @@
+model Production {
+  id                 String           @id @default(uuid())
+  batch_id           String           @unique
+  inventory_id       String
+  status             ProductionStatus
+  quality_status     QualityStatus
+  target_quantity    Float
+  completed_quantity Float            @default(0)
+  rejected_quantity  Float            @default(0)
+
+  created_at         DateTime         @default(now())
+  updated_at         DateTime         @updatedAt
+  archived_at        DateTime?
+
+  // Relations
+  inventory          Inventory        @relation(fields: [inventory_id], references: [id])
+  
+  // Inverse relations
+  orderLines         OrderLine[]
+
+  @@index([batch_id])
+  @@index([status])
+  @@index([created_at])
+}

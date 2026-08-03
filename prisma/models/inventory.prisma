@@ -1,0 +1,23 @@
+model Inventory {
+  id                String          @id @default(uuid())
+  resource_id       String
+  location_id       String
+  quantity          Float
+  reserved_quantity Float           @default(0)
+  status            InventoryStatus
+  
+  created_at        DateTime        @default(now())
+  updated_at        DateTime        @updatedAt
+  archived_at       DateTime?
+
+  // Relations
+  resource          Resource        @relation(fields: [resource_id], references: [id])
+  
+  // Inverse relations
+  productions       Production[]
+
+  @@index([resource_id])
+  @@index([location_id])
+  @@index([status])
+  @@index([created_at])
+}

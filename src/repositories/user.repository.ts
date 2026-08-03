@@ -85,20 +85,30 @@ export const userRepository = {
     });
   },
 
-  addWishlistItem(userId: string, productId: string) {
-    return prisma.wishlist.upsert({
-      where: {
-        userId_productId: {
+  async addWishlistItem(userId: string, productId: string) {
+    console.log(`\n[REPOSITORY] Prisma query: upsert`);
+    console.log(`[REPOSITORY] Arguments: userId=${userId}, productId=${productId}`);
+    try {
+      const result = await prisma.wishlist.upsert({
+        where: {
+          userId_productId: {
+            userId,
+            productId
+          }
+        },
+        update: {},
+        create: {
           userId,
           productId
         }
-      },
-      update: {},
-      create: {
-        userId,
-        productId
-      }
-    });
+      });
+      console.log(`[REPOSITORY] Returned object:`, result);
+      return result;
+    } catch (error: any) {
+      console.log(`[REPOSITORY] Thrown error code:`, error?.code);
+      console.log(`[REPOSITORY] Thrown error full:`, error);
+      throw error;
+    }
   },
 
   removeWishlistItem(id: string, userId: string) {
@@ -111,14 +121,14 @@ export const userRepository = {
   findUserWithPassword(userId: string) {
     return prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, password: true },
+      select: { id: true, passwordHash: true },
     });
   },
 
   updatePassword(userId: string, hashedPassword: string) {
     return prisma.user.update({
       where: { id: userId },
-      data: { password: hashedPassword },
+      data: { passwordHash: hashedPassword },
     });
   }
 };

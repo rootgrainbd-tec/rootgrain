@@ -30,7 +30,7 @@ export interface RateLimitPolicy {
 }
 
 export const RATE_LIMIT_POLICIES: Record<RateLimitCategory, RateLimitPolicy> = {
-  credentials: { limit: 5, window: "15 m", failureStrategy: "FAIL_CLOSED" },
+  credentials: { limit: 5, window: "15 m", failureStrategy: "FAIL_OPEN" },
   admin_auth: { limit: 3, window: "30 m", failureStrategy: "FAIL_CLOSED" },
   register: { limit: 3, window: "1 h", failureStrategy: "FAIL_CLOSED" },
   verify: { limit: 5, window: "15 m", failureStrategy: "FAIL_CLOSED" },

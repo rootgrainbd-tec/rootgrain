@@ -1,0 +1,21 @@
+orders:
+  get:
+    tags: [Orders]
+    summary: List orders
+    operationId: listOrders
+    responses:
+      '200':
+        $ref: '../components/responses/common.yaml#/SuccessResponse'
+  post:
+    tags: [Orders]
+    summary: Create an order
+    operationId: createOrder
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/orders.yaml#/OrderCreate'
+    responses:
+      '201':
+        $ref: '../components/responses/common.yaml#/SuccessResponse'

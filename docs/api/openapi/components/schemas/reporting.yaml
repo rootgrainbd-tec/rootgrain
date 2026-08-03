@@ -1,0 +1,10 @@
+ReportGenerate:
+  type: object
+  properties:
+    category:
+      type: string
+    period:
+      type: string
+  required:
+    - category
+    - period

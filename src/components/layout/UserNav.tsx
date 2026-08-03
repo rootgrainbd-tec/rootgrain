@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { useAuth, useSession } from "@/components/auth/Providers";
 import Link from "next/link";
 import { User, LogOut, Settings, Package, Heart } from "lucide-react";
 import {
@@ -13,10 +13,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function UserNav({ isScrolled }: { isScrolled?: boolean }) {
   const { data: session, status } = useSession();
+  const { logout } = useAuth();
 
   if (status === "loading") {
     return (
@@ -37,14 +38,15 @@ export function UserNav({ isScrolled }: { isScrolled?: boolean }) {
     );
   }
 
+  const user = session.user;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8 border border-[var(--walnut)]/20">
-            <AvatarImage src={session.user.image || ""} alt={session.user.name || "User"} />
             <AvatarFallback className="bg-[var(--walnut)] text-white">
-              {session.user.name ? session.user.name.charAt(0).toUpperCase() : "U"}
+              {user.name ? user.name.charAt(0).toUpperCase() : "U"}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -52,9 +54,9 @@ export function UserNav({ isScrolled }: { isScrolled?: boolean }) {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{session.user.name}</p>
+            <p className="text-sm font-medium leading-none">{user.name}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              {session.user.email}
+              {user.email}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -86,7 +88,7 @@ export function UserNav({ isScrolled }: { isScrolled?: boolean }) {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600" onClick={() => signOut({ callbackUrl: "/" })}>
+        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600" onClick={() => logout()}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>
