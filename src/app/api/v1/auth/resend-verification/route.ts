@@ -12,7 +12,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   if (!session) return errorResponse('Session expired or invalid', 401);
 
   // Endpoint logic: Resend if not verified
-  if (!session.user.emailVerified) {
+  if (!session.user.emailVerified && session.user.email) {
     await AuthService.sendVerificationEmail(session.user.email);
   }
 

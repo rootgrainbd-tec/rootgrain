@@ -27,6 +27,6 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
       role: session.user.role,
       emailVerified: session.user.emailVerified,
     },
-    sessionExpiresAt: session.expiresAt
+    sessionExpiresAt: session.expires
   });
 });

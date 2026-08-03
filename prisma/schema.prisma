@@ -1,14 +1,353 @@
-// This is the primary Prisma schema file.
-// It will compile models and enums from the respective directories to maintain modularity.
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql" // Assumption: Postgres for standard deployment, adaptable per adapter
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // Essential for Supabase/Neon migrations
 }
 
-// In a real environment with the 'prismaSchemaFolder' preview feature, 
-// this file would just enable the feature. For now, it acts as the central anchor.
+model Product {
+  id           String      @id @default(cuid())
+  sanityId     String?     @unique
+  name         String
+  slug         String      @unique
+  category     String      
+  price        Int         // Stored in Taka
+  comparePrice Int?
+  wood         String
+  dimensions   String
+  image        String
+  description  String
+  inStock      Boolean     @default(true)
+  isActive     Boolean     @default(true)
+  featured     Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  orderItems   OrderItem[]
+
+  @@index([featured])
+}
+
+model Order {
+  id              String          @id @default(cuid())
+  orderNumber     String          @unique // e.g. RG-20260522-0001
+  userId          String?         
+  user            User?           @relation(fields: [userId], references: [id])
+  subtotal        Int             // Taka
+  shippingCost    Int             // Taka
+  total           Int             // Taka
+  advancePaid     Int             @default(0) // Tracks the PGW booking fee
+  balanceDue      Int             // total - advancePaid
+  status          OrderStatus     @default(PENDING_ADVANCE)
+  shippingAddress Json            // Structured division/district/address
+  promoCode       String?
+  discountAmount  Int             @default(0) // Taka
+  notes           String?
+  logistics       LogisticsProvider @default(PRIVATE_FREIGHT)
+  trackingState   TrackingState   @default(PENDING_PRODUCTION)
+  guestTokenHash  String?         @unique
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  items           OrderItem[]
+  paymentRecords  PaymentRecord[] // One-to-Many: Booking + Settlement
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  productId   String
+  productName String
+  quantity    Int
+  unitPrice   Int      // Taka at time of purchase
+  total       Int      // unitPrice * quantity
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model PaymentRecord {
+  id          String        @id @default(cuid())
+  orderId     String
+  type        PaymentPhase  // ADVANCE or SETTLEMENT
+  method      PaymentMethod 
+  amount      Int           // Taka
+  status      PaymentStatus @default(INITIATED)
+  bkashTrxId  String?       @unique // Nullable for Bank/COD
+  paidAt      DateTime?
+  createdAt   DateTime      @default(now())
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, type]) // Ensures only one advance and one settlement per order
+  @@index([status])
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  quote     String
+  author    String
+  location  String
+  piece     String
+  approved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([approved])
+}
+
+// --- Enums enforce strict state machines ---
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING_ADVANCE
+  CONFIRMED
+  PROCESSING
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+  REJECTED
+}
+
+enum PaymentPhase {
+  ADVANCE
+  SETTLEMENT
+}
+
+enum PaymentMethod {
+  MANUAL_BKASH
+  BANK_TRANSFER
+  COD
+}
+
+enum PaymentStatus {
+  INITIATED
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+// --- Logistics & Fulfillment Enums ---
+
+enum LogisticsProvider {
+  PRIVATE_FREIGHT
+  PATHAO
+  REDX
+  DHL
+}
+
+enum TrackingState {
+  PENDING_PRODUCTION
+  IN_PRODUCTION
+  QUALITY_CHECK
+  DISPATCHED
+  OUT_FOR_DELIVERY
+  DELIVERED_AND_COLLECTED
+}
+
+// --- Token Caching ---
+
+// --- NextAuth & User Models ---
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?   @map("password")
+  phone         String?
+  role          Role      @default(USER)
+  
+  accounts      Account[]
+  sessions      Session[]
+  orders        Order[]
+  addresses     Address[]
+  wishlists     Wishlist[]
+  reviews       Review[]
+  abandonedCarts AbandonedCart[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  userId     String
+  name       String
+  phone      String
+  division   String
+  district   String
+  street     String
+  postCode   String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Wishlist {
+  id         String   @id @default(cuid())
+  userId     String
+  productId  String   // References Sanity Product ID
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model Inquiry {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  message   String   @db.Text
+  productId String?  // References Sanity Product ID
+  
+  status    String   @default("PENDING") // PENDING, RESPONDED, CLOSED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ShippingRate {
+  id          String   @id @default(cuid())
+  district    String   @unique
+  baseRate    Int      // Taka
+  perItemRate Int      // Taka
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String   // Sanity Product ID
+  userId    String
+  rating    Int      // 1 to 5
+  comment   String   @db.Text
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([userId])
+  @@index([status])
+}
+
+model PromoCode {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  discountType   DiscountType
+  discountValue  Int       // Percentage (1-100) or Flat amount (Taka)
+  isActive       Boolean   @default(true)
+  maxUses        Int?      // Null means unlimited
+  currentUses    Int       @default(0)
+  expiryDate     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([code])
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FLAT
+}
+
+enum AbandonedCartStatus {
+  PENDING
+  RECOVERED
+  EMAIL_SENT
+}
+
+model StoreSettings {
+  id                           String   @id @default(cuid())
+  abandonedCartDelayHours      Int      @default(24)
+  abandonedCartDiscountPercent Int      @default(5)
+  maintenanceMode              Boolean  @default(false)
+  updatedAt                    DateTime @updatedAt
+}
+
+model AbandonedCart {
+  id                 String              @id @default(cuid())
+  cartSessionId      String?             @unique
+  userId             String?
+  email              String
+  cartItems          Json                // Store the cart contents
+  lastActive         DateTime            @default(now())
+  status             AbandonedCartStatus @default(PENDING)
+  isRecoveryEligible Boolean             @default(false)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  user               User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([status])
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, token])
+}

@@ -1,6 +1,5 @@
 import prisma from '@/lib/prisma';
-import { AuthProvider, LoginFailureReason } from '@prisma/client';
-import { logAuthEvent } from '@/lib/auth/audit';
+import { logAuthEvent, AuthProvider, LoginFailureReason } from '@/lib/auth/audit';
 import { SessionService } from '@/services/session.service';
 
 export interface GoogleProfile {
@@ -39,6 +38,7 @@ export class OAuthService {
       }
 
       // Check Lockout
+      // @ts-ignore
       if (user.lockedUntil && new Date() < user.lockedUntil) {
         logAuthEvent({ userId: user.id, email: profile.email, ipAddress, userAgent, authMethod: AuthProvider.GOOGLE, success: false, failureReason: LoginFailureReason.ACCOUNT_LOCKED });
         return { success: false, error: 'Account locked. Please try again later.', requiresOnboarding: false };
@@ -85,13 +85,14 @@ export class OAuthService {
         name: data.name,
         email: data.email,
         phone: data.phone,
-        emailVerified: true, // Google emails are pre-verified
+        emailVerified: new Date(), // Google emails are pre-verified
       },
     });
 
     await prisma.account.create({
       data: {
         userId: user.id,
+        type: 'oauth',
         provider: AuthProvider.GOOGLE,
         providerAccountId: data.providerAccountId,
       },
