@@ -33,6 +33,7 @@ test('SECURITY-H2-A2 Cart Identity Invariants', async (t) => {
       create: {
         email: "test-auth-user@example.com",
         name: "Test User",
+        updatedAt: new Date(),
       }
     });
     testUserId = user.id;
@@ -123,7 +124,7 @@ test('SECURITY-H2-A2 Cart Identity Invariants', async (t) => {
   });
 
   await t.test('9. Different userId cannot mutate another authenticated cart', async () => {
-    const user2 = await prisma.user.create({ data: { email: "user2@example.com", name: "User 2" } });
+    const user2 = await prisma.user.create({ data: { email: "user2@example.com", name: "User 2", updatedAt: new Date() } });
     
     await CartRepository.upsertCart({ kind: "authenticated", userId: testUserId }, dummyCartItems, "auth@example.com");
     await CartRepository.upsertCart({ kind: "authenticated", userId: user2.id }, dummyCartItems, "auth@example.com");

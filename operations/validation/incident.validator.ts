@@ -1,4 +1,4 @@
-import { IncidentContract } from './incident.contract';
+import { IncidentContract } from '../incidents/incident.contract';
 
 export class IncidentValidator {
   static validate(incident: IncidentContract): void {

@@ -41,7 +41,7 @@ export class AuthRepository {
   static async createResetToken(email: string, token: string, expiresAt: Date) {
     return prisma.passwordResetToken.create({
       data: {
-        email,
+        userId: email,
         token,
         expiresAt,
       },
@@ -50,7 +50,7 @@ export class AuthRepository {
 
   static async deleteResetTokensByEmail(email: string) {
     return prisma.passwordResetToken.deleteMany({
-      where: { email },
+      where: { userId: email },
     });
   }
 
@@ -69,16 +69,16 @@ export class AuthRepository {
   static async createVerificationToken(identifier: string, token: string, expires: Date) {
     return prisma.verificationToken.create({
       data: {
-        identifier,
+        userId: identifier,
         token,
-        expires,
+        expiresAt: expires,
       },
     });
   }
 
   static async deleteVerificationTokensByIdentifier(identifier: string) {
     return prisma.verificationToken.deleteMany({
-      where: { identifier },
+      where: { userId: identifier },
     });
   }
 
@@ -91,7 +91,7 @@ export class AuthRepository {
   static async verifyUserEmail(email: string) {
     return prisma.user.update({
       where: { email },
-      data: { emailVerified: new Date() },
+      data: { emailVerified: true },
     });
   }
 }

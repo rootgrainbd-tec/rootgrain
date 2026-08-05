@@ -27,6 +27,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     // Enumeration protection: always return a generic success
     return successResponse(null, 'If the email is valid, a verification link has been sent.');
   } catch (error: any) {
+    console.error("REGISTRATION ERROR:", error);
     // If it's a known error like "Registration failed", we still return a generic success
     // to prevent email enumeration, but we can log the real error if we want.
     return successResponse(null, 'If the email is valid, a verification link has been sent.');

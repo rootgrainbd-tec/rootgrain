@@ -85,16 +85,17 @@ export class OAuthService {
         name: data.name,
         email: data.email,
         phone: data.phone,
-        emailVerified: new Date(), // Google emails are pre-verified
+        emailVerified: true, // Google emails are pre-verified
+        updatedAt: new Date(),
       },
     });
 
     await prisma.account.create({
       data: {
         userId: user.id,
-        type: 'oauth',
         provider: AuthProvider.GOOGLE,
         providerAccountId: data.providerAccountId,
+        updatedAt: new Date(),
       },
     });
 
