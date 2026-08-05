@@ -50,7 +50,7 @@ export const metadata: Metadata = {
 };
 
 import { SmoothScroll } from "@/components/SmoothScroll";
-import { AuthProviders } from "@/components/auth/Providers";
+import { NextAuthProvider } from "@/components/auth/NextAuthProvider";
 import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import { MaintenanceGuard } from "@/components/layout/MaintenanceGuard";
 import { VerificationBanner } from "@/components/auth/VerificationBanner";
@@ -101,7 +101,7 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} ${cormorant.variable} antialiased bg-background text-foreground`}
       >
-        <AuthProviders>
+        <NextAuthProvider>
           <SmoothScroll>
             <MaintenanceGuard>
               <VerificationBanner />
@@ -111,7 +111,7 @@ export default async function RootLayout({
             <SonnerToaster position="bottom-right" richColors />
             <WhatsAppButton whatsappNumber={config.support.phone.whatsapp} />
           </SmoothScroll>
-        </AuthProviders>
+        </NextAuthProvider>
       </body>
     </html>
   );
