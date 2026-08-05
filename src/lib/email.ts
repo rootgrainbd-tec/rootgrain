@@ -358,6 +358,13 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
 
 export async function sendVerificationEmail(email: string, verifyLink: string) {
   try {
+    const key = process.env.RESEND_API_KEY || "";
+    logger.info({
+      hasResendKey: !!process.env.RESEND_API_KEY,
+      hasSenderEmail: !!process.env.RESEND_FROM_EMAIL,
+      sender: process.env.RESEND_FROM_EMAIL || "support@rootgrain.bd",
+      apiPrefix: key.length > 5 ? key.substring(0, 5) + "..." : "none",
+    }, "[EMAIL DEBUG] Pre-send check");
     const config = await getFreshSiteConfig();
     const sender = await getEmailSender(config);
     const content = `
