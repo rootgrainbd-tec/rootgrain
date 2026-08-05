@@ -32,7 +32,7 @@ function VerifyEmailContent() {
 
       if (res.ok && data.success) {
         setState("success");
-        await update();
+        await update({ emailVerified: true });
       } else {
         setState("error");
         setErrorMessage(data.error?.message || "Invalid or expired token.");

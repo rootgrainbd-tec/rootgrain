@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
-import { SessionService } from '@/services/session.service';
+
 import { logAuthEvent, AuthProvider, LoginFailureReason } from '@/lib/auth/audit';
 import { User } from '@prisma/client';
 import { sendVerificationEmail, sendPasswordResetEmail } from '@/lib/email';
@@ -98,11 +98,9 @@ export class AuthService {
       data: { failedAttempts: 0, lockedUntil: null, updatedAt: new Date() } as any,
     });
 
-    const sessionToken = await SessionService.createSession(user.id, false); // RememberMe will be wired later
-
     logAuthEvent({ userId: user.id, email, ipAddress, userAgent, authMethod: AuthProvider.CREDENTIALS, success: true });
 
-    return { success: true, token: sessionToken, user };
+    return { success: true, user };
   }
 
   /**
@@ -210,7 +208,7 @@ export class AuthService {
     // Clean up all active sessions since password changed
     const user = await prisma.user.findUnique({ where: { id: resetToken.userId } });
     if (user) {
-      await SessionService.revokeAllSessions(user.id);
+      await prisma.session.deleteMany({ where: { userId: user.id } });
     }
 
     await prisma.passwordResetToken.delete({ where: { id: resetToken.id } });

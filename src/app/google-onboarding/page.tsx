@@ -74,7 +74,7 @@ function GoogleOnboardingContent() {
 
       if (res.ok && data.success) {
         toast.success("Account created! Welcome to RootGrain.");
-        await update();
+        await update({ emailVerified: true });
         router.push("/account");
       } else {
         setServerError(data.error?.message || "Failed to create account.");

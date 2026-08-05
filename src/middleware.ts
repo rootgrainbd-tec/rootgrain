@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { checkRateLimit, getAccountTargetKey, RateLimitCategory } from "@/lib/rate-limit";
-import { SESSION_COOKIE_NAME } from "@/lib/auth/cookies";
+
 
 function getIpKey(req: NextRequest): string {
   const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
@@ -89,7 +89,6 @@ export async function middleware(req: NextRequest) {
   }
 
   const hasSession = 
-    req.cookies.has(SESSION_COOKIE_NAME) || 
     req.cookies.has("next-auth.session-token") || 
     req.cookies.has("__Secure-next-auth.session-token");
   const isAdminRoute = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");

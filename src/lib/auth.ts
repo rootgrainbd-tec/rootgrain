@@ -135,14 +135,19 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub as string;
-        (session.user as any).role = token.role as Role;
+        session.user.role = token.role as string;
+        session.user.emailVerified = token.emailVerified as boolean | null;
       }
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session: updateSession }) {
       if (user) {
         token.sub = user.id;
         token.role = (user as any).role || Role.USER;
+        token.emailVerified = (user as any).emailVerified || null;
+      }
+      if (trigger === "update" && updateSession?.emailVerified !== undefined) {
+        token.emailVerified = updateSession.emailVerified;
       }
       return token;
     }
