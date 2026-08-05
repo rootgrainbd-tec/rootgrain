@@ -8,43 +8,39 @@ import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, XCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
 
-type VerifyState = "verifying" | "success" | "error" | "no-token";
+type VerifyState = "ready" | "verifying" | "success" | "error" | "no-token";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const { refreshSession, isAuthenticated } = useAuth();
-  const [state, setState] = useState<VerifyState>(token ? "verifying" : "no-token");
+  const [state, setState] = useState<VerifyState>(token ? "ready" : "no-token");
   const [errorMessage, setErrorMessage] = useState("");
   const [isResending, setIsResending] = useState(false);
 
-  useEffect(() => {
+  const handleVerify = async () => {
     if (!token) return;
+    setState("verifying");
+    try {
+      const res = await fetch("/api/v1/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      const data = await res.json();
 
-    const verify = async () => {
-      try {
-        const res = await fetch("/api/v1/auth/verify-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token }),
-        });
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-          setState("success");
-          await refreshSession();
-        } else {
-          setState("error");
-          setErrorMessage(data.error?.message || "Invalid or expired token.");
-        }
-      } catch {
+      if (res.ok && data.success) {
+        setState("success");
+        await refreshSession();
+      } else {
         setState("error");
-        setErrorMessage("Something went wrong. Please try again.");
+        setErrorMessage(data.error?.message || "Invalid or expired token.");
       }
-    };
-
-    verify();
-  }, [token, refreshSession]);
+    } catch {
+      setState("error");
+      setErrorMessage("Something went wrong. Please try again.");
+    }
+  };
 
   const handleResend = async () => {
     setIsResending(true);
@@ -69,6 +65,19 @@ function VerifyEmailContent() {
     <div className="min-h-[70vh] bg-[#fcfaf8] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-10 px-6 shadow sm:rounded-lg sm:px-10 border border-gray-100 text-center">
+          {state === "ready" && (
+            <>
+              <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-blue-100 mb-4">
+                <Mail className="h-7 w-7 text-[var(--walnut)]" />
+              </div>
+              <h1 className="text-xl font-serif text-[var(--walnut-dark)] mb-2">Verify your email</h1>
+              <p className="text-sm text-gray-600 mb-6">Click the button below to verify your email address.</p>
+              <Button onClick={handleVerify} className="w-full bg-[var(--walnut-dark)] hover:bg-[var(--gold)] text-white">
+                Verify Email
+              </Button>
+            </>
+          )}
+
           {state === "verifying" && (
             <>
               <Loader2 className="h-12 w-12 animate-spin text-[var(--walnut)] mx-auto mb-4" />

@@ -65,8 +65,8 @@ export function LoginForm() {
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
     try {
-      // Redirect to server-side Google OAuth initiation endpoint
-      window.location.href = "/api/v1/auth/google";
+      const { signIn } = await import("next-auth/react");
+      await signIn("google", { callbackUrl: "/account" });
     } catch {
       toast.error("Could not connect to Google");
       setIsGoogleLoading(false);
