@@ -20,6 +20,8 @@ export async function GET(req: NextRequest) {
       NEXTAUTH_SECRET: !!process.env.NEXTAUTH_SECRET,
       NEXTAUTH_URL: process.env.NEXTAUTH_URL,
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+      RESEND_API_KEY: !!process.env.RESEND_API_KEY,
+      RESEND_PREFIX: process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.substring(0, 5) + '...' : 'none'
     }
   });
 }
