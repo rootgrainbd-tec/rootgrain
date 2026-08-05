@@ -43,34 +43,33 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Invalid credentials");
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        });
+        const ip = req?.headers?.["x-forwarded-for"] || "unknown";
+        const userAgent = req?.headers?.["user-agent"] || "unknown";
 
-        if (!user || !user.passwordHash) {
-          throw new Error("Invalid credentials");
+        const { AuthService } = await import("@/services/auth.service");
+        const result = await AuthService.login(
+          credentials.email,
+          credentials.password,
+          ip,
+          userAgent
+        );
+
+        if (!result.success || !result.user) {
+          throw new Error(result.error || "Invalid credentials");
         }
 
-        if (!user.emailVerified) {
+        // Check if email is verified. AuthService.login doesn't explicitly throw for this if we rely on it here, 
+        // but we can check the returned user just in case.
+        if (!result.user.emailVerified) {
           throw new Error("EMAIL_NOT_VERIFIED");
         }
 
-        const { verifyPassword } = await import('@/lib/auth/password');
-        const isCorrectPassword = await verifyPassword(
-          user.passwordHash,
-          credentials.password
-        );
-
-        if (!isCorrectPassword) {
-          throw new Error("Invalid credentials");
-        }
-
-        return user;
+        return result.user;
       }
     })
   ],

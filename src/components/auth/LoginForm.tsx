@@ -40,20 +40,20 @@ export function LoginForm() {
     setServerError(null);
 
     try {
-      const res = await fetch("/api/v1/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+      const { signIn } = await import("next-auth/react");
+      const res = await signIn("credentials", {
+        redirect: false,
+        email: values.email,
+        password: values.password,
       });
-      const data = await res.json();
 
-      if (res.ok && data.success) {
+      if (res?.ok && !res?.error) {
         toast.success("Signed in successfully");
         await refreshSession();
         router.push("/account");
         router.refresh();
       } else {
-        setServerError(data.error?.message || "Invalid email or password");
+        setServerError(res?.error || "Invalid email or password");
       }
     } catch {
       setServerError("Something went wrong. Please try again.");
