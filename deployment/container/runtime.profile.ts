@@ -1,6 +1,6 @@
-import { ResourceProfile } from './resource.profile';
-import { StartupProfile } from './startup.profile';
-import { ShutdownProfile } from './shutdown.profile';
+import { ResourceProfile } from '../runtime/resource.profile';
+import { StartupProfile } from '../runtime/startup.profile';
+import { ShutdownProfile } from '../runtime/shutdown.profile';
 
 export interface RuntimeProfile {
   readonly profile_id: string;
