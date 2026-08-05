@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { generateInvoicePDF } from "./pdfGenerator";
 import { logger } from "./logger";
 import { getFreshSiteConfig } from "@/data/site-config";
@@ -18,15 +18,13 @@ function escapeHtml(unsafe: string) {
   });
 }
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.resend.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: "resend",
-    pass: process.env.RESEND_API_KEY,
-  },
-});
+let _resend: Resend | null = null;
+function getResendClient(): Resend {
+  if (!_resend) {
+    _resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return _resend;
+}
 
 async function getEmailSender(config: SiteConfig) {
   const fromEmail = process.env.RESEND_FROM_EMAIL || "support@rootgrain.bd";
@@ -196,7 +194,7 @@ export async function sendOrderConfirmationEmail(order: any, customerEmail: stri
     const html = await getBaseTemplate(`Order Confirmation - ${order.orderNumber}`, content, config);
     const pdfBuffer = await generateInvoicePDF(order);
 
-    await transporter.sendMail({
+    await getResendClient().emails.send({
       from: sender,
       ...(config.support?.email && { replyTo: config.support.email }),
       to: customerEmail,
@@ -206,7 +204,6 @@ export async function sendOrderConfirmationEmail(order: any, customerEmail: stri
         {
           filename: `Invoice_${order.orderNumber}.pdf`,
           content: pdfBuffer,
-          contentType: 'application/pdf'
         }
       ]
     });
@@ -261,7 +258,7 @@ export async function sendOrderStatusUpdateEmail(order: any, customerEmail: stri
 
     const html = await getBaseTemplate(`Order Update - ${order.orderNumber}`, content, config);
 
-    await transporter.sendMail({
+    await getResendClient().emails.send({
       from: sender,
       ...(config.support?.email && { replyTo: config.support.email }),
       to: customerEmail,
@@ -304,7 +301,7 @@ export async function sendAbandonedCartEmail(customerEmail: string, items: any[]
 
     const html = await getBaseTemplate(`Complete Your Order`, content, config);
 
-    await transporter.sendMail({
+    await getResendClient().emails.send({
       from: sender,
       ...(config.support?.email && { replyTo: config.support.email }),
       to: customerEmail,
@@ -342,7 +339,7 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
 
     const html = await getBaseTemplate(`Reset Your Password`, content, config);
 
-    await transporter.sendMail({
+    await getResendClient().emails.send({
       from: sender,
       ...(config.support?.email && { replyTo: config.support.email }),
       to: email,
@@ -358,13 +355,6 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
 
 export async function sendVerificationEmail(email: string, verifyLink: string) {
   try {
-    const key = process.env.RESEND_API_KEY || "";
-    logger.info({
-      hasResendKey: !!process.env.RESEND_API_KEY,
-      hasSenderEmail: !!process.env.RESEND_FROM_EMAIL,
-      sender: process.env.RESEND_FROM_EMAIL || "support@rootgrain.bd",
-      apiPrefix: key.length > 5 ? key.substring(0, 5) + "..." : "none",
-    }, "[EMAIL DEBUG] Pre-send check");
     const config = await getFreshSiteConfig();
     const sender = await getEmailSender(config);
     const content = `
@@ -387,7 +377,7 @@ export async function sendVerificationEmail(email: string, verifyLink: string) {
 
     const html = await getBaseTemplate(`Verify Your Email`, content, config);
 
-    await transporter.sendMail({
+    await getResendClient().emails.send({
       from: sender,
       ...(config.support?.email && { replyTo: config.support.email }),
       to: email,
@@ -421,7 +411,7 @@ export async function sendLoginAttemptEmail(email: string) {
 
     const html = await getBaseTemplate(`Registration Attempt`, content, config);
 
-    await transporter.sendMail({
+    await getResendClient().emails.send({
       from: sender,
       ...(config.support?.email && { replyTo: config.support.email }),
       to: email,
@@ -520,7 +510,7 @@ export async function sendWelcomeEmail(user: { name?: string | null; email?: str
       </html>
     `;
 
-    const info = await transporter.sendMail({
+    const { data } = await getResendClient().emails.send({
       from: sender,
       ...(config.support?.email && { replyTo: config.support.email }),
       to: user.email,
@@ -528,7 +518,7 @@ export async function sendWelcomeEmail(user: { name?: string | null; email?: str
       html,
     });
     
-    logger.info({ email: user.email, messageId: info.messageId }, "[EMAIL] Welcome email sent");
+    logger.info({ email: user.email, messageId: data?.id }, "[EMAIL] Welcome email sent");
   } catch (error) {
     logger.error({ err: error, email: user.email }, "[EMAIL ERROR] Failed to send welcome email");
   }
