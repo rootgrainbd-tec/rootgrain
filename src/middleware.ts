@@ -55,14 +55,9 @@ export async function middleware(req: NextRequest) {
   let l1Result: any = null;
   
   if (category && !isL2Only) {
-    if (req.headers.get("x-test-bypass") === "rootgrain-test-99") {
-       // bypass rate limit for testing
-       l1Result = { success: true, limit: 100, remaining: 99, reset: Date.now() + 60000 };
-    } else {
-      l1Result = await checkRateLimit(ipKey, category);
-      if (!l1Result.success) {
-        return buildRateLimitResponse(429, l1Result);
-      }
+    l1Result = await checkRateLimit(ipKey, category);
+    if (!l1Result.success) {
+      return buildRateLimitResponse(429, l1Result);
     }
   }
 
