@@ -8,7 +8,7 @@ export interface MailerService {
 export const mailer: MailerService = {
   async sendVerificationEmail(email: string, token: string) {
     // Determine the base URL dynamically based on environment
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://rootgrain.bd';
     const link = `${baseUrl}/verify-email?token=${token}`;
     
     console.log(`\n[MAILER MOCK] ----------------------------------------------------`);
@@ -18,7 +18,7 @@ export const mailer: MailerService = {
   },
 
   async sendPasswordResetEmail(email: string, token: string) {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://rootgrain.bd';
     const link = `${baseUrl}/reset-password?token=${token}`;
 
     console.log(`\n[MAILER MOCK] ----------------------------------------------------`);

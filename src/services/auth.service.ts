@@ -126,7 +126,7 @@ export class AuthService {
       },
     });
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://rootgrain.bd';
     const verifyLink = `${baseUrl}/verify-email?token=${token}`;
     await sendVerificationEmail(email, verifyLink);
   }
@@ -176,7 +176,7 @@ export class AuthService {
       },
     });
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://rootgrain.bd';
     const resetLink = `${baseUrl}/reset-password?token=${token}`;
     await sendPasswordResetEmail(email, resetLink);
   }
