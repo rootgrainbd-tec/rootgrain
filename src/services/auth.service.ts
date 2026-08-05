@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
 
-import { logAuthEvent, AuthProvider, LoginFailureReason } from '@/lib/auth/audit';
+import { logAuthEvent, LoginFailureReason } from '@/lib/auth/audit';
 import { User } from '@prisma/client';
 import { sendVerificationEmail, sendPasswordResetEmail } from '@/lib/email';
 import { randomBytes } from 'crypto';
@@ -33,7 +33,8 @@ export class AuthService {
     await prisma.account.create({
       data: {
         userId: user.id,
-        provider: AuthProvider.CREDENTIALS,
+        type: 'credentials',
+        provider: 'credentials',
         providerAccountId: user.email!,
         updatedAt: new Date(),
       },
@@ -55,20 +56,20 @@ export class AuthService {
     });
 
     if (!user) {
-      logAuthEvent({ email, ipAddress, userAgent, authMethod: AuthProvider.CREDENTIALS, success: false, failureReason: LoginFailureReason.INVALID_CREDENTIALS });
+      logAuthEvent({ email, ipAddress, userAgent, authMethod: 'credentials', success: false, failureReason: LoginFailureReason.INVALID_CREDENTIALS });
       return { success: false, error: 'Invalid email or password' };
     }
 
     // Check Lockout
     // @ts-ignore
     if (user.lockedUntil && new Date() < user.lockedUntil) {
-      logAuthEvent({ userId: user.id, email, ipAddress, userAgent, authMethod: AuthProvider.CREDENTIALS, success: false, failureReason: LoginFailureReason.ACCOUNT_LOCKED });
+      logAuthEvent({ userId: user.id, email, ipAddress, userAgent, authMethod: 'credentials', success: false, failureReason: LoginFailureReason.ACCOUNT_LOCKED });
       return { success: false, error: 'Account locked. Please try again later or reset your password.' };
     }
 
     // Check if Credentials login is allowed (has password)
     if (!user.passwordHash) {
-      logAuthEvent({ userId: user.id, email, ipAddress, userAgent, authMethod: AuthProvider.CREDENTIALS, success: false, failureReason: LoginFailureReason.MISSING_IDENTITY });
+      logAuthEvent({ userId: user.id, email, ipAddress, userAgent, authMethod: 'credentials', success: false, failureReason: LoginFailureReason.MISSING_IDENTITY });
       return { success: false, error: 'Please log in with Google to access this account.' };
     }
 
@@ -84,7 +85,7 @@ export class AuthService {
         data: { failedAttempts: newAttempts, lockedUntil, updatedAt: new Date() } as any,
       });
 
-      logAuthEvent({ userId: user.id, email, ipAddress, userAgent, authMethod: AuthProvider.CREDENTIALS, success: false, failureReason: LoginFailureReason.INVALID_CREDENTIALS });
+      logAuthEvent({ userId: user.id, email, ipAddress, userAgent, authMethod: 'credentials', success: false, failureReason: LoginFailureReason.INVALID_CREDENTIALS });
       
       if (lockedUntil) {
         return { success: false, error: 'Account locked due to too many failed attempts.' };
@@ -98,7 +99,7 @@ export class AuthService {
       data: { failedAttempts: 0, lockedUntil: null, updatedAt: new Date() } as any,
     });
 
-    logAuthEvent({ userId: user.id, email, ipAddress, userAgent, authMethod: AuthProvider.CREDENTIALS, success: true });
+    logAuthEvent({ userId: user.id, email, ipAddress, userAgent, authMethod: 'credentials', success: true });
 
     return { success: true, user };
   }
@@ -111,16 +112,16 @@ export class AuthService {
     if (!user || user.emailVerified) return;
 
     // Delete any existing tokens
-    await prisma.verificationToken.deleteMany({ where: { userId: user.id } });
+    await prisma.verificationToken.deleteMany({ where: { identifier: user.email! } });
 
     const token = randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     await prisma.verificationToken.create({
       data: {
-        userId: user.id,
+        identifier: user.email!,
         token,
-        expiresAt: expires,
+        expires,
       },
     });
 
@@ -133,24 +134,24 @@ export class AuthService {
    * Verifies a user's email.
    */
   static async verifyEmail(token: string) {
-    const verificationToken = await prisma.verificationToken.findUnique({ where: { token } });
+    const verificationToken = await prisma.verificationToken.findFirst({ where: { token } });
     if (!verificationToken) {
       throw new Error('Invalid or expired token');
     }
 
-    if (verificationToken.expiresAt < new Date()) {
-      await prisma.verificationToken.delete({ where: { token } });
+    if (verificationToken.expires < new Date()) {
+      await prisma.verificationToken.delete({ where: { identifier_token: { identifier: verificationToken.identifier, token: verificationToken.token } } });
       throw new Error('Invalid or expired token');
     }
 
     // Update user
     await prisma.user.update({
-      where: { id: verificationToken.userId },
-      data: { emailVerified: true, updatedAt: new Date() } as any,
+      where: { email: verificationToken.identifier },
+      data: { emailVerified: new Date(), updatedAt: new Date() } as any,
     });
 
     // Clean up token
-    await prisma.verificationToken.delete({ where: { token } });
+    await prisma.verificationToken.delete({ where: { identifier_token: { identifier: verificationToken.identifier, token: verificationToken.token } } });
   }
 
   /**

@@ -12,7 +12,7 @@ import { Role } from "@prisma/client";
 import { sendWelcomeEmail } from "@/lib/email";
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma) as Adapter,
+  adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days explicit
@@ -26,12 +26,12 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-      allowDangerousEmailAccountLinking: false,
+      allowDangerousEmailAccountLinking: true,
     }),
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID as string,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
-      allowDangerousEmailAccountLinking: false,
+      allowDangerousEmailAccountLinking: true,
     }),
     EmailProvider({
       server: process.env.EMAIL_SERVER as string,
@@ -65,7 +65,7 @@ export const authOptions: NextAuthOptions = {
 
         // Check if email is verified. AuthService.login doesn't explicitly throw for this if we rely on it here, 
         // but we can check the returned user just in case.
-        if (!result.user.emailVerified) {
+        if (result.user.emailVerified === null) {
           throw new Error("EMAIL_NOT_VERIFIED");
         }
 

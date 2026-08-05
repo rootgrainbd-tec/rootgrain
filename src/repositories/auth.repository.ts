@@ -61,7 +61,7 @@ export class AuthRepository {
   }
 
   static async getVerificationToken(token: string) {
-    return prisma.verificationToken.findUnique({
+    return prisma.verificationToken.findFirst({
       where: { token },
     });
   }
@@ -69,21 +69,21 @@ export class AuthRepository {
   static async createVerificationToken(identifier: string, token: string, expires: Date) {
     return prisma.verificationToken.create({
       data: {
-        userId: identifier,
+        identifier,
         token,
-        expiresAt: expires,
+        expires,
       },
     });
   }
 
   static async deleteVerificationTokensByIdentifier(identifier: string) {
     return prisma.verificationToken.deleteMany({
-      where: { userId: identifier },
+      where: { identifier },
     });
   }
 
   static async deleteVerificationToken(token: string) {
-    return prisma.verificationToken.delete({
+    return prisma.verificationToken.deleteMany({
       where: { token },
     });
   }
@@ -91,7 +91,7 @@ export class AuthRepository {
   static async verifyUserEmail(email: string) {
     return prisma.user.update({
       where: { email },
-      data: { emailVerified: true },
+      data: { emailVerified: new Date() },
     });
   }
 }
