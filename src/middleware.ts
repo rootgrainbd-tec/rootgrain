@@ -88,7 +88,10 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  const hasSession = req.cookies.has(SESSION_COOKIE_NAME);
+  const hasSession = 
+    req.cookies.has(SESSION_COOKIE_NAME) || 
+    req.cookies.has("next-auth.session-token") || 
+    req.cookies.has("__Secure-next-auth.session-token");
   const isAdminRoute = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
   const isAccountRoute = pathname.startsWith("/account") || pathname.startsWith("/api/user");
 
