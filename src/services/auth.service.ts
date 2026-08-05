@@ -3,7 +3,7 @@ import { hashPassword, verifyPassword } from '@/lib/auth/password';
 import { SessionService } from '@/services/session.service';
 import { logAuthEvent, AuthProvider, LoginFailureReason } from '@/lib/auth/audit';
 import { User } from '@prisma/client';
-import { mailer } from '@/lib/auth/mailer';
+import { sendVerificationEmail, sendPasswordResetEmail } from '@/lib/email';
 import { randomBytes } from 'crypto';
 
 export class AuthService {
@@ -125,7 +125,9 @@ export class AuthService {
       },
     });
 
-    await mailer.sendVerificationEmail(email, token);
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const verifyLink = `${baseUrl}/verify-email?token=${token}`;
+    await sendVerificationEmail(email, verifyLink);
   }
 
   /**
@@ -173,7 +175,9 @@ export class AuthService {
       },
     });
 
-    await mailer.sendPasswordResetEmail(email, token);
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const resetLink = `${baseUrl}/reset-password?token=${token}`;
+    await sendPasswordResetEmail(email, resetLink);
   }
 
   /**
