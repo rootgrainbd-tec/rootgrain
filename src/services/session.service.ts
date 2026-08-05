@@ -23,9 +23,10 @@ export class SessionService {
 
     await prisma.session.create({
       data: {
-        sessionToken: tokenHash, // Store ONLY the SHA-256 hash
+        id: tokenHash, // Store ONLY the SHA-256 hash
         userId,
-        expires: expiresAt,
+        expiresAt: expiresAt,
+        updatedAt: new Date(),
       },
     });
 
@@ -40,13 +41,13 @@ export class SessionService {
     const tokenHash = hashSessionToken(rawToken);
 
     const session = await prisma.session.findUnique({
-      where: { sessionToken: tokenHash },
+      where: { id: tokenHash },
       include: { user: true },
     });
 
     if (!session) return null;
 
-    if (new Date() > session.expires) {
+    if (new Date() > session.expiresAt) {
       // Session has expired, clean it up immediately
       await prisma.session.delete({ where: { id: session.id } });
       return null;
@@ -56,16 +57,16 @@ export class SessionService {
     // For simplicity in Phase 1, we renew standard sessions daily.
     // We update 'expiresAt' in the DB here if needed.
     const now = new Date();
-    const timeRemaining = session.expires.getTime() - now.getTime();
+    const timeRemaining = session.expiresAt.getTime() - now.getTime();
     const oneDay = 1000 * 60 * 60 * 24;
     
     if (timeRemaining < oneDay) {
       const newExpiresAt = new Date(now.getTime() + (STANDARD_SESSION_HOURS * 60 * 60 * 1000));
       await prisma.session.update({
         where: { id: session.id },
-        data: { expires: newExpiresAt },
+        data: { expiresAt: newExpiresAt, updatedAt: new Date() },
       });
-      session.expires = newExpiresAt;
+      session.expiresAt = newExpiresAt;
     }
 
     return session;
@@ -78,7 +79,7 @@ export class SessionService {
     const tokenHash = hashSessionToken(rawToken);
     try {
       await prisma.session.delete({
-        where: { sessionToken: tokenHash },
+        where: { id: tokenHash },
       });
     } catch {
       // Idempotent: Ignore if it doesn't exist

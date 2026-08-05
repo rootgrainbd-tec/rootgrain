@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL") // Essential for Supabase/Neon migrations
+  directUrl = env("DIRECT_URL")
 }
 
 model Product {
@@ -13,8 +13,8 @@ model Product {
   sanityId     String?     @unique
   name         String
   slug         String      @unique
-  category     String      
-  price        Int         // Stored in Taka
+  category     String
+  price        Int
   comparePrice Int?
   wood         String
   dimensions   String
@@ -31,27 +31,27 @@ model Product {
 }
 
 model Order {
-  id              String          @id @default(cuid())
-  orderNumber     String          @unique // e.g. RG-20260522-0001
-  userId          String?         
-  user            User?           @relation(fields: [userId], references: [id])
-  subtotal        Int             // Taka
-  shippingCost    Int             // Taka
-  total           Int             // Taka
-  advancePaid     Int             @default(0) // Tracks the PGW booking fee
-  balanceDue      Int             // total - advancePaid
-  status          OrderStatus     @default(PENDING_ADVANCE)
-  shippingAddress Json            // Structured division/district/address
+  id              String            @id @default(cuid())
+  orderNumber     String            @unique
+  userId          String?
+  subtotal        Int
+  shippingCost    Int
+  total           Int
+  advancePaid     Int               @default(0)
+  balanceDue      Int
+  status          OrderStatus       @default(PENDING_ADVANCE)
+  shippingAddress Json
   promoCode       String?
-  discountAmount  Int             @default(0) // Taka
+  discountAmount  Int               @default(0)
   notes           String?
   logistics       LogisticsProvider @default(PRIVATE_FREIGHT)
-  trackingState   TrackingState   @default(PENDING_PRODUCTION)
-  guestTokenHash  String?         @unique
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  trackingState   TrackingState     @default(PENDING_PRODUCTION)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  guestTokenHash  String?           @unique
+  user            User?             @relation(fields: [userId], references: [id])
   items           OrderItem[]
-  paymentRecords  PaymentRecord[] // One-to-Many: Booking + Settlement
+  paymentRecords  PaymentRecord[]
 
   @@index([userId])
   @@index([status])
@@ -59,33 +59,33 @@ model Order {
 }
 
 model OrderItem {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   orderId     String
   productId   String
   productName String
   quantity    Int
-  unitPrice   Int      // Taka at time of purchase
-  total       Int      // unitPrice * quantity
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product     Product  @relation(fields: [productId], references: [id])
+  unitPrice   Int
+  total       Int
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product @relation(fields: [productId], references: [id])
 
   @@index([orderId])
   @@index([productId])
 }
 
 model PaymentRecord {
-  id          String        @id @default(cuid())
-  orderId     String
-  type        PaymentPhase  // ADVANCE or SETTLEMENT
-  method      PaymentMethod 
-  amount      Int           // Taka
-  status      PaymentStatus @default(INITIATED)
-  bkashTrxId  String?       @unique // Nullable for Bank/COD
-  paidAt      DateTime?
-  createdAt   DateTime      @default(now())
-  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id         String        @id @default(cuid())
+  orderId    String
+  type       PaymentPhase
+  method     PaymentMethod
+  amount     Int
+  status     PaymentStatus @default(INITIATED)
+  bkashTrxId String?       @unique
+  paidAt     DateTime?
+  createdAt  DateTime      @default(now())
+  order      Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  @@unique([orderId, type]) // Ensures only one advance and one settlement per order
+  @@unique([orderId, type])
   @@index([status])
 }
 
@@ -101,7 +101,289 @@ model Testimonial {
   @@index([approved])
 }
 
-// --- Enums enforce strict state machines ---
+model Account {
+  id                String       @id @default(cuid())
+  userId            String
+  providerAccountId String
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime
+  provider          AuthProvider
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  updatedAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([userId])
+}
+
+model User {
+  id             String           @id @default(cuid())
+  name           String
+  email          String           @unique
+  phone          String?
+  role           Role             @default(USER)
+  createdAt      DateTime         @default(now())
+  deletedAt      DateTime?
+  failedAttempts Int              @default(0)
+  lockedUntil    DateTime?
+  passwordHash   String?
+  updatedAt      DateTime
+  emailVerified  Boolean          @default(false)
+  abandonedCarts AbandonedCart[]
+  accounts       Account[]
+  addresses      Address[]
+  AuditLog       AuditLog[]
+  LoginAuditLog  LoginAuditLog[]
+  orders         Order[]
+  reviews        Review[]
+  sessions       Session[]
+  UserPermission UserPermission[]
+  UserRole       UserRole[]
+  wishlists      Wishlist[]
+}
+
+model VerificationToken {
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  id        String   @id @default(cuid())
+  userId    String   @unique
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  phone     String
+  division  String
+  district  String
+  street    String
+  postCode  String?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model Inquiry {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  message   String
+  productId String?
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ShippingRate {
+  id          String   @id @default(cuid())
+  district    String   @unique
+  baseRate    Int
+  perItemRate Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Review {
+  id        String       @id @default(cuid())
+  productId String
+  userId    String
+  rating    Int
+  comment   String
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([userId])
+  @@index([status])
+}
+
+model PromoCode {
+  id            String       @id @default(cuid())
+  code          String       @unique
+  discountType  DiscountType
+  discountValue Int
+  isActive      Boolean      @default(true)
+  maxUses       Int?
+  currentUses   Int          @default(0)
+  expiryDate    DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([code])
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+model StoreSettings {
+  id                           String   @id @default(cuid())
+  abandonedCartDelayHours      Int      @default(24)
+  abandonedCartDiscountPercent Int      @default(5)
+  maintenanceMode              Boolean  @default(false)
+  updatedAt                    DateTime @updatedAt
+}
+
+model AbandonedCart {
+  id                 String              @id @default(cuid())
+  email              String
+  cartItems          Json
+  lastActive         DateTime            @default(now())
+  status             AbandonedCartStatus @default(PENDING)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  cartSessionId      String?             @unique
+  isRecoveryEligible Boolean             @default(false)
+  userId             String?
+  user               User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([status])
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userId    String   @unique
+}
+
+model AuditLog {
+  id                String   @id
+  userId            String?
+  action            String
+  resource          String
+  principal         String
+  decision          String
+  eventHash         String   @unique
+  previousEventHash String?  @unique
+  metadata          Json?
+  createdAt         DateTime @default(now())
+  User              User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId, resource, createdAt])
+}
+
+model AuthRole {
+  id             String           @id
+  description    String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  RolePermission RolePermission[]
+  UserRole       UserRole[]
+}
+
+model FeatureFlag {
+  key         String   @id
+  isActive    Boolean  @default(false)
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+}
+
+model LoginAuditLog {
+  id              String              @id
+  userId          String?
+  email           String
+  timestamp       DateTime            @default(now())
+  ipAddress       String
+  userAgent       String
+  deviceType      String?
+  browser         String?
+  operatingSystem String?
+  authMethod      AuthProvider
+  success         Boolean
+  failureReason   LoginFailureReason?
+  sessionId       String?
+  User            User?               @relation(fields: [userId], references: [id])
+
+  @@index([email])
+  @@index([timestamp])
+  @@index([userId])
+}
+
+model Permission {
+  id             String           @id
+  description    String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  RolePermission RolePermission[]
+  UserPermission UserPermission[]
+}
+
+model Policy {
+  id          String           @id
+  name        String           @unique
+  description String?
+  effect      PermissionEffect
+  rules       Json
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime
+
+  @@index([isActive])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  createdAt    DateTime   @default(now())
+  Permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  AuthRole     AuthRole   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([roleId])
+}
+
+model UserPermission {
+  userId       String
+  permissionId String
+  effect       PermissionEffect @default(ALLOW)
+  createdAt    DateTime         @default(now())
+  Permission   Permission       @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  User         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, permissionId])
+  @@index([userId])
+}
+
+model UserRole {
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+  AuthRole  AuthRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([userId])
+}
 
 enum Role {
   USER
@@ -136,8 +418,6 @@ enum PaymentStatus {
   REFUNDED
 }
 
-// --- Logistics & Fulfillment Enums ---
-
 enum LogisticsProvider {
   PRIVATE_FREIGHT
   PATHAO
@@ -152,150 +432,6 @@ enum TrackingState {
   DISPATCHED
   OUT_FOR_DELIVERY
   DELIVERED_AND_COLLECTED
-}
-
-// --- Token Caching ---
-
-// --- NextAuth & User Models ---
-
-model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String?   @map("password")
-  phone         String?
-  role          Role      @default(USER)
-  
-  accounts      Account[]
-  sessions      Session[]
-  orders        Order[]
-  addresses     Address[]
-  wishlists     Wishlist[]
-  reviews       Review[]
-  abandonedCarts AbandonedCart[]
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
-model Address {
-  id         String   @id @default(cuid())
-  userId     String
-  name       String
-  phone      String
-  division   String
-  district   String
-  street     String
-  postCode   String?
-  isDefault  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Wishlist {
-  id         String   @id @default(cuid())
-  userId     String
-  productId  String   // References Sanity Product ID
-  createdAt  DateTime @default(now())
-
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, productId])
-}
-
-model Inquiry {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String
-  message   String   @db.Text
-  productId String?  // References Sanity Product ID
-  
-  status    String   @default("PENDING") // PENDING, RESPONDED, CLOSED
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model ShippingRate {
-  id          String   @id @default(cuid())
-  district    String   @unique
-  baseRate    Int      // Taka
-  perItemRate Int      // Taka
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Review {
-  id        String   @id @default(cuid())
-  productId String   // Sanity Product ID
-  userId    String
-  rating    Int      // 1 to 5
-  comment   String   @db.Text
-  status    ReviewStatus @default(PENDING)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([productId])
-  @@index([userId])
-  @@index([status])
-}
-
-model PromoCode {
-  id             String    @id @default(cuid())
-  code           String    @unique
-  discountType   DiscountType
-  discountValue  Int       // Percentage (1-100) or Flat amount (Taka)
-  isActive       Boolean   @default(true)
-  maxUses        Int?      // Null means unlimited
-  currentUses    Int       @default(0)
-  expiryDate     DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  @@index([code])
-}
-
-model Subscriber {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
 }
 
 enum ReviewStatus {
@@ -315,39 +451,22 @@ enum AbandonedCartStatus {
   EMAIL_SENT
 }
 
-model StoreSettings {
-  id                           String   @id @default(cuid())
-  abandonedCartDelayHours      Int      @default(24)
-  abandonedCartDiscountPercent Int      @default(5)
-  maintenanceMode              Boolean  @default(false)
-  updatedAt                    DateTime @updatedAt
+enum AuthProvider {
+  CREDENTIALS
+  GOOGLE
 }
 
-model AbandonedCart {
-  id                 String              @id @default(cuid())
-  cartSessionId      String?             @unique
-  userId             String?
-  email              String
-  cartItems          Json                // Store the cart contents
-  lastActive         DateTime            @default(now())
-  status             AbandonedCartStatus @default(PENDING)
-  isRecoveryEligible Boolean             @default(false)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-
-  user               User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([email])
-  @@index([status])
-  @@index([userId])
+enum LoginFailureReason {
+  INVALID_CREDENTIALS
+  ACCOUNT_LOCKED
+  OAUTH_STATE_MISMATCH
+  OAUTH_REJECTED
+  MISSING_IDENTITY
 }
 
-model PasswordResetToken {
-  id        String   @id @default(cuid())
-  email     String
-  token     String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  @@unique([email, token])
+enum PermissionEffect {
+  ALLOW
+  DENY
+  OBFUSCATE
+  MASK
 }

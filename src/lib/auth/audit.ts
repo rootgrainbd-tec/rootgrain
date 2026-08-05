@@ -1,9 +1,9 @@
 import prisma from '@/lib/prisma';
 // import { AuthProvider, LoginFailureReason } from '@prisma/client';
-export const AuthProvider = { CREDENTIALS: 'credentials', GOOGLE: 'google' } as const;
+export const AuthProvider = { CREDENTIALS: 'CREDENTIALS', GOOGLE: 'GOOGLE' } as const;
 export type AuthProvider = typeof AuthProvider[keyof typeof AuthProvider];
 
-export const LoginFailureReason = { INVALID_CREDENTIALS: 'invalid_credentials', ACCOUNT_LOCKED: 'account_locked', MISSING_IDENTITY: 'missing_identity', OAUTH_REJECTED: 'oauth_rejected' } as const;
+export const LoginFailureReason = { INVALID_CREDENTIALS: 'INVALID_CREDENTIALS', ACCOUNT_LOCKED: 'ACCOUNT_LOCKED', MISSING_IDENTITY: 'MISSING_IDENTITY', OAUTH_REJECTED: 'OAUTH_REJECTED' } as const;
 export type LoginFailureReason = typeof LoginFailureReason[keyof typeof LoginFailureReason];
 
 export type AuditLogPayload = {

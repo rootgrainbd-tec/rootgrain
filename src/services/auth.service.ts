@@ -25,6 +25,7 @@ export class AuthService {
         email: data.email,
         phone: data.phone,
         passwordHash,
+        updatedAt: new Date(),
       },
     });
 
@@ -32,9 +33,9 @@ export class AuthService {
     await prisma.account.create({
       data: {
         userId: user.id,
-        type: 'credentials',
         provider: AuthProvider.CREDENTIALS,
         providerAccountId: user.email!,
+        updatedAt: new Date(),
       },
     });
 
@@ -80,7 +81,7 @@ export class AuthService {
 
       await prisma.user.update({
         where: { id: user.id },
-        data: { failedAttempts: newAttempts, lockedUntil } as any,
+        data: { failedAttempts: newAttempts, lockedUntil, updatedAt: new Date() } as any,
       });
 
       logAuthEvent({ userId: user.id, email, ipAddress, userAgent, authMethod: AuthProvider.CREDENTIALS, success: false, failureReason: LoginFailureReason.INVALID_CREDENTIALS });
@@ -94,7 +95,7 @@ export class AuthService {
     // Success! Reset attempts and generate session
     await prisma.user.update({
       where: { id: user.id },
-      data: { failedAttempts: 0, lockedUntil: null } as any,
+      data: { failedAttempts: 0, lockedUntil: null, updatedAt: new Date() } as any,
     });
 
     const sessionToken = await SessionService.createSession(user.id, false); // RememberMe will be wired later
@@ -112,16 +113,16 @@ export class AuthService {
     if (!user || user.emailVerified) return;
 
     // Delete any existing tokens
-    await prisma.verificationToken.deleteMany({ where: { identifier: user.email! } });
+    await prisma.verificationToken.deleteMany({ where: { userId: user.id } });
 
     const token = randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     await prisma.verificationToken.create({
       data: {
-        identifier: user.email!,
+        userId: user.id,
         token,
-        expires: expires,
+        expiresAt: expires,
       },
     });
 
@@ -139,15 +140,15 @@ export class AuthService {
       throw new Error('Invalid or expired token');
     }
 
-    if (verificationToken.expires < new Date()) {
+    if (verificationToken.expiresAt < new Date()) {
       await prisma.verificationToken.delete({ where: { token } });
       throw new Error('Invalid or expired token');
     }
 
     // Update user
     await prisma.user.update({
-      where: { email: verificationToken.identifier },
-      data: { emailVerified: new Date() },
+      where: { id: verificationToken.userId },
+      data: { emailVerified: true, updatedAt: new Date() } as any,
     });
 
     // Clean up token
@@ -162,14 +163,14 @@ export class AuthService {
     if (!user) return; // Silent return for enumeration protection
 
     // Delete existing reset tokens
-    await prisma.passwordResetToken.deleteMany({ where: { email: user.email! } });
+    await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
 
     const token = randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
     await prisma.passwordResetToken.create({
       data: {
-        email: user.email!,
+        userId: user.id,
         token,
         expiresAt,
       },
@@ -197,16 +198,17 @@ export class AuthService {
     const passwordHash = await hashPassword(newPassword);
 
     await prisma.user.update({
-      where: { email: resetToken.email },
+      where: { id: resetToken.userId },
       data: { 
         passwordHash,
         failedAttempts: 0, // Unlock account on reset
-        lockedUntil: null
+        lockedUntil: null,
+        updatedAt: new Date()
       } as any,
     });
 
     // Clean up all active sessions since password changed
-    const user = await prisma.user.findUnique({ where: { email: resetToken.email } });
+    const user = await prisma.user.findUnique({ where: { id: resetToken.userId } });
     if (user) {
       await SessionService.revokeAllSessions(user.id);
     }
