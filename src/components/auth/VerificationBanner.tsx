@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/components/auth/Providers";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Mail, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 
 export function VerificationBanner() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { data: session, status } = useSession();
+  const isLoading = status === "loading";
+  const isAuthenticated = status === "authenticated";
+  const user = session?.user;
   const [isResending, setIsResending] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 

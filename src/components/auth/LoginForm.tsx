@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { LoginSchema } from "@/validations/auth.schema";
-import { useAuth } from "@/components/auth/Providers";
+
 import { FeatureFlags } from "@/lib/flags";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,7 @@ type LoginValues = z.infer<typeof LoginSchema>;
 
 export function LoginForm() {
   const router = useRouter();
-  const { refreshSession } = useAuth();
+
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export function LoginForm() {
 
       if (res?.ok && !res?.error) {
         toast.success("Signed in successfully");
-        await refreshSession();
+
         router.push("/account");
         router.refresh();
       } else {

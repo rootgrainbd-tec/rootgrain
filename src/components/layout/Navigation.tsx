@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession, useAuth } from "@/components/auth/Providers";
+import { useSession, signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, User, Search, ShoppingBag } from "lucide-react";
 import Image from "next/image";
@@ -19,7 +19,7 @@ const SearchCommand = dynamic(() => import('./SearchCommand').then((mod) => mod.
 
 export function Navigation({ config }: { config: SiteConfig }) {
   const { data: session } = useSession();
-  const { logout } = useAuth();
+
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -252,7 +252,7 @@ export function Navigation({ config }: { config: SiteConfig }) {
                       transition={{ delay: (NAV_LINKS.length + 2) * 0.1 }}
                       onClick={() => {
                         setIsMobileMenuOpen(false);
-                        logout();
+                        signOut({ callbackUrl: '/' });
                       }}
                       className="font-serif text-2xl text-[var(--ivory)]/70 hover:text-[var(--gold)] transition-colors"
                     >

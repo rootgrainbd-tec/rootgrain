@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth, useSession } from "@/components/auth/Providers";
+import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { User, LogOut, Settings, Package, Heart } from "lucide-react";
 import {
@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function UserNav({ isScrolled }: { isScrolled?: boolean }) {
   const { data: session, status } = useSession();
-  const { logout } = useAuth();
+
 
   if (status === "loading") {
     return (
@@ -88,7 +88,7 @@ export function UserNav({ isScrolled }: { isScrolled?: boolean }) {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600" onClick={() => logout()}>
+        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600" onClick={() => signOut({ callbackUrl: '/' })}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>

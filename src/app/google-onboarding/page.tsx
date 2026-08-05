@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/components/auth/Providers";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,7 +17,7 @@ import { Loader2 } from "lucide-react";
 function GoogleOnboardingContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { refreshSession } = useAuth();
+  const { update } = useSession();
 
   // These values would be passed from the OAuth callback
   const prefillName = searchParams.get("name") || "";
@@ -74,7 +74,7 @@ function GoogleOnboardingContent() {
 
       if (res.ok && data.success) {
         toast.success("Account created! Welcome to RootGrain.");
-        await refreshSession();
+        await update();
         router.push("/account");
       } else {
         setServerError(data.error?.message || "Failed to create account.");

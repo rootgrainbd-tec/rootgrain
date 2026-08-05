@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/components/auth/Providers";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, XCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
@@ -13,7 +13,8 @@ type VerifyState = "ready" | "verifying" | "success" | "error" | "no-token";
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  const { refreshSession, isAuthenticated } = useAuth();
+  const { data: session, status, update } = useSession();
+  const isAuthenticated = status === "authenticated";
   const [state, setState] = useState<VerifyState>(token ? "ready" : "no-token");
   const [errorMessage, setErrorMessage] = useState("");
   const [isResending, setIsResending] = useState(false);
@@ -31,7 +32,7 @@ function VerifyEmailContent() {
 
       if (res.ok && data.success) {
         setState("success");
-        await refreshSession();
+        await update();
       } else {
         setState("error");
         setErrorMessage(data.error?.message || "Invalid or expired token.");
