@@ -1,9 +1,10 @@
 import prisma from '@/lib/prisma';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
-
+import { logger } from '@/lib/logger';
 import { logAuthEvent, LoginFailureReason } from '@/lib/auth/audit';
 import { User } from '@prisma/client';
 import { sendVerificationEmail, sendPasswordResetEmail } from '@/lib/email';
+import { needsEmailVerification } from '@/lib/verification';
 import { randomBytes } from 'crypto';
 
 export class AuthService {
@@ -108,8 +109,16 @@ export class AuthService {
    * Resends verification email.
    */
   static async sendVerificationEmail(email: string) {
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || user.emailVerified) return;
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { accounts: true }
+    });
+    
+    if (!user) return;
+    
+    // Map the first account's provider (if any) for the helper
+    const provider = user.accounts?.[0]?.provider;
+    if (!needsEmailVerification({ ...user, provider })) return;
 
     // Delete any existing tokens
     await prisma.verificationToken.deleteMany({ where: { identifier: user.email! } });

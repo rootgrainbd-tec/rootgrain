@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, Mail, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 
+import { needsEmailVerification } from "@/lib/verification";
+
 export function VerificationBanner() {
   const { data: session, status } = useSession();
   const isLoading = status === "loading";
@@ -15,7 +17,7 @@ export function VerificationBanner() {
   const [dismissed, setDismissed] = useState(false);
 
   // Don't render if loading, not authenticated, already verified, or dismissed
-  if (isLoading || !isAuthenticated || !user || user.emailVerified || user.provider === "google" || dismissed) {
+  if (isLoading || !isAuthenticated || !user || !needsEmailVerification(user) || dismissed) {
     return null;
   }
 
