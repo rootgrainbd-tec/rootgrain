@@ -145,7 +145,7 @@ model User {
   lockedUntil    DateTime?
   passwordHash   String?
   image          String?
-  updatedAt      DateTime
+  updatedAt      DateTime         @updatedAt
   emailVerified  DateTime?
   abandonedCarts AbandonedCart[]
   accounts       Account[]

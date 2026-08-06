@@ -1,0 +1,3 @@
+-- AlterTable
+-- This migration is deliberately empty because adding @updatedAt in Prisma does not require a database schema change.
+-- It only instructs the Prisma Client to automatically set the updatedAt timestamp.
