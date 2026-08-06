@@ -105,7 +105,12 @@ export const authOptions: NextAuthOptions = {
       }
     },
     async linkAccount({ user, account, profile }) {
-      if (account.provider === "google" && profile?.email_verified === true) {
+      if (
+        account.provider === "google" &&
+        profile &&
+        "email_verified" in profile &&
+        profile.email_verified === true
+      ) {
         try {
           await prisma.user.update({
             where: { id: user.id },
