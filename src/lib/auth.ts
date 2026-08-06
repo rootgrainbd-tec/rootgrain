@@ -103,6 +103,19 @@ export const authOptions: NextAuthOptions = {
           console.error("Failed to link guest orders on OAuth:", e);
         }
       }
+    },
+    async linkAccount({ user, account, profile }) {
+      if (account.provider === "google" && profile?.email_verified === true) {
+        try {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { emailVerified: new Date() }
+          });
+          logger.info({ email: user.email }, "Marked Google OAuth user as emailVerified");
+        } catch (error) {
+          logger.error({ err: error, email: user.email }, "Failed to update emailVerified on OAuth account link");
+        }
+      }
     }
   },
   callbacks: {
