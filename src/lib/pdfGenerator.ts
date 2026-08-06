@@ -1,6 +1,11 @@
 import PDFDocument from 'pdfkit';
+import { getSiteConfig } from "@/data/site-config";
+import { BrandService } from "@/lib/brand";
 
 export async function generateInvoicePDF(order: any): Promise<Buffer> {
+  const config = await getSiteConfig();
+  const brand = new BrandService(config);
+
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ margin: 50 });
@@ -11,10 +16,13 @@ export async function generateInvoicePDF(order: any): Promise<Buffer> {
       doc.on('error', reject);
 
       // Header
-      doc.fontSize(25).fillColor('#5D4037').text('Rootgrain Furniture', { align: 'right' });
-      doc.fontSize(10).fillColor('gray').text('123 Furniture Street, Dhaka, Bangladesh', { align: 'right' });
-      doc.text('Email: support@rootgrain.bd', { align: 'right' });
-      doc.text('Phone: +880 1234-567890', { align: 'right' });
+      doc.fontSize(25).fillColor('#5D4037').text(brand.getCompanyName(), { align: 'right' });
+      doc.fontSize(10).fillColor('gray').text(
+        config.address?.line1 ? `${config.address.line1}${config.address.line2 ? ', ' + config.address.line2 : ''}` : '123 Furniture Street, Dhaka, Bangladesh', 
+        { align: 'right' }
+      );
+      doc.text(`Email: ${config.support?.email || 'support@rootgrain.bd'}`, { align: 'right' });
+      doc.text(`Phone: ${config.support?.phone?.display || '+880 1234-567890'}`, { align: 'right' });
       doc.moveDown(2);
 
       // Invoice Info
@@ -91,7 +99,7 @@ export async function generateInvoicePDF(order: any): Promise<Buffer> {
       // Footer Message
       doc.moveDown(4);
       doc.font('Helvetica').fontSize(10).fillColor('gray');
-      doc.text('Thank you for choosing Rootgrain Furniture!', { align: 'center' });
+      doc.text(`Thank you for choosing ${brand.getCompanyName()}!`, { align: 'center' });
 
       doc.end();
     } catch (error) {

@@ -4,9 +4,11 @@ import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { getSiteConfig } from "@/data/site-config";
 import { Button } from "@/components/ui/button";
+import { BrandService } from "@/lib/brand";
 
 export default async function NotFound() {
   const SITE_CONFIG = await getSiteConfig();
+  const brand = new BrandService(SITE_CONFIG);
 
   return (
     <main className="min-h-screen bg-[var(--ivory)]">
@@ -14,7 +16,7 @@ export default async function NotFound() {
       
       <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-40 pb-24 flex flex-col items-center justify-center text-center min-h-[70vh]">
         <div className="relative w-24 h-24 mb-8 opacity-30">
-          <Image src="/images/rootgrain-logo-dark.svg" alt="RootGrain" fill className="object-contain" />
+          <Image src={brand.getDarkLogo()} alt={brand.getCompanyName()} fill className="object-contain" />
         </div>
         
         <h1 className="font-serif text-7xl md:text-9xl text-[var(--walnut-dark)] font-light mb-4">

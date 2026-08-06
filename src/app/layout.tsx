@@ -17,37 +17,47 @@ const cormorant = Cormorant_Garamond({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://rootgrain.com"),
-  title: "RootGrain | Heritage Artisan Furniture",
-  description: "RootGrain crafts heirloom-quality wooden furniture using time-honored artisan techniques. Each piece tells a story of craftsmanship, permanence, and timeless beauty.",
-  keywords: ["handcrafted furniture", "artisan furniture", "wooden furniture", "heritage furniture", "luxury furniture", "dining tables", "coffee tables", "woodworking"],
-  authors: [{ name: "RootGrain Atelier" }],
-  icons: {
-    icon: "/images/logo-new.png",
-  },
-  openGraph: {
-    title: "RootGrain | Heritage Artisan Furniture",
-    description: "Handcrafted heirloom-quality wooden furniture. Crafted with legacy, not mass manufactured.",
-    url: "https://rootgrain.com",
-    siteName: "RootGrain",
-    type: "website",
-    images: [
-      {
-        url: "/images/hero-workshop.png",
-        width: 1344,
-        height: 768,
-        alt: "RootGrain Artisan Workshop",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "RootGrain | Heritage Artisan Furniture",
-    description: "Handcrafted heirloom-quality wooden furniture. Crafted with legacy, not mass manufactured.",
-    images: ["/images/hero-workshop.png"],
-  },
-};
+import { getSiteConfig } from "@/data/site-config";
+import { BrandService } from "@/lib/brand";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await getSiteConfig();
+  const brand = new BrandService(config);
+
+  return {
+    metadataBase: new URL(config.url || "https://rootgrain.bd"),
+    title: `${brand.getSiteName()} | Heritage Artisan Furniture`,
+    description: "RootGrain crafts heirloom-quality wooden furniture using time-honored artisan techniques. Each piece tells a story of craftsmanship, permanence, and timeless beauty.",
+    keywords: ["handcrafted furniture", "artisan furniture", "wooden furniture", "heritage furniture", "luxury furniture", "dining tables", "coffee tables", "woodworking"],
+    authors: [{ name: `${brand.getCompanyName()} Atelier` }],
+    icons: {
+      icon: brand.getFavicon(),
+      apple: brand.getFavicon(),
+    },
+    manifest: "/site.webmanifest",
+    openGraph: {
+      title: `${brand.getSiteName()} | Heritage Artisan Furniture`,
+      description: "Handcrafted heirloom-quality wooden furniture. Crafted with legacy, not mass manufactured.",
+      url: config.url || "https://rootgrain.bd",
+      siteName: brand.getSiteName(),
+      type: "website",
+      images: [
+        {
+          url: brand.getOgImage(),
+          width: 1344,
+          height: 768,
+          alt: `${brand.getCompanyName()} Artisan Workshop`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${brand.getSiteName()} | Heritage Artisan Furniture`,
+      description: "Handcrafted heirloom-quality wooden furniture. Crafted with legacy, not mass manufactured.",
+      images: [brand.getOgImage()],
+    },
+  };
+}
 
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { NextAuthProvider } from "@/components/auth/NextAuthProvider";
@@ -55,8 +65,6 @@ import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import { MaintenanceGuard } from "@/components/layout/MaintenanceGuard";
 import { VerificationBanner } from "@/components/auth/VerificationBanner";
 import Script from "next/script";
-
-import { getSiteConfig } from "@/data/site-config";
 
 export default async function RootLayout({
   children,
