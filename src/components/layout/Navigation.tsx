@@ -11,6 +11,7 @@ import { NAV_LINKS } from "@/data/site-config";
 import type { SiteConfig } from "@/types/site";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
+import { BrandService } from "@/lib/brand";
 
 const CartSheet = dynamic(() => import('./CartSheet').then((mod) => mod.CartSheet), {
   loading: () => <div className="w-5 h-5 flex items-center justify-center"><ShoppingBag className="w-5 h-5 opacity-50" /></div>,
@@ -18,6 +19,7 @@ const CartSheet = dynamic(() => import('./CartSheet').then((mod) => mod.CartShee
 const SearchCommand = dynamic(() => import('./SearchCommand').then((mod) => mod.SearchCommand));
 
 export function Navigation({ config }: { config: SiteConfig }) {
+  const brand = new BrandService(config);
   const { data: session } = useSession();
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -52,8 +54,8 @@ export function Navigation({ config }: { config: SiteConfig }) {
             <div className="flex items-center gap-2 z-10 shrink-0">
               <Link href="/" className={`relative shrink-0 transition-all duration-500 ${isScrolled ? "w-[50px] h-[50px]" : "w-[90px] h-[90px] lg:w-[120px] lg:h-[120px]"}`}>
                 <Image
-                  src={isDarkText ? "/images/rootgrain-logo-dark.svg" : "/images/rootgrain-logo.svg"}
-                  alt="RootGrain Logo"
+                  src={isDarkText ? brand.getDarkLogo() : brand.getLogo()}
+                  alt={`${brand.getCompanyName()} Logo`}
                   fill
                   className="object-contain"
                 />

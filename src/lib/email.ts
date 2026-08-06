@@ -4,6 +4,7 @@ import { logger } from "./logger";
 import { getFreshSiteConfig } from "@/data/site-config";
 import { EmailTheme } from "./email/theme";
 import type { SiteConfig } from "@/types/site";
+import { BrandService } from "@/lib/brand";
 
 function escapeHtml(unsafe: string) {
   return (unsafe || "").replace(/[&<"'>]/g, function (m) {
@@ -27,8 +28,9 @@ function getResendClient(): Resend {
 }
 
 async function getEmailSender(config: SiteConfig) {
+  const brand = new BrandService(config);
   const fromEmail = process.env.RESEND_FROM_EMAIL || "support@rootgrain.bd";
-  return `"${config.name || 'Rootgrain'}" <${fromEmail}>`;
+  return `"${brand.getCompanyName()}" <${fromEmail}>`;
 }
 
 function buildSocialLinksHtml(config: SiteConfig) {
@@ -46,10 +48,9 @@ function buildSocialLinksHtml(config: SiteConfig) {
 }
 
 async function getBaseTemplate(title: string, content: string, config: SiteConfig) {
+  const brand = new BrandService(config);
   const currentYear = new Date().getFullYear();
-  const logoHtml = config.logoUrl 
-    ? `<img src="${config.logoUrl}" alt="${config.name || 'Rootgrain'}" style="max-height: 40px; border: 0;" />`
-    : `<h1>${config.name || 'Rootgrain'}</h1>`;
+  const logoHtml = `<img src="${brand.getEmailLogo()}" alt="${brand.getCompanyName()}" style="max-height: 40px; border: 0;" />`;
     
   const socialLinksHtml = buildSocialLinksHtml(config);
   const supportEmailHtml = config.support?.email 
@@ -87,11 +88,11 @@ async function getBaseTemplate(title: string, content: string, config: SiteConfi
           ${content}
         </div>
         <div class="footer">
-          ${config.tagline ? `<p>${config.tagline}</p>` : `<p>${config.name || 'Rootgrain'} | Handcrafted in Bangladesh</p>`}
+          ${config.tagline ? `<p>${config.tagline}</p>` : `<p>${brand.getCompanyName()} | Handcrafted in Bangladesh</p>`}
           ${supportEmailHtml}
           <p style="margin-top: 10px;"><a href="${config.url}" style="color: ${EmailTheme.primary}; text-decoration: none;">${config.url.replace(/^https?:\/\//, '')}</a></p>
           ${socialLinksHtml ? `<div style="margin-top: 15px;">${socialLinksHtml}</div>` : ''}
-          <p style="margin-top: 15px; font-size: 12px;">&copy; ${currentYear} ${config.name || 'Rootgrain'}. All rights reserved.</p>
+          <p style="margin-top: 15px; font-size: 12px;">&copy; ${currentYear} ${brand.getCompanyName()}. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -256,13 +257,14 @@ export async function sendOrderStatusUpdateEmail(order: any, customerEmail: stri
       </div>
     `;
 
+    const brand = new BrandService(config);
     const html = await getBaseTemplate(`Order Update - ${order.orderNumber}`, content, config);
 
     await getResendClient().emails.send({
       from: sender,
       ...(config.support?.email && { replyTo: config.support.email }),
       to: customerEmail,
-      subject: `Order Update: ${status} - ${order.orderNumber} | ${config.name || 'Rootgrain'}`,
+      subject: `Order Update: ${status} - ${order.orderNumber} | ${brand.getCompanyName()}`,
       html,
     });
 
@@ -299,13 +301,14 @@ export async function sendAbandonedCartEmail(customerEmail: string, items: any[]
       </div>
     `;
 
+    const brand = new BrandService(config);
     const html = await getBaseTemplate(`Complete Your Order`, content, config);
 
     await getResendClient().emails.send({
       from: sender,
       ...(config.support?.email && { replyTo: config.support.email }),
       to: customerEmail,
-      subject: `You left something behind! (Here's ${discountPercent}% off) | ${config.name || 'Rootgrain'}`,
+      subject: `You left something behind! (Here's ${discountPercent}% off) | ${brand.getCompanyName()}`,
       html,
     });
     
@@ -337,13 +340,14 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
       </p>
     `;
 
+    const brand = new BrandService(config);
     const html = await getBaseTemplate(`Reset Your Password`, content, config);
 
     await getResendClient().emails.send({
       from: sender,
       ...(config.support?.email && { replyTo: config.support.email }),
       to: email,
-      subject: `Reset Your Password | ${config.name || 'Rootgrain'}`,
+      subject: `Reset Your Password | ${brand.getCompanyName()}`,
       html,
     });
     
@@ -356,10 +360,11 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
 export async function sendVerificationEmail(email: string, verifyLink: string) {
   try {
     const config = await getFreshSiteConfig();
+    const brand = new BrandService(config);
     const sender = await getEmailSender(config);
     const content = `
       <h2>Verify Your Email Address</h2>
-      <p>Thank you for registering with ${config.name || 'Rootgrain'}!</p>
+      <p>Thank you for registering with ${brand.getCompanyName()}!</p>
       <p>Please click the button below to verify your email address and activate your account.</p>
       
       <div style="text-align: center; margin: 30px 0;">
@@ -381,7 +386,7 @@ export async function sendVerificationEmail(email: string, verifyLink: string) {
       from: sender,
       ...(config.support?.email && { replyTo: config.support.email }),
       to: email,
-      subject: `Verify Your Email | ${config.name || 'Rootgrain'}`,
+      subject: `Verify Your Email | ${brand.getCompanyName()}`,
       html,
     });
     
@@ -409,13 +414,14 @@ export async function sendLoginAttemptEmail(email: string) {
       </p>
     `;
 
+    const brand = new BrandService(config);
     const html = await getBaseTemplate(`Registration Attempt`, content, config);
 
     await getResendClient().emails.send({
       from: sender,
       ...(config.support?.email && { replyTo: config.support.email }),
       to: email,
-      subject: `Registration Attempt | ${config.name || 'Rootgrain'}`,
+      subject: `Registration Attempt | ${brand.getCompanyName()}`,
       html,
     });
     
@@ -439,9 +445,8 @@ export async function sendWelcomeEmail(user: { name?: string | null; email?: str
     const phoneDisplay = config.support?.phone?.display;
     const emailDisplay = config.support?.email;
     
-    const logoHtml = config.logoUrl 
-      ? `<img src="${config.logoUrl}" alt="${config.name || 'Rootgrain'}" style="max-height: 40px; border: 0;" />`
-      : `<h2 style="color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 2px; text-transform: uppercase;">${config.name || 'ROOTGRAIN'}</h2>`;
+    const brand = new BrandService(config);
+    const logoHtml = `<img src="${brand.getEmailLogo()}" alt="${brand.getCompanyName()}" style="max-height: 40px; border: 0;" />`;
 
     const html = `
       <!DOCTYPE html>
@@ -449,7 +454,7 @@ export async function sendWelcomeEmail(user: { name?: string | null; email?: str
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Welcome to ${config.name || 'Rootgrain'}!</title>
+        <title>Welcome to ${brand.getCompanyName()}!</title>
         <style>
           body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: ${EmailTheme.cream}; margin: 0; padding: 0; color: ${EmailTheme.textDark}; }
           .preheader { display: none; max-height: 0px; overflow: hidden; }
@@ -479,10 +484,10 @@ export async function sendWelcomeEmail(user: { name?: string | null; email?: str
             ${logoHtml}
           </div>
           <div class="content">
-            <h1>Welcome to the ${config.name || 'Rootgrain'} Family!</h1>
+            <h1>Welcome to the ${brand.getCompanyName()} Family!</h1>
             <p>Hi ${firstName},</p>
             <p>Thank you for joining us. We're thrilled to have you with us on this journey.</p>
-            <p>At ${config.name || 'Rootgrain'}, we believe that every grain tells a story. Our handcrafted furniture is designed to bring the timeless elegance of nature into your home, combining sustainable practices with exceptional craftsmanship.</p>
+            <p>At ${brand.getCompanyName()}, we believe that every grain tells a story. Our handcrafted furniture is designed to bring the timeless elegance of nature into your home, combining sustainable practices with exceptional craftsmanship.</p>
             <p>Whether you're looking to furnish a new space or find that perfect statement piece, our collection has been curated with you in mind.</p>
             
             <div class="cta-container">
@@ -491,10 +496,10 @@ export async function sendWelcomeEmail(user: { name?: string | null; email?: str
             </div>
             
             <p style="margin-top: 30px;">We can't wait to see how you style your space!</p>
-            <p>Warmly,<br><strong>The ${config.name || 'Rootgrain'} Team</strong></p>
+            <p>Warmly,<br><strong>The ${brand.getCompanyName()} Team</strong></p>
           </div>
           <div class="footer">
-            <h3>${config.name || 'Rootgrain'}</h3>
+            <h3>${brand.getCompanyName()}</h3>
             <p>${config.tagline || 'Every Grain Tells a Story.'}</p>
             ${phoneDisplay || emailDisplay ? `
             <p style="margin-top: 15px;">
@@ -503,7 +508,7 @@ export async function sendWelcomeEmail(user: { name?: string | null; email?: str
             </p>
             ` : ''}
             ${socialLinksHtml ? `<div class="social-links">${socialLinksHtml}</div>` : ''}
-            <p style="margin-top: 20px; font-size: 12px; color: #888;">&copy; ${currentYear} ${config.name || 'Rootgrain'}. All rights reserved.</p>
+            <p style="margin-top: 20px; font-size: 12px; color: #888;">&copy; ${currentYear} ${brand.getCompanyName()}. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -514,7 +519,7 @@ export async function sendWelcomeEmail(user: { name?: string | null; email?: str
       from: sender,
       ...(config.support?.email && { replyTo: config.support.email }),
       to: user.email,
-      subject: `🌿 Welcome to ${config.name || 'Rootgrain'}!`,
+      subject: `🌿 Welcome to ${brand.getCompanyName()}!`,
       html,
     });
     

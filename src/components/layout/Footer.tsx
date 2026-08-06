@@ -13,8 +13,10 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { SiteConfig } from "@/types/site";
+import { BrandService } from "@/lib/brand";
 
 export function Footer({ config }: { config: SiteConfig }) {
+  const brand = new BrandService(config);
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -102,8 +104,8 @@ export function Footer({ config }: { config: SiteConfig }) {
             <div className="flex items-center gap-2 mb-4">
               <div className="relative w-[83px] h-[83px]">
                 <Image
-                  src="/images/rootgrain-logo.svg"
-                  alt="RootGrain Logo"
+                  src={brand.getLogo()}
+                  alt={`${brand.getCompanyName()} Logo`}
                   fill
                   className="object-contain"
                 />
