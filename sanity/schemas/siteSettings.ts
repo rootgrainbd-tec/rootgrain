@@ -12,11 +12,39 @@ export default defineType({
     }),
     defineField({
       name: 'logo',
-      title: 'Site Logo',
+      title: 'Site Logo (Light / Default)',
       type: 'image',
-      options: {
-        hotspot: true,
-      },
+      options: { hotspot: true },
+    }),
+    defineField({
+      name: 'logoDark',
+      title: 'Site Logo (Dark Mode)',
+      type: 'image',
+      options: { hotspot: true },
+    }),
+    defineField({
+      name: 'logoEmail',
+      title: 'Email Logo (Print / Email)',
+      type: 'image',
+      options: { hotspot: true },
+    }),
+    defineField({
+      name: 'logoSquare',
+      title: 'Square Logo (Profile / Icons)',
+      type: 'image',
+      options: { hotspot: true },
+    }),
+    defineField({
+      name: 'favicon',
+      title: 'Favicon',
+      type: 'image',
+      options: { hotspot: true },
+    }),
+    defineField({
+      name: 'ogImage',
+      title: 'Open Graph Image (Social Sharing)',
+      type: 'image',
+      options: { hotspot: true },
     }),
     defineField({
       name: 'websiteUrl',

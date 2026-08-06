@@ -40,7 +40,12 @@ export const getSiteConfig = cache(async function getSiteConfig(): Promise<SiteC
   const [sanityConfig, categoryGroupsRaw] = await Promise.all([
     client.fetch(`*[_type == "siteSettings"][0] {
       ...,
-      "logoUrl": logo.asset->url
+      "logoUrl": logo.asset->url,
+      "logoDarkUrl": logoDark.asset->url,
+      "logoEmailUrl": logoEmail.asset->url,
+      "logoSquareUrl": logoSquare.asset->url,
+      "faviconUrl": favicon.asset->url,
+      "ogImageUrl": ogImage.asset->url
     }`),
     client.fetch(`*[_type == "categoryGroup"] | order(order asc) {
       _id,
@@ -65,7 +70,12 @@ export const getSiteConfig = cache(async function getSiteConfig(): Promise<SiteC
     tagline: sanityConfig?.tagline || "",
     description: sanityConfig?.description || "",
     url: siteUrl,
-    logoUrl: sanityConfig?.logoUrl || `${siteUrl}/images/rootgrain-logo.png`,
+    logoUrl: sanityConfig?.logoUrl || `${siteUrl}/images/rootgrain-logo.svg`,
+    logoDarkUrl: sanityConfig?.logoDarkUrl || `${siteUrl}/images/rootgrain-logo-dark.svg`,
+    logoEmailUrl: sanityConfig?.logoEmailUrl || sanityConfig?.logoUrl || `${siteUrl}/images/rootgrain-logo.png`,
+    logoSquareUrl: sanityConfig?.logoSquareUrl || `${siteUrl}/images/logo-new.png`,
+    faviconUrl: sanityConfig?.faviconUrl || `${siteUrl}/images/logo-new.png`,
+    ogImageUrl: sanityConfig?.ogImageUrl || `${siteUrl}/images/hero-workshop.png`,
     support: {
       phone: parsePhone(rawPhone),
       email: sanityConfig?.email || "",
@@ -95,7 +105,12 @@ export async function getFreshSiteConfig(): Promise<SiteConfig> {
   const [sanityConfig, categoryGroupsRaw] = await Promise.all([
     client.fetch(`*[_type == "siteSettings"][0] {
       ...,
-      "logoUrl": logo.asset->url
+      "logoUrl": logo.asset->url,
+      "logoDarkUrl": logoDark.asset->url,
+      "logoEmailUrl": logoEmail.asset->url,
+      "logoSquareUrl": logoSquare.asset->url,
+      "faviconUrl": favicon.asset->url,
+      "ogImageUrl": ogImage.asset->url
     }`, {}, { cache: 'no-store', next: { revalidate: 0 } }),
     client.fetch(`*[_type == "categoryGroup"] | order(order asc) {
       _id,
@@ -120,7 +135,12 @@ export async function getFreshSiteConfig(): Promise<SiteConfig> {
     tagline: sanityConfig?.tagline || "",
     description: sanityConfig?.description || "",
     url: siteUrl,
-    logoUrl: sanityConfig?.logoUrl || `${siteUrl}/images/rootgrain-logo.png`,
+    logoUrl: sanityConfig?.logoUrl || `${siteUrl}/images/rootgrain-logo.svg`,
+    logoDarkUrl: sanityConfig?.logoDarkUrl || `${siteUrl}/images/rootgrain-logo-dark.svg`,
+    logoEmailUrl: sanityConfig?.logoEmailUrl || sanityConfig?.logoUrl || `${siteUrl}/images/rootgrain-logo.png`,
+    logoSquareUrl: sanityConfig?.logoSquareUrl || `${siteUrl}/images/logo-new.png`,
+    faviconUrl: sanityConfig?.faviconUrl || `${siteUrl}/images/logo-new.png`,
+    ogImageUrl: sanityConfig?.ogImageUrl || `${siteUrl}/images/hero-workshop.png`,
     support: {
       phone: parsePhone(rawPhone),
       email: sanityConfig?.email || "",

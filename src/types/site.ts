@@ -5,6 +5,11 @@ export interface SiteConfig {
   description: string;
   url: string;
   logoUrl?: string;
+  logoDarkUrl?: string;
+  logoEmailUrl?: string;
+  logoSquareUrl?: string;
+  faviconUrl?: string;
+  ogImageUrl?: string;
   support: {
     /** Primary support phone */
     phone: {
