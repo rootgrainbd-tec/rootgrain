@@ -7,7 +7,7 @@ import FacebookProvider from "next-auth/providers/facebook";
 import EmailProvider from "next-auth/providers/email";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-import type { Adapter } from "next-auth/adapters";
+import type { Adapter, AdapterUser } from "next-auth/adapters";
 import { Role } from "@prisma/client";
 import { sendWelcomeEmail } from "@/lib/email";
 
@@ -108,14 +108,16 @@ export const authOptions: NextAuthOptions = {
       if (
         account.provider === "google" &&
         profile &&
-        "email_verified" in profile &&
-        profile.email_verified === true
+        "emailVerified" in profile &&
+        profile.emailVerified
       ) {
         try {
+          const verifiedDate = new Date();
           await prisma.user.update({
             where: { id: user.id },
-            data: { emailVerified: new Date() }
+            data: { emailVerified: verifiedDate }
           });
+          (user as AdapterUser).emailVerified = verifiedDate; // Mutate for JWT callback
           logger.info({ email: user.email }, "Marked Google OAuth user as emailVerified");
         } catch (error) {
           logger.error({ err: error, email: user.email }, "Failed to update emailVerified on OAuth account link");
