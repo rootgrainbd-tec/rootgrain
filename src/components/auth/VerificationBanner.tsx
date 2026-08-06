@@ -15,7 +15,7 @@ export function VerificationBanner() {
   const [dismissed, setDismissed] = useState(false);
 
   // Don't render if loading, not authenticated, already verified, or dismissed
-  if (isLoading || !isAuthenticated || !user || user.emailVerified || dismissed) {
+  if (isLoading || !isAuthenticated || !user || user.emailVerified || user.provider === "google" || dismissed) {
     return null;
   }
 

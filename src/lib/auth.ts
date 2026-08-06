@@ -105,24 +105,7 @@ export const authOptions: NextAuthOptions = {
       }
     },
     async linkAccount({ user, account, profile }) {
-      if (
-        account.provider === "google" &&
-        profile &&
-        "emailVerified" in profile &&
-        profile.emailVerified
-      ) {
-        try {
-          const verifiedDate = new Date();
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { emailVerified: verifiedDate }
-          });
-          (user as AdapterUser).emailVerified = verifiedDate; // Mutate for JWT callback
-          logger.info({ email: user.email }, "Marked Google OAuth user as emailVerified");
-        } catch (error) {
-          logger.error({ err: error, email: user.email }, "Failed to update emailVerified on OAuth account link");
-        }
-      }
+      // Intentionally left blank. Database mutation here is ineffective for session flow.
     }
   },
   callbacks: {
@@ -166,10 +149,14 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.sub as string;
         session.user.role = token.role as string;
         session.user.emailVerified = token.emailVerified as boolean | null;
+        session.user.provider = token.provider as string | undefined;
       }
       return session;
     },
-    async jwt({ token, user, trigger, session: updateSession }) {
+    async jwt({ token, user, account, trigger, session: updateSession }) {
+      if (account) {
+        token.provider = account.provider;
+      }
       if (user) {
         token.sub = user.id;
         token.role = (user as any).role || Role.USER;
