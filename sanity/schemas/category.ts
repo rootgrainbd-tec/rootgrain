@@ -9,17 +9,19 @@ export default defineType({
       name: 'name',
       title: 'Category Name',
       type: 'string',
-      validation: (Rule) => Rule.required(),
+      description: 'The name of the category (e.g. Chairs, Tables)',
+      validation: (Rule) => Rule.required().error('Category name is required.'),
     }),
     defineField({
       name: 'slug',
       title: 'Slug',
       type: 'slug',
+      description: 'URL-friendly identifier for the category',
       options: {
         source: 'name',
         maxLength: 96,
       },
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => Rule.required().error('Slug is required.'),
     }),
     defineField({
       name: 'description',

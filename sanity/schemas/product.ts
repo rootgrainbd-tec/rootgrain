@@ -156,16 +156,19 @@ export default defineType({
       availability: 'availability',
       sku: 'sku',
       media: 'heroImage',
+      id: '_id',
     },
     prepare(selection) {
-      const { title, price, availability, sku, media } = selection
+      const { title, price, availability, sku, media, id } = selection
       const skuText = sku ? ` [${sku}]` : ''
       const priceText = price ? `৳${price}` : 'No price'
       const statusText = availability || 'Status unknown'
+      const isDraft = id && id.startsWith('drafts.')
+      const pubStatus = isDraft ? '📝 Draft' : '✅ Published'
       
       return {
         title: `${title}${skuText}`,
-        subtitle: `${statusText} - ${priceText}`,
+        subtitle: `${pubStatus} | ${statusText} - ${priceText}`,
         media: media,
       }
     }
