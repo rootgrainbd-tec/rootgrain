@@ -20,12 +20,14 @@ export default defineType({
       name: 'quote',
       title: 'Quote',
       type: 'text',
+      rows: 4,
       validation: (Rule) => Rule.required().error('Testimonial quote is required.'),
     }),
     defineField({
       name: 'productPurchased',
       title: 'Product Purchased',
       type: 'string',
+      description: 'e.g., Japandi Dining Table',
     }),
     defineField({
       name: 'featured',
@@ -46,6 +48,7 @@ export default defineType({
       type: 'image',
       description: 'Optional photo of the customer (1:1 aspect ratio recommended).',
       options: { hotspot: true },
+      fields: [{ name: 'alt', type: 'string', title: 'Alternative text', validation: (Rule) => Rule.required().error('Alt text is required.') }],
     }),
     defineField({
       name: 'rating',

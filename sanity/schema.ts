@@ -1,6 +1,7 @@
 import { type SchemaTypeDefinition } from 'sanity'
 import category from './schemas/category'
 import categoryGroup from './schemas/categoryGroup'
+import seo from './schemas/seo'
 import product from './schemas/product'
 import craftsmanshipStep from './schemas/craftsmanshipStep'
 import testimonial from './schemas/testimonial'
@@ -12,6 +13,7 @@ import styledText from './schemas/styledText'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
+    seo,
     styledText,
     categoryGroup,
     category,

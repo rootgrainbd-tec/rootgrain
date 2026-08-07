@@ -8,6 +8,12 @@ export default defineType({
     { name: 'basic', title: 'Basic Info' },
     { name: 'details', title: 'Details & Specs' },
     { name: 'media', title: 'Media' },
+    { name: 'seo', title: 'SEO' },
+  ],
+  fieldsets: [
+    { name: 'pricing', title: 'Pricing', options: { columns: 2 } },
+    { name: 'dimensions', title: 'Dimensions', options: { collapsible: true, collapsed: false } },
+    { name: 'publishing', title: 'Publishing & Status', options: { collapsible: true, collapsed: false } },
   ],
   fields: [
     defineField({
@@ -22,8 +28,24 @@ export default defineType({
       title: 'Slug',
       type: 'slug',
       group: 'basic',
-      options: { source: 'title', maxLength: 96 },
+      options: { source: 'title', maxLength: 96, isUnique: (value, context) => context.defaultIsUnique(value, context) },
       validation: (Rule) => Rule.required().error('Slug is required to generate the product URL.'),
+    }),
+    defineField({
+      name: 'lifecycleStatus',
+      title: 'Lifecycle Status',
+      type: 'string',
+      group: 'basic',
+      fieldset: 'publishing',
+      initialValue: 'Active',
+      options: {
+        list: [
+          { title: 'Active', value: 'Active' },
+          { title: 'Archived', value: 'Archived' },
+        ],
+        layout: 'radio',
+      },
+      description: 'Archived products are hidden from the storefront catalog.',
     }),
     defineField({
       name: 'category',
@@ -31,6 +53,7 @@ export default defineType({
       type: 'reference',
       group: 'basic',
       to: [{ type: 'category' }],
+      validation: (Rule) => Rule.required().error('Every product must belong to a category.'),
     }),
     defineField({
       name: 'sku',
@@ -58,18 +81,22 @@ export default defineType({
           { title: 'White Oak', value: 'White Oak' },
         ],
       },
+      validation: (Rule) => Rule.required().error('Wood type is required.'),
     }),
     defineField({
       name: 'price',
       title: 'Price (BDT)',
       type: 'number',
       group: 'basic',
+      fieldset: 'pricing',
+      validation: (Rule) => Rule.required().positive().error('A valid positive price is required.'),
     }),
     defineField({
       name: 'comparePrice',
       title: 'Compare Price / Previous Price (BDT)',
       type: 'number',
       group: 'basic',
+      fieldset: 'pricing',
       description: 'Original price before discount (shows as crossed-out price)',
     }),
     defineField({
@@ -99,6 +126,8 @@ export default defineType({
       title: 'Short Description',
       type: 'text',
       group: 'details',
+      rows: 3,
+      validation: (Rule) => Rule.max(200).warning('Keep it concise for product cards.'),
     }),
     defineField({
       name: 'fullDescription',
@@ -114,25 +143,34 @@ export default defineType({
       group: 'media',
       description: 'Primary image shown on product cards. Recommended aspect ratio 4:5.',
       options: { hotspot: true },
-      fields: [{ name: 'alt', type: 'string', title: 'Alternative text (for accessibility)', validation: (Rule) => Rule.required().error('Alt text is required for accessibility.') }],
+      fields: [{ name: 'alt', type: 'string', title: 'Alternative text', description: 'Describe what is in the image for accessibility and SEO.', validation: (Rule) => Rule.required().error('Alt text is required for accessibility.') }],
+      validation: (Rule) => Rule.required().error('A hero image is required.'),
     }),
     defineField({
       name: 'galleryImages',
       title: 'Gallery Images',
       type: 'array',
       group: 'media',
-      of: [{ type: 'image', options: { hotspot: true } }],
+      description: 'Additional images for the product carousel.',
+      of: [
+        { 
+          type: 'image', 
+          options: { hotspot: true },
+          fields: [{ name: 'alt', type: 'string', title: 'Alternative text', validation: (Rule) => Rule.required().error('Alt text is required.') }]
+        }
+      ],
     }),
     defineField({
       name: 'dimensions',
       title: 'Dimensions',
       type: 'object',
       group: 'details',
+      fieldset: 'dimensions',
       fields: [
         { name: 'length', type: 'number', title: 'Length' },
         { name: 'width', type: 'number', title: 'Width' },
         { name: 'height', type: 'number', title: 'Height' },
-        { name: 'unit', type: 'string', title: 'Unit (inches/cm)', options: { list: ['inches', 'cm'] } },
+        { name: 'unit', type: 'string', title: 'Unit', options: { list: ['inches', 'cm'] }, initialValue: 'inches' },
       ],
     }),
     defineField({
@@ -140,13 +178,21 @@ export default defineType({
       title: 'Lead Time (Days)',
       type: 'number',
       group: 'details',
+      description: 'Estimated days to manufacture if made-to-order.',
     }),
     defineField({
       name: 'featured',
       title: 'Featured (Show on Homepage)',
       type: 'boolean',
       group: 'basic',
+      fieldset: 'publishing',
       initialValue: false,
+    }),
+    defineField({
+      name: 'seo',
+      title: 'Search Engine Optimization',
+      type: 'seo',
+      group: 'seo',
     }),
   ],
   preview: {
@@ -154,21 +200,23 @@ export default defineType({
       title: 'title',
       price: 'price',
       availability: 'availability',
+      lifecycleStatus: 'lifecycleStatus',
       sku: 'sku',
       media: 'heroImage',
       id: '_id',
     },
     prepare(selection) {
-      const { title, price, availability, sku, media, id } = selection
+      const { title, price, availability, lifecycleStatus, sku, media, id } = selection
       const skuText = sku ? ` [${sku}]` : ''
       const priceText = price ? `৳${price}` : 'No price'
       const statusText = availability || 'Status unknown'
       const isDraft = id && id.startsWith('drafts.')
       const pubStatus = isDraft ? '📝 Draft' : '✅ Published'
+      const lifeStatus = lifecycleStatus === 'Archived' ? '🗄️ Archived | ' : ''
       
       return {
         title: `${title}${skuText}`,
-        subtitle: `${pubStatus} | ${statusText} - ${priceText}`,
+        subtitle: `${lifeStatus}${pubStatus} | ${statusText} - ${priceText}`,
         media: media,
       }
     }
