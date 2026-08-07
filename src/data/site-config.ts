@@ -38,7 +38,7 @@ function parsePhone(rawPhone: string) {
 
 export const getSiteConfig = cache(async function getSiteConfig(): Promise<SiteConfig> {
   const [sanityConfig, categoryGroupsRaw] = await Promise.all([
-    client.fetch(`*[_type == "siteSettings"][0] {
+    client.fetch(`*[_type == "siteSettings" && _id == "siteSettings"][0] {
       ...,
       "logoUrl": logo.asset->url,
       "logoDarkUrl": logoDark.asset->url,
@@ -103,7 +103,7 @@ export const getSiteConfig = cache(async function getSiteConfig(): Promise<SiteC
 
 export async function getFreshSiteConfig(): Promise<SiteConfig> {
   const [sanityConfig, categoryGroupsRaw] = await Promise.all([
-    client.fetch(`*[_type == "siteSettings"][0] {
+    client.fetch(`*[_type == "siteSettings" && _id == "siteSettings"][0] {
       ...,
       "logoUrl": logo.asset->url,
       "logoDarkUrl": logoDark.asset->url,
