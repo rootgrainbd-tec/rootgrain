@@ -36,7 +36,7 @@ describe("SECURITY-H3-A1: Identity Hardening & Pre-ATO Prevention", () => {
       expect(res1.email).toBe("enum@test.com");
 
       // Mark first user as verified
-      await prisma.user.update({ where: { email: "enum@test.com" }, data: { emailVerified: true } });
+      await prisma.user.update({ where: { email: "enum@test.com" }, data: { emailVerified: new Date() } });
 
       const payload2 = { name: "Test 2", email: "enum@test.com", password: "password123" };
       await expect(AuthService.register(payload2)).rejects.toThrow("Registration failed");
@@ -47,7 +47,7 @@ describe("SECURITY-H3-A1: Identity Hardening & Pre-ATO Prevention", () => {
     it("verifies user and deletes token atomically", async () => {
       await AuthService.register({ name: "Verify", email: "verify@test.com", password: "password123" });
       const user = await prisma.user.findUnique({ where: { email: "verify@test.com" } });
-      const tokenRecord = await prisma.verificationToken.findFirst({ where: { userId: user!.id } });
+      const tokenRecord = await prisma.verificationToken.findFirst({ where: { identifier: user!.email } });
       expect(tokenRecord).not.toBeNull();
 
       await AuthService.verifyEmail(tokenRecord!.token);
@@ -55,19 +55,19 @@ describe("SECURITY-H3-A1: Identity Hardening & Pre-ATO Prevention", () => {
       const verifiedUser = await prisma.user.findUnique({ where: { email: "verify@test.com" } });
       expect(verifiedUser?.emailVerified).toBe(true);
 
-      const deletedToken = await prisma.verificationToken.findFirst({ where: { userId: user!.id } });
+      const deletedToken = await prisma.verificationToken.findFirst({ where: { identifier: user!.email } });
       expect(deletedToken).toBeNull();
     });
 
     it("rejects expired tokens", async () => {
       await AuthService.register({ name: "Verify Exp", email: "verify_exp@test.com", password: "password123" });
       const user = await prisma.user.findUnique({ where: { email: "verify_exp@test.com" } });
-      const tokenRecord = await prisma.verificationToken.findFirst({ where: { userId: user!.id } });
+      const tokenRecord = await prisma.verificationToken.findFirst({ where: { identifier: user!.email } });
       
       // Manually expire token
       await prisma.verificationToken.update({
-        where: { token: tokenRecord!.token },
-        data: { expiresAt: new Date(Date.now() - 1000) }
+        where: { identifier_token: { identifier: tokenRecord!.identifier, token: tokenRecord!.token } },
+        data: { expires: new Date(Date.now() - 1000) }
       });
 
       await expect(AuthService.verifyEmail(tokenRecord!.token)).rejects.toThrow("Invalid or expired verification token");
@@ -85,7 +85,7 @@ describe("SECURITY-H3-A1: Identity Hardening & Pre-ATO Prevention", () => {
     it("allows verified login", async () => {
       await AuthService.register({ name: "Login Verified", email: "login_v@test.com", password: "password123" });
       const userCreate = await prisma.user.findUnique({ where: { email: "login_v@test.com" } });
-      const tokenRecord = await prisma.verificationToken.findFirst({ where: { userId: userCreate!.id } });
+      const tokenRecord = await prisma.verificationToken.findFirst({ where: { identifier: userCreate!.email } });
       await AuthService.verifyEmail(tokenRecord!.token);
 
       const credentialsProvider = authOptions.providers.find(p => p.id === "credentials") as any;
@@ -120,7 +120,7 @@ describe("SECURITY-H3-A1: Identity Hardening & Pre-ATO Prevention", () => {
       // 1. Victim registers and verifies
       await AuthService.register({ name: "Victim", email: "victim2@test.com", password: "victim_password" });
       const userCreate = await prisma.user.findUnique({ where: { email: "victim2@test.com" } });
-      const token = await prisma.verificationToken.findFirst({ where: { userId: userCreate!.id } });
+      const token = await prisma.verificationToken.findFirst({ where: { identifier: userCreate!.email } });
       await AuthService.verifyEmail(token!.token);
       
       // 2. Someone tries to OAuth
