@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as SonnerToaster } from "sonner";
-
 const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
@@ -59,11 +56,6 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-import { SmoothScroll } from "@/components/SmoothScroll";
-import { NextAuthProvider } from "@/components/auth/NextAuthProvider";
-import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
-import { MaintenanceGuard } from "@/components/layout/MaintenanceGuard";
-import { VerificationBanner } from "@/components/auth/VerificationBanner";
 import Script from "next/script";
 
 export default async function RootLayout({
@@ -71,7 +63,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const config = await getSiteConfig();
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -109,17 +100,7 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} ${cormorant.variable} antialiased bg-background text-foreground`}
       >
-        <NextAuthProvider>
-          <SmoothScroll>
-            <MaintenanceGuard>
-              <VerificationBanner />
-              {children}
-            </MaintenanceGuard>
-            <Toaster />
-            <SonnerToaster position="bottom-right" richColors />
-            <WhatsAppButton whatsappNumber={config.support.phone.whatsapp} />
-          </SmoothScroll>
-        </NextAuthProvider>
+        {children}
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { client } from "../../../../sanity/lib/client";
-import { urlForImage } from "../../../../sanity/lib/image";
+import { client } from "../../../../../sanity/lib/client";
+import { urlForImage } from "../../../../../sanity/lib/image";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { getSiteConfig } from "@/data/site-config";

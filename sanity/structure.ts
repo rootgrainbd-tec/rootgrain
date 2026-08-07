@@ -1,34 +1,89 @@
 import type { StructureResolver } from 'sanity/structure'
+import {
+  HomeIcon,
+  TagIcon,
+  WrenchIcon,
+  CogIcon,
+  EnvelopeIcon,
+  BlockElementIcon,
+  ThListIcon,
+  ComponentIcon,
+  UserIcon,
+} from '@sanity/icons'
 
 export const structure: StructureResolver = (S) =>
   S.list()
-    .title('RootGrain Content')
+    .title('RootGrain Studio')
     .items([
-      // Singleton: Site Settings
       S.listItem()
-        .title('Site Settings')
-        .id('siteSettings')
+        .title('Content')
+        .icon(HomeIcon)
         .child(
-          S.document()
-            .schemaType('siteSettings')
-            .documentId('siteSettings')
+          S.list()
+            .title('Content')
+            .items([
+              S.listItem()
+                .title('Homepage')
+                .id('homepage')
+                .icon(HomeIcon)
+                .child(
+                  S.document()
+                    .schemaType('homepage')
+                    .documentId('homepage')
+                ),
+              S.documentTypeListItem('testimonial').title('Testimonials').icon(UserIcon),
+            ])
         ),
-
-      // Singleton: Homepage
       S.listItem()
-        .title('Homepage')
-        .id('homepage')
+        .title('Catalog')
+        .icon(ThListIcon)
         .child(
-          S.document()
-            .schemaType('homepage')
-            .documentId('homepage')
+          S.list()
+            .title('Catalog')
+            .items([
+              S.documentTypeListItem('product').title('Products').icon(BlockElementIcon),
+              S.documentTypeListItem('categoryGroup').title('Collections').icon(ThListIcon),
+              S.documentTypeListItem('category').title('Categories').icon(TagIcon),
+            ])
         ),
-
+      S.listItem()
+        .title('Workshop')
+        .icon(WrenchIcon)
+        .child(
+          S.list()
+            .title('Workshop')
+            .items([
+              S.documentTypeListItem('workshop').title('Workshop'),
+              S.documentTypeListItem('craftsmanshipStep').title('Craftsmanship').icon(ComponentIcon),
+            ])
+        ),
+      S.listItem()
+        .title('Marketing')
+        .icon(EnvelopeIcon)
+        .child(
+          S.list()
+            .title('Marketing')
+            .items([
+              S.documentTypeListItem('subscriber').title('Subscribers').icon(EnvelopeIcon),
+            ])
+        ),
       S.divider(),
-
-      // Filter out the singletons and decommissioned schemas from the main list
-      ...S.documentTypeListItems().filter(
-        (listItem) =>
-          !['siteSettings', 'homepage', 'subscriber'].includes(listItem.getId() as string)
-      ),
+      S.listItem()
+        .title('Settings')
+        .icon(CogIcon)
+        .child(
+          S.list()
+            .title('Settings')
+            .items([
+              S.listItem()
+                .title('Site Settings')
+                .id('siteSettings')
+                .icon(CogIcon)
+                .child(
+                  S.document()
+                    .schemaType('siteSettings')
+                    .documentId('siteSettings')
+                ),
+            ])
+        ),
     ])

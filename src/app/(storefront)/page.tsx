@@ -10,8 +10,8 @@ import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 
 import { getSiteConfig } from "@/data/site-config";
 import type { Product, ProductCategory, WoodType } from "@/types/product";
-import { client } from "../../sanity/lib/client";
-import { urlForImage } from "../../sanity/lib/image";
+import { client } from "../../../sanity/lib/client";
+import { urlForImage } from "../../../sanity/lib/image";
 import type { SanityProduct, SanityTestimonial, SanityHomepage, SanityCraftsmanshipStep, SanityWorkshop } from "@/types/sanity";
 
 // Optional: Set revalidation time if using ISR

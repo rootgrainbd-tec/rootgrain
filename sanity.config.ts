@@ -4,6 +4,7 @@ import { visionTool } from '@sanity/vision'
 import { schema } from './sanity/schema'
 import { structure } from './sanity/structure'
 import { dataset, projectId } from './sanity/env'
+import { StudioLogo } from './sanity/logo'
 
 export default defineConfig({
   basePath: '/studio',
@@ -11,6 +12,11 @@ export default defineConfig({
   dataset,
   title: 'RootGrain Studio',
   schema,
+  studio: {
+    components: {
+      logo: StudioLogo,
+    },
+  },
   plugins: [
     structureTool({ structure }),
     visionTool(),

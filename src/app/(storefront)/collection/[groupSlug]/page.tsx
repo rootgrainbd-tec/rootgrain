@@ -5,8 +5,8 @@ import { Footer } from "@/components/layout/Footer";
 import { CollectionClient } from "@/components/sections/CollectionClient";
 import { getSiteConfig } from "@/data/site-config";
 import type { Product, ProductCategory, WoodType } from "@/types/product";
-import { client } from "../../../../sanity/lib/client";
-import { urlForImage } from "../../../../sanity/lib/image";
+import { client } from "../../../../../sanity/lib/client";
+import { urlForImage } from "../../../../../sanity/lib/image";
 
 export const dynamic = 'force-dynamic';
 

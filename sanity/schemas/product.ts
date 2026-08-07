@@ -15,7 +15,7 @@ export default defineType({
       title: 'Title',
       type: 'string',
       group: 'basic',
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => Rule.required().error('Please enter a product title.'),
     }),
     defineField({
       name: 'slug',
@@ -23,7 +23,7 @@ export default defineType({
       type: 'slug',
       group: 'basic',
       options: { source: 'title', maxLength: 96 },
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => Rule.required().error('Slug is required to generate the product URL.'),
     }),
     defineField({
       name: 'category',
@@ -31,6 +31,13 @@ export default defineType({
       type: 'reference',
       group: 'basic',
       to: [{ type: 'category' }],
+    }),
+    defineField({
+      name: 'sku',
+      title: 'SKU (Stock Keeping Unit)',
+      type: 'string',
+      group: 'basic',
+      description: 'Optional unique identifier for this product.',
     }),
     defineField({
       name: 'woodType',
@@ -70,6 +77,7 @@ export default defineType({
       title: 'Availability',
       type: 'string',
       group: 'basic',
+      initialValue: 'Available',
       options: {
         list: [
           { title: 'Available', value: 'Available' },
@@ -104,8 +112,9 @@ export default defineType({
       title: 'Hero Image',
       type: 'image',
       group: 'media',
+      description: 'Primary image shown on product cards. Recommended aspect ratio 4:5.',
       options: { hotspot: true },
-      fields: [{ name: 'alt', type: 'string', title: 'Alternative text' }],
+      fields: [{ name: 'alt', type: 'string', title: 'Alternative text (for accessibility)', validation: (Rule) => Rule.required().error('Alt text is required for accessibility.') }],
     }),
     defineField({
       name: 'galleryImages',
@@ -143,14 +152,21 @@ export default defineType({
   preview: {
     select: {
       title: 'title',
-      subtitle: 'price',
+      price: 'price',
+      availability: 'availability',
+      sku: 'sku',
       media: 'heroImage',
     },
     prepare(selection) {
+      const { title, price, availability, sku, media } = selection
+      const skuText = sku ? ` [${sku}]` : ''
+      const priceText = price ? `৳${price}` : 'No price'
+      const statusText = availability || 'Status unknown'
+      
       return {
-        title: selection.title,
-        subtitle: selection.subtitle ? `৳${selection.subtitle}` : 'No price set',
-        media: selection.media,
+        title: `${title}${skuText}`,
+        subtitle: `${statusText} - ${priceText}`,
+        media: media,
       }
     }
   }

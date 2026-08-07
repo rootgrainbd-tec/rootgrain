@@ -10,7 +10,7 @@ export default defineType({
       title: 'Group Title',
       type: 'string',
       description: 'The display name for this tab (e.g. "Furniture", "Kitchenware & Dining")',
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => Rule.required().error('Please enter a group title.'),
     }),
     defineField({
       name: 'slug',
@@ -21,7 +21,7 @@ export default defineType({
         source: 'title',
         maxLength: 96,
       },
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => Rule.required().error('Slug is required for the collection URL.'),
     }),
     defineField({
       name: 'categories',
@@ -36,5 +36,28 @@ export default defineType({
       type: 'number',
       description: 'Order in which this tab appears (lower numbers appear first)',
     }),
+    defineField({
+      name: 'heroImage',
+      title: 'Cover Image',
+      type: 'image',
+      description: 'Optional cover image representing this entire collection.',
+      options: { hotspot: true },
+      fields: [{ name: 'alt', type: 'string', title: 'Alternative text', validation: (Rule) => Rule.required().error('Alt text is required.') }],
+    }),
   ],
+  preview: {
+    select: {
+      title: 'title',
+      slug: 'slug.current',
+      media: 'heroImage',
+    },
+    prepare(selection) {
+      const { title, slug, media } = selection
+      return {
+        title: title,
+        subtitle: slug ? `/${slug}` : 'No slug',
+        media: media,
+      }
+    }
+  }
 })
