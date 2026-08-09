@@ -33,8 +33,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase: new URL(config.url || "https://rootgrain.bd"),
-    title: `${brand.getSiteName()} | Heritage Artisan Furniture`,
-    description: "RootGrain crafts heirloom-quality wooden furniture using time-honored artisan techniques. Each piece tells a story of craftsmanship, permanence, and timeless beauty.",
+    title: brand.getSeoTitle(),
+    description: brand.getSeoDescription(),
     keywords: ["handcrafted furniture", "artisan furniture", "wooden furniture", "heritage furniture", "luxury furniture", "dining tables", "coffee tables", "woodworking"],
     authors: [{ name: `${brand.getCompanyName()} Atelier` }],
     icons: {
@@ -43,8 +43,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     manifest: "/site.webmanifest",
     openGraph: {
-      title: `${brand.getSiteName()} | Heritage Artisan Furniture`,
-      description: "Handcrafted heirloom-quality wooden furniture. Crafted with legacy, not mass manufactured.",
+      title: brand.getSeoTitle(),
+      description: brand.getSeoDescription(),
       url: config.url || "https://rootgrain.bd",
       siteName: brand.getSiteName(),
       type: "website",
@@ -59,8 +59,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: `${brand.getSiteName()} | Heritage Artisan Furniture`,
-      description: "Handcrafted heirloom-quality wooden furniture. Crafted with legacy, not mass manufactured.",
+      title: brand.getSeoTitle(),
+      description: brand.getSeoDescription(),
       images: [brand.getOgImage()],
     },
   };

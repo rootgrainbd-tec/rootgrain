@@ -45,7 +45,8 @@ export const getSiteConfig = cache(async function getSiteConfig(): Promise<SiteC
       "logoEmailUrl": logoEmail.asset->url,
       "logoSquareUrl": logoSquare.asset->url,
       "faviconUrl": favicon.asset->url,
-      "ogImageUrl": ogImage.asset->url
+      "ogImageUrl": ogImage.asset->url,
+      seo
     }`),
     client.fetch(`*[_type == "categoryGroup"] | order(order asc) {
       _id,
@@ -69,6 +70,10 @@ export const getSiteConfig = cache(async function getSiteConfig(): Promise<SiteC
     name: sanityConfig?.siteTitle || "RootGrain",
     tagline: sanityConfig?.tagline || "",
     description: sanityConfig?.description || "",
+    seo: {
+      seoTitle: sanityConfig?.seo?.seoTitle,
+      seoDescription: sanityConfig?.seo?.seoDescription,
+    },
     url: siteUrl,
     logoUrl: sanityConfig?.logoUrl || `${siteUrl}/images/rootgrain-logo.svg`,
     logoDarkUrl: sanityConfig?.logoDarkUrl || `${siteUrl}/images/rootgrain-logo-dark.svg`,
@@ -110,7 +115,8 @@ export async function getFreshSiteConfig(): Promise<SiteConfig> {
       "logoEmailUrl": logoEmail.asset->url,
       "logoSquareUrl": logoSquare.asset->url,
       "faviconUrl": favicon.asset->url,
-      "ogImageUrl": ogImage.asset->url
+      "ogImageUrl": ogImage.asset->url,
+      seo
     }`, {}, { cache: 'no-store', next: { revalidate: 0 } }),
     client.fetch(`*[_type == "categoryGroup"] | order(order asc) {
       _id,
@@ -134,6 +140,10 @@ export async function getFreshSiteConfig(): Promise<SiteConfig> {
     name: sanityConfig?.siteTitle || "RootGrain",
     tagline: sanityConfig?.tagline || "",
     description: sanityConfig?.description || "",
+    seo: {
+      seoTitle: sanityConfig?.seo?.seoTitle,
+      seoDescription: sanityConfig?.seo?.seoDescription,
+    },
     url: siteUrl,
     logoUrl: sanityConfig?.logoUrl || `${siteUrl}/images/rootgrain-logo.svg`,
     logoDarkUrl: sanityConfig?.logoDarkUrl || `${siteUrl}/images/rootgrain-logo-dark.svg`,

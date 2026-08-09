@@ -118,8 +118,7 @@ export function Footer({ config }: { config: SiteConfig }) {
               </div>
             </div>
             <p className="text-[var(--ivory)]/60 text-sm leading-relaxed mb-4">
-              Handcrafted heirloom furniture for those who value authenticity, 
-              craftsmanship, and the timeless beauty of natural wood.
+              {brand.getBrandDescription()}
             </p>
             <div className="flex gap-4">
               <a aria-label="Instagram" href={config.social.instagram ?? "#"} className="text-[var(--ivory)]/60 hover:text-[var(--gold)] transition-colors">

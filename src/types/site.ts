@@ -3,6 +3,10 @@ export interface SiteConfig {
   name: string;
   tagline: string;
   description: string;
+  seo?: {
+    seoTitle?: string;
+    seoDescription?: string;
+  };
   url: string;
   logoUrl?: string;
   logoDarkUrl?: string;

@@ -38,6 +38,13 @@ export default defineType({
       description: 'A short slogan or tagline.',
     }),
     defineField({
+      name: 'description',
+      title: 'Brand Description',
+      type: 'text',
+      group: 'general',
+      description: 'A short description of the brand used in the footer.',
+    }),
+    defineField({
       name: 'seo',
       title: 'Global SEO Settings',
       type: 'seo',

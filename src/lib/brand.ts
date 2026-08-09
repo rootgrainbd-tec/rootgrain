@@ -51,4 +51,16 @@ export class BrandService {
   getSiteName(): string {
     return this.config.name || "RootGrain";
   }
+
+  getBrandDescription(): string {
+    return this.config.description || "Handcrafted heirloom furniture for those who value authenticity, craftsmanship, and the timeless beauty of natural wood.";
+  }
+
+  getSeoTitle(): string {
+    return this.config.seo?.seoTitle || `${this.getSiteName()} | Heritage Artisan Furniture`;
+  }
+
+  getSeoDescription(): string {
+    return this.config.seo?.seoDescription || "RootGrain crafts heirloom-quality wooden furniture using time-honored artisan techniques. Each piece tells a story of craftsmanship, permanence, and timeless beauty.";
+  }
 }
