@@ -31,8 +31,8 @@ export default function ShippingSettingsPage() {
     try {
       const res = await fetch("/api/admin/shipping");
       if (res.ok) {
-        const data = await res.json();
-        setRates(data);
+        const payload = await res.json();
+        setRates(payload.data?.rates || []);
       }
     } catch (error) {
       toast.error("Failed to fetch shipping rates");
