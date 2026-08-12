@@ -114,7 +114,7 @@ export default async function StorefrontLayout({
               {children}
             </MaintenanceGuard>
             <Toaster />
-            <SonnerToaster position="bottom-right" richColors />
+            <SonnerToaster position="bottom-right" richColors className="print:hidden" />
             <WhatsAppButton whatsappNumber={config.support.phone.whatsapp} />
           </SmoothScroll>
         </NextAuthProvider>
