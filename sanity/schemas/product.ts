@@ -114,6 +114,21 @@ export default defineType({
       },
     }),
     defineField({
+      name: 'shippingType',
+      title: 'Shipping Type',
+      type: 'string',
+      group: 'basic',
+      options: {
+        list: [
+          { title: 'Small 1', value: 'small_1' },
+          { title: 'Small 2', value: 'small_2' },
+          { title: 'Medium', value: 'medium' },
+          { title: 'Large', value: 'large' },
+          { title: 'Bulky', value: 'bulky' },
+        ],
+      },
+    }),
+    defineField({
       name: 'inStock',
       title: 'In Stock',
       type: 'boolean',
