@@ -307,6 +307,12 @@
   background: var(--walnut);
 }
 
+@media print {
+  ::-webkit-scrollbar {
+    display: none !important;
+  }
+}
+
 /* Selection */
 ::selection {
   background: var(--gold);
