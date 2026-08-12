@@ -156,9 +156,9 @@ export default function CheckoutPage() {
       if (res.ok) {
         clearCart();
         toast.success("Order booked successfully!");
-        router.push(`/checkout/success?orderNumber=${data.orderNumber}`);
+        router.push(`/checkout/success?orderNumber=${data.data.orderNumber}`);
       } else {
-        toast.error(data.error || "Failed to book order");
+        toast.error(data.error?.message || data.message || "Failed to book order");
       }
     } catch (error) {
       toast.error("An error occurred");
