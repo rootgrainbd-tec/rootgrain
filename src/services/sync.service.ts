@@ -56,7 +56,8 @@ export class SyncService {
       dimensions,
       "image": heroImage.asset->url,
       "description": shortDescription,
-      "inStock": availability != "Sold"
+      "inStock": availability != "Sold",
+      shippingType
     }`;
 
     let sanityProduct = null;

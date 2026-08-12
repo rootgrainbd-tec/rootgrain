@@ -7,6 +7,7 @@ import { ShippingRepository } from "@/repositories/shipping.repository";
 import { PromoRepository } from "@/repositories/promo.repository";
 import { OrderRepository } from "@/repositories/order.repository";
 import { CartRepository } from "@/repositories/cart.repository";
+import { ShippingEngine, CartItemShipping } from "@/services/shipping-engine.service";
 import { ValidationError, NotFoundError } from "@/lib/errors/AppError";
 import { logger } from "@/lib/logger";
 import { generateGuestTrackingToken, hashGuestTrackingToken } from "@/lib/capability-token";
@@ -92,17 +93,20 @@ export class CheckoutService {
       };
     });
 
-    // 2. Calculate shipping
-    const shippingRate = await ShippingRepository.getShippingRateByDistrict(district);
-    if (!shippingRate) {
-      throw new ValidationError("Shipping is not available for this district.");
-    }
+    // 2. Calculate shipping using the new ShippingEngine
+    const shippingRates = await ShippingRepository.getAllShippingTypeRates();
+    
+    const cartItemShippingList: CartItemShipping[] = items.map(item => {
+      const dbProd = dbProducts.find((p) => p.slug === item.id);
+      return {
+        productId: item.id,
+        productName: dbProd?.name || item.id,
+        shippingType: dbProd?.shippingType || null,
+        quantity: item.quantity
+      };
+    });
 
-    const totalQuantity = items.reduce((acc, item) => acc + item.quantity, 0);
-    let shippingCost = shippingRate.baseRate;
-    if (totalQuantity > 1) {
-      shippingCost += (totalQuantity - 1) * shippingRate.perItemRate;
-    }
+    const shippingCost = ShippingEngine.calculate(cartItemShippingList, shippingRates);
 
     // 3. Apply Promo Code
     let discountAmount = 0;

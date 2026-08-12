@@ -13,4 +13,8 @@ export class ShippingRepository {
       where: { district },
     });
   }
+
+  static async getAllShippingTypeRates() {
+    return prisma.shippingTypeRate.findMany();
+  }
 }

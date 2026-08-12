@@ -23,7 +23,9 @@ interface ShippingRate {
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, clearCart } = useCartStore();
-  const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
+  const [shippingCost, setShippingCost] = useState<number>(0);
+  const [isShippingLoading, setIsShippingLoading] = useState(true);
+  const [shippingError, setShippingError] = useState<string | null>(null);
   const [selectedDivision, setSelectedDivision] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,13 +35,32 @@ export default function CheckoutPage() {
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   
   useEffect(() => {
-    fetch("/api/shipping")
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) setShippingRates(data);
+    if (items.length === 0) return;
+    
+    setIsShippingLoading(true);
+    setShippingError(null);
+    fetch("/api/checkout/shipping-preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items })
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to calculate shipping");
+        }
+        setShippingCost(data.shippingCost);
       })
-      .catch(() => toast.error("Failed to load shipping rates"));
+      .catch((err) => {
+        setShippingError(err.message);
+        toast.error(err.message);
+      })
+      .finally(() => {
+        setIsShippingLoading(false);
+      });
+  }, [items]);
 
+  useEffect(() => {
     fetch("/api/user/address")
       .then(res => {
         if (!res.ok) throw new Error("Not logged in or no addresses");
@@ -67,19 +88,7 @@ export default function CheckoutPage() {
   const subtotal = items.reduce((acc: any, item: any) => acc + item.price * item.quantity, 0);
   const totalQuantity = items.reduce((acc: any, item: any) => acc + item.quantity, 0);
 
-  let shippingCost = 0;
-  let isShippingAvailable = true;
-  if (selectedDistrict) {
-    const rate = shippingRates.find(r => r.district === selectedDistrict);
-    if (rate) {
-      shippingCost = rate.baseRate;
-      if (totalQuantity > 1) {
-        shippingCost += (totalQuantity - 1) * rate.perItemRate;
-      }
-    } else {
-      isShippingAvailable = false;
-    }
-  }
+
 
   const applyPromoCode = async () => {
     if (!promoInput) return;
@@ -120,8 +129,8 @@ export default function CheckoutPage() {
       toast.error("Please select both division and district");
       return;
     }
-    if (!isShippingAvailable) {
-      toast.error("Shipping is not available for the selected district");
+    if (shippingError) {
+      toast.error(shippingError);
       return;
     }
     if (!address.name || !address.phone || !address.street) {
@@ -239,19 +248,14 @@ export default function CheckoutPage() {
                         <SelectValue placeholder="Select District" />
                       </SelectTrigger>
                       <SelectContent className="max-h-64 overflow-y-auto">
-                        {selectedDivision && bdDistricts[selectedDivision]?.map(dist => {
-                          const hasRate = shippingRates.some(r => r.district === dist);
-                          return (
-                            <SelectItem key={dist} value={dist} disabled={!hasRate}>
-                              {dist} {!hasRate && "(No Delivery)"}
+                        {selectedDivision && bdDistricts[selectedDivision]?.map(dist => (
+                            <SelectItem key={dist} value={dist}>
+                              {dist}
                             </SelectItem>
-                          );
-                        })}
+                        ))}
                       </SelectContent>
                     </Select>
-                    {!selectedDistrict && (
-                      <p className="text-xs text-muted-foreground mt-1">Select a district to calculate shipping</p>
-                    )}
+
                   </div>
                 </div>
                 <div>
@@ -286,7 +290,7 @@ export default function CheckoutPage() {
             <Button 
               type="submit" 
               className="w-full bg-[var(--walnut-dark)] hover:bg-[var(--gold)] text-[var(--ivory)] py-6 text-lg"
-              disabled={isSubmitting || !selectedDistrict}
+              disabled={isSubmitting || !!shippingError || isShippingLoading}
             >
               {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
               Book Order
@@ -323,7 +327,7 @@ export default function CheckoutPage() {
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Shipping Estimate</span>
                 <span className="font-medium">
-                  {!selectedDistrict ? 'Select District' : !isShippingAvailable ? 'Not Available' : `৳${shippingCost.toLocaleString()}`}
+                  {isShippingLoading ? 'Calculating...' : shippingError ? 'Not Available' : `৳${shippingCost.toLocaleString()}`}
                 </span>
               </div>
               

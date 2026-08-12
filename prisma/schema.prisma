@@ -20,6 +20,7 @@ model Product {
   dimensions   String
   image        String
   description  String
+  shippingType String?
   inStock      Boolean     @default(true)
   isActive     Boolean     @default(true)
   featured     Boolean     @default(false)
