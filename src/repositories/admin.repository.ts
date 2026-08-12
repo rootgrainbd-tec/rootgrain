@@ -63,6 +63,22 @@ export class AdminRepository {
       where: { id },
     });
   }
+
+  // --- Shipping Type Rates (Nationwide) ---
+  async getShippingTypeRates() {
+    return prisma.shippingTypeRate.findMany({
+      orderBy: { shippingType: 'asc' }
+    });
+  }
+
+  async upsertShippingTypeRate(shippingType: string, baseRate: number, additionalRate: number) {
+    return prisma.shippingTypeRate.upsert({
+      where: { shippingType },
+      update: { baseRate, additionalRate },
+      create: { shippingType, baseRate, additionalRate },
+    });
+  }
+
   // --- Settings ---
   async getStoreSettings() {
     return prisma.storeSettings.findFirst();

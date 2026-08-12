@@ -55,6 +55,24 @@ export class AdminService {
     if (!id) throw new AppError("Missing ID", 400);
     return adminRepository.deleteShippingRate(id);
   }
+
+  // --- Shipping Type Rates (Nationwide) ---
+  private static ALLOWED_SHIPPING_TYPES = ['small_1', 'small_2', 'medium', 'large', 'bulky'];
+
+  async getShippingTypeRates() {
+    return adminRepository.getShippingTypeRates();
+  }
+
+  async upsertShippingTypeRate(shippingType: string, baseRate: number, additionalRate: number) {
+    if (!shippingType || baseRate === undefined || additionalRate === undefined) {
+      throw new AppError("Missing required fields", 400);
+    }
+    if (!AdminService.ALLOWED_SHIPPING_TYPES.includes(shippingType)) {
+      throw new AppError(`Invalid shipping type: ${shippingType}. Allowed: ${AdminService.ALLOWED_SHIPPING_TYPES.join(', ')}`, 400);
+    }
+    return adminRepository.upsertShippingTypeRate(shippingType, baseRate, additionalRate);
+  }
+
   // --- Settings ---
   async updateStoreSettings(delayHours: number, discountPercent: number) {
     const existing = await adminRepository.getStoreSettings();

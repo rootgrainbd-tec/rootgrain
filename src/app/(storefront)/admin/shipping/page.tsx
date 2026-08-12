@@ -6,36 +6,58 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Trash2, Edit2, Plus, Loader2 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { bdDivisions, bdDistricts } from "@/lib/bd-locations";
+import { Loader2, Save, Truck } from "lucide-react";
 
-interface ShippingRate {
+const SHIPPING_TYPES = [
+  { key: "small_1", label: "Small 1" },
+  { key: "small_2", label: "Small 2" },
+  { key: "medium", label: "Medium" },
+  { key: "large", label: "Large" },
+  { key: "bulky", label: "Bulky" },
+] as const;
+
+interface ShippingTypeRate {
   id: string;
-  district: string;
+  shippingType: string;
   baseRate: number;
-  perItemRate: number;
+  additionalRate: number;
+}
+
+interface RateFormState {
+  baseRate: string;
+  additionalRate: string;
 }
 
 export default function ShippingSettingsPage() {
-  const [rates, setRates] = useState<ShippingRate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  const [division, setDivision] = useState("");
-  const [district, setDistrict] = useState("");
-  const [baseRate, setBaseRate] = useState("");
-  const [perItemRate, setPerItemRate] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [savingType, setSavingType] = useState<string | null>(null);
+  const [formState, setFormState] = useState<Record<string, RateFormState>>(() => {
+    const initial: Record<string, RateFormState> = {};
+    SHIPPING_TYPES.forEach((t) => {
+      initial[t.key] = { baseRate: "", additionalRate: "" };
+    });
+    return initial;
+  });
 
   const fetchRates = async () => {
     try {
-      const res = await fetch("/api/admin/shipping");
+      const res = await fetch("/api/admin/shipping-types");
       if (res.ok) {
         const payload = await res.json();
-        setRates(payload.data?.rates || []);
+        const rates: ShippingTypeRate[] = payload.data?.rates || [];
+
+        const updated: Record<string, RateFormState> = {};
+        SHIPPING_TYPES.forEach((t) => {
+          const existing = rates.find((r) => r.shippingType === t.key);
+          updated[t.key] = {
+            baseRate: existing ? existing.baseRate.toString() : "",
+            additionalRate: existing ? existing.additionalRate.toString() : "",
+          };
+        });
+        setFormState(updated);
       }
     } catch (error) {
-      toast.error("Failed to fetch shipping rates");
+      toast.error("Failed to fetch shipping type rates");
     } finally {
       setIsLoading(false);
     }
@@ -45,173 +67,130 @@ export default function ShippingSettingsPage() {
     fetchRates();
   }, []);
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!district || !baseRate || !perItemRate) {
-      toast.error("Please fill all fields");
+  const handleSave = async (shippingType: string) => {
+    const form = formState[shippingType];
+    if (!form.baseRate || !form.additionalRate) {
+      toast.error("Please fill both Base Charge and Additional Item Charge");
       return;
     }
-    
-    setIsSubmitting(true);
+
+    setSavingType(shippingType);
     try {
-      const res = await fetch("/api/admin/shipping", {
+      const res = await fetch("/api/admin/shipping-types", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          district,
-          baseRate: parseInt(baseRate),
-          perItemRate: parseInt(perItemRate)
-        })
+          shippingType,
+          baseRate: parseInt(form.baseRate),
+          additionalRate: parseInt(form.additionalRate),
+        }),
       });
 
       if (res.ok) {
-        toast.success("Shipping rate saved!");
-        setDistrict("");
-        setBaseRate("");
-        setPerItemRate("");
-        fetchRates();
+        const label = SHIPPING_TYPES.find((t) => t.key === shippingType)?.label;
+        toast.success(`${label} rate saved!`);
       } else {
         toast.error("Failed to save rate");
       }
     } catch (error) {
       toast.error("An error occurred");
     } finally {
-      setIsSubmitting(false);
+      setSavingType(null);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this rate?")) return;
-    
-    try {
-      const res = await fetch(`/api/admin/shipping?id=${id}`, { method: "DELETE" });
-      if (res.ok) {
-        toast.success("Deleted successfully");
-        fetchRates();
-      } else {
-        toast.error("Failed to delete");
-      }
-    } catch (error) {
-      toast.error("An error occurred");
-    }
-  };
-
-  const handleEdit = (rate: ShippingRate) => {
-    // Find the division for this district
-    let foundDiv = "";
-    for (const div of bdDivisions) {
-      if (bdDistricts[div]?.includes(rate.district)) {
-        foundDiv = div;
-        break;
-      }
-    }
-    setDivision(foundDiv);
-    setDistrict(rate.district);
-    setBaseRate(rate.baseRate.toString());
-    setPerItemRate(rate.perItemRate.toString());
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleChange = (shippingType: string, field: keyof RateFormState, value: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      [shippingType]: {
+        ...prev[shippingType],
+        [field]: value,
+      },
+    }));
   };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Shipping Settings</h1>
-        <p className="text-muted-foreground">Manage dynamic shipping rates per district.</p>
+        <p className="text-muted-foreground">
+          Configure nationwide shipping rates by product shipping type.
+        </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Add / Edit Rate</CardTitle>
-          <CardDescription>Enter the district name and the corresponding delivery charges in BDT.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSave} className="flex flex-col md:flex-row gap-4 items-end">
-            <div className="space-y-2 flex-1 min-w-[150px]">
-              <Label htmlFor="division">Division</Label>
-              <Select value={division} onValueChange={(val) => { setDivision(val); setDistrict(""); }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Division" />
-                </SelectTrigger>
-                <SelectContent className="max-h-64">
-                  {bdDivisions.map(div => (
-                    <SelectItem key={div} value={div}>{div}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2 flex-1 min-w-[150px]">
-              <Label htmlFor="district">District</Label>
-              <Select value={district} onValueChange={setDistrict} disabled={!division}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select District" />
-                </SelectTrigger>
-                <SelectContent className="max-h-64 overflow-y-auto">
-                  {division && bdDistricts[division]?.map(dist => (
-                    <SelectItem key={dist} value={dist}>{dist}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2 flex-1">
-              <Label htmlFor="baseRate">Base Charge (BDT) - 1st item</Label>
-              <Input 
-                id="baseRate" 
-                type="number"
-                value={baseRate} 
-                onChange={(e) => setBaseRate(e.target.value)} 
-                placeholder="500"
-              />
-            </div>
-            <div className="space-y-2 flex-1">
-              <Label htmlFor="perItemRate">Extra Charge (BDT) - per item</Label>
-              <Input 
-                id="perItemRate" 
-                type="number"
-                value={perItemRate} 
-                onChange={(e) => setPerItemRate(e.target.value)} 
-                placeholder="100"
-              />
-            </div>
-            <Button type="submit" disabled={isSubmitting} className="bg-[var(--walnut-dark)] hover:bg-[var(--gold)] text-[var(--ivory)]">
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-              Save Rate
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Configured Rates</CardTitle>
+          <div className="flex items-center gap-2">
+            <Truck className="h-5 w-5 text-[var(--walnut)]" />
+            <CardTitle>Nationwide Shipping Rates</CardTitle>
+          </div>
+          <CardDescription>
+            Set the base charge (first item) and additional item charge for each shipping type.
+            These rates apply across all of Bangladesh.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-          ) : rates.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No shipping rates configured yet.</p>
+            <div className="flex justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
           ) : (
             <div className="rounded-md border">
               <table className="w-full text-sm text-left">
                 <thead className="bg-muted text-muted-foreground">
                   <tr>
-                    <th className="px-4 py-3 font-medium">District</th>
+                    <th className="px-4 py-3 font-medium w-[160px]">Shipping Type</th>
                     <th className="px-4 py-3 font-medium">Base Charge (BDT)</th>
-                    <th className="px-4 py-3 font-medium">Extra Per Item (BDT)</th>
-                    <th className="px-4 py-3 font-medium text-right">Actions</th>
+                    <th className="px-4 py-3 font-medium">Additional Item (BDT)</th>
+                    <th className="px-4 py-3 font-medium text-right w-[100px]">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {rates.map((rate) => (
-                    <tr key={rate.id} className="hover:bg-muted/50">
-                      <td className="px-4 py-3 font-medium">{rate.district}</td>
-                      <td className="px-4 py-3">৳{rate.baseRate.toLocaleString()}</td>
-                      <td className="px-4 py-3">৳{rate.perItemRate.toLocaleString()}</td>
+                  {SHIPPING_TYPES.map((type) => (
+                    <tr key={type.key} className="hover:bg-muted/50">
+                      <td className="px-4 py-3 font-medium text-[var(--walnut-dark)]">
+                        {type.label}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          <span className="text-muted-foreground">৳</span>
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            className="h-9 w-28"
+                            value={formState[type.key].baseRate}
+                            onChange={(e) => handleChange(type.key, "baseRate", e.target.value)}
+                          />
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          <span className="text-muted-foreground">৳</span>
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            className="h-9 w-28"
+                            value={formState[type.key].additionalRate}
+                            onChange={(e) =>
+                              handleChange(type.key, "additionalRate", e.target.value)
+                            }
+                          />
+                        </div>
+                      </td>
                       <td className="px-4 py-3 text-right">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(rate)}>
-                          <Edit2 className="h-4 w-4 text-blue-500" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(rate.id)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                        <Button
+                          size="sm"
+                          onClick={() => handleSave(type.key)}
+                          disabled={savingType === type.key}
+                          className="bg-[var(--walnut-dark)] hover:bg-[var(--gold)] text-[var(--ivory)]"
+                        >
+                          {savingType === type.key ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Save className="h-4 w-4" />
+                          )}
                         </Button>
                       </td>
                     </tr>
