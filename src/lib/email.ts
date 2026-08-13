@@ -134,7 +134,10 @@ function getOrderItemsHtml(items: any[]) {
 }
 
 export async function sendOrderConfirmationEmail(order: any, customerEmail: string, rawGuestToken?: string) {
+  const traceStartTime = Date.now();
+  let currentStage = "START";
   try {
+    logger.info({ orderNumber: order?.orderNumber }, "RG_EMAIL_TRACE_START");
     const config = await getFreshSiteConfig();
     const sender = await getEmailSender(config);
     const customerName = escapeHtml(order.shippingAddress?.name || "Customer");
@@ -193,7 +196,16 @@ export async function sendOrderConfirmationEmail(order: any, customerEmail: stri
     `;
 
     const html = await getBaseTemplate(`Order Confirmation - ${order.orderNumber}`, content, config);
+    
+    currentStage = "PDF";
+    logger.info({ orderNumber: order?.orderNumber }, "RG_EMAIL_TRACE_PDF_START");
+    const pdfStartTime = Date.now();
     const pdfBuffer = await generateInvoicePDF(order);
+    logger.info({ orderNumber: order?.orderNumber, durationMs: Date.now() - pdfStartTime }, "RG_EMAIL_TRACE_PDF_DONE");
+
+    currentStage = "RESEND";
+    logger.info({ orderNumber: order?.orderNumber }, "RG_EMAIL_TRACE_RESEND_START");
+    const resendStartTime = Date.now();
 
     await getResendClient().emails.send({
       from: sender,
@@ -209,8 +221,17 @@ export async function sendOrderConfirmationEmail(order: any, customerEmail: stri
       ]
     });
     
+    logger.info({ orderNumber: order?.orderNumber, durationMs: Date.now() - resendStartTime }, "RG_EMAIL_TRACE_RESEND_SUCCESS");
     logger.info({ customerEmail }, "[EMAIL] Order confirmation sent with PDF invoice");
-  } catch (error) {
+  } catch (error: any) {
+    logger.error({ 
+      err: error, 
+      orderNumber: order?.orderNumber,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      stack: error?.stack,
+      stage: currentStage
+    }, "RG_EMAIL_TRACE_ERROR");
     logger.error({ err: error }, "[EMAIL ERROR] Failed to send order confirmation");
   }
 }
