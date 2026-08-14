@@ -5,8 +5,9 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  serverExternalPackages: ['pdfkit'],
   outputFileTracingIncludes: {
-    '/**': ['./node_modules/pdfkit/js/data/**/*'],
+    '/api/checkout': ['./node_modules/pdfkit/js/data/**/*'],
   },
   images: {
     formats: ["image/avif", "image/webp"],
