@@ -237,7 +237,10 @@ export async function sendOrderConfirmationEmail(order: any, customerEmail: stri
 }
 
 export async function sendOrderStatusUpdateEmail(order: any, customerEmail: string, status: string) {
+  const traceStartTime = Date.now();
+  let currentStage = "START";
   try {
+    logger.info({ orderNumber: order?.orderNumber, status, stage: currentStage }, "STATUS_EMAIL_START");
     const config = await getFreshSiteConfig();
     const sender = await getEmailSender(config);
     const customerName = escapeHtml(order.shippingAddress?.name || "Customer");
@@ -280,6 +283,13 @@ export async function sendOrderStatusUpdateEmail(order: any, customerEmail: stri
 
     const brand = new BrandService(config);
     const html = await getBaseTemplate(`Order Update - ${order.orderNumber}`, content, config);
+    
+    currentStage = "TEMPLATE_DONE";
+    logger.info({ orderNumber: order?.orderNumber, status, stage: currentStage, durationMs: Date.now() - traceStartTime }, "STATUS_EMAIL_TEMPLATE_DONE");
+
+    currentStage = "RESEND_START";
+    logger.info({ orderNumber: order?.orderNumber, status, stage: currentStage }, "STATUS_EMAIL_RESEND_START");
+    const resendStartTime = Date.now();
 
     await getResendClient().emails.send({
       from: sender,
@@ -289,9 +299,21 @@ export async function sendOrderStatusUpdateEmail(order: any, customerEmail: stri
       html,
     });
 
-    logger.info({ customerEmail, status }, "[EMAIL] Status update sent");
-  } catch (error) {
-    logger.error({ err: error }, "[EMAIL ERROR] Failed to send status update");
+    currentStage = "RESEND_SUCCESS";
+    logger.info({ orderNumber: order?.orderNumber, status, stage: currentStage, durationMs: Date.now() - resendStartTime }, "STATUS_EMAIL_RESEND_SUCCESS");
+    
+    logger.info({ orderNumber: order?.orderNumber, status }, "[EMAIL] Status update sent");
+  } catch (error: any) {
+    logger.error({ 
+      err: error,
+      orderNumber: order?.orderNumber,
+      status,
+      stage: currentStage,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      stack: error?.stack
+    }, "STATUS_EMAIL_ERROR");
+    logger.error({ err: error, orderNumber: order?.orderNumber, status }, "[EMAIL ERROR] Failed to send status update");
   }
 }
 
