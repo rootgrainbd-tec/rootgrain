@@ -256,6 +256,18 @@ export async function sendOrderStatusUpdateEmail(order: any, customerEmail: stri
     } else if (status === "DELIVERED") {
       heading = "Order Delivered!";
       statusMessage = "Your order has been marked as <strong>Delivered</strong>. Thank you for choosing us to furnish your home!";
+    } else if (status === "PENDING_ADVANCE" || status === "PENDING") {
+      heading = "Order Pending";
+      statusMessage = "Your order status is currently <strong>Pending</strong>. We are awaiting your advance payment or further action to begin processing.";
+    } else if (status === "PROCESSING") {
+      heading = "Order in Production";
+      statusMessage = "Your order is now <strong>Processing</strong> in our workshop. Our craftsmen are building your piece with care.";
+    } else if (status === "REJECTED") {
+      heading = "Order Rejected";
+      statusMessage = "Unfortunately, your order has been <strong>Rejected</strong>. Please contact our support team for more details.";
+    } else if (status === "CANCELLED") {
+      heading = "Order Cancelled";
+      statusMessage = "Your order has been <strong>Cancelled</strong>. If you believe this is an error or wish to re-order, please visit our website or contact support.";
     }
 
     const itemsHtml = getOrderItemsHtml(order.items);

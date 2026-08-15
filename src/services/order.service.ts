@@ -75,7 +75,10 @@ export class OrderService {
 
     // Send email notification for status change
     const email = (updatedOrder.shippingAddress as any)?.email;
-    if (email && ["CONFIRMED", "DISPATCHED", "DELIVERED"].includes(status)) {
+    const statusChanged = currentOrder.status !== status;
+    const emailableStatuses = ["CONFIRMED", "PROCESSING", "DISPATCHED", "DELIVERED", "REJECTED", "CANCELLED"];
+    
+    if (email && statusChanged && emailableStatuses.includes(status)) {
       sendOrderStatusUpdateEmail(updatedOrder, email, status).catch((error) => {
         // Just log the error, don't fail the order update
         console.error("Failed to send order status update email", error);
