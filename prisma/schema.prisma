@@ -32,27 +32,33 @@ model Product {
 }
 
 model Order {
-  id              String            @id @default(cuid())
-  orderNumber     String            @unique
+  id              String               @id @default(cuid())
+  orderNumber     String               @unique
   userId          String?
   subtotal        Int
   shippingCost    Int
   total           Int
-  advancePaid     Int               @default(0)
+  requiredAdvance Int                  @default(0)
+  advancePaid     Int                  @default(0)
   balanceDue      Int
-  status          OrderStatus       @default(PENDING_ADVANCE)
+  status          OrderStatus          @default(PENDING_ADVANCE)
+  productionState ProductionState      @default(NOT_STARTED)
+  deliveryState   DeliveryState        @default(TBD)
   shippingAddress Json
   promoCode       String?
-  discountAmount  Int               @default(0)
+  discountAmount  Int                  @default(0)
   notes           String?
-  logistics       LogisticsProvider @default(PRIVATE_FREIGHT)
-  trackingState   TrackingState     @default(PENDING_PRODUCTION)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  guestTokenHash  String?           @unique
-  user            User?             @relation(fields: [userId], references: [id])
+  logistics       LogisticsProvider    @default(PRIVATE_FREIGHT)
+  trackingState   TrackingState        @default(PENDING_PRODUCTION)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  guestTokenHash  String?              @unique
+  user            User?                @relation(fields: [userId], references: [id])
   items           OrderItem[]
   paymentRecords  PaymentRecord[]
+  events          OrderEvent[]
+  documents       OrderDocument[]
+  outboxItems     NotificationOutbox[]
 
   @@index([userId])
   @@index([status])
@@ -67,7 +73,7 @@ model OrderItem {
   quantity    Int
   unitPrice   Int
   total       Int
-  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Restrict)
   product     Product @relation(fields: [productId], references: [id])
 
   @@index([orderId])
@@ -77,14 +83,14 @@ model OrderItem {
 model PaymentRecord {
   id         String        @id @default(cuid())
   orderId    String
-  type       PaymentPhase
+  type       PaymentType
   method     PaymentMethod
   amount     Int
   status     PaymentStatus @default(INITIATED)
   bkashTrxId String?       @unique
   paidAt     DateTime?
   createdAt  DateTime      @default(now())
-  order      Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order      Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
 
   @@unique([orderId, type])
   @@index([status])
@@ -103,29 +109,29 @@ model Testimonial {
 }
 
 model Account {
-  id                String  @id @default(cuid())
-  userId            String  
+  id                String   @id @default(cuid())
+  userId            String
   type              String
   provider          String
-  providerAccountId String  
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  providerAccountId String
+  refresh_token     String?  @db.Text
+  access_token      String?  @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?  @db.Text
   session_state     String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
 
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @unique 
-  userId       String   
+  sessionToken String   @unique
+  userId       String
   expires      DateTime
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -420,9 +426,23 @@ enum OrderStatus {
   REJECTED
 }
 
-enum PaymentPhase {
+enum PaymentType {
   ADVANCE
-  SETTLEMENT
+  INSTALLMENT
+  COD
+}
+
+enum ProductionState {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETE
+}
+
+enum DeliveryState {
+  TBD
+  FINALIZED
+  OUT_FOR_DELIVERY
+  DELIVERED_AND_COLLECTED
 }
 
 enum PaymentMethod {
@@ -486,4 +506,84 @@ enum PermissionEffect {
   DENY
   OBFUSCATE
   MASK
+}
+
+enum IdempotencyOwnerType {
+  USER
+  GUEST
+}
+
+enum IdempotencyStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum NotificationOutboxStatus {
+  PENDING
+}
+
+model IdempotencyKey {
+  ownerType       IdempotencyOwnerType
+  ownerId         String
+  scope           String
+  key             String
+  fingerprint     String
+  status          IdempotencyStatus    @default(IN_PROGRESS)
+  resultReference String?
+  responsePayload Json?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@unique([ownerType, ownerId, scope, key])
+}
+
+model OrderEvent {
+  id                 String               @id @default(cuid())
+  orderId            String
+  sequence           Int
+  eventType          String
+  payload            Json
+  actor              Json
+  occurredAt         DateTime             @default(now())
+  order              Order                @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  NotificationOutbox NotificationOutbox[]
+
+  @@unique([orderId, sequence])
+  @@index([orderId])
+}
+
+model OrderDocument {
+  id                String   @id @default(cuid())
+  orderId           String
+  documentType      String
+  referenceIdentity String
+  snapshot          Json
+  templateVersion   String
+  createdBy         String
+  createdAt         DateTime @default(now())
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+}
+
+model NotificationOutbox {
+  id               String                   @id @default(cuid())
+  eventReference   String
+  orderId          String
+  notificationType String
+  channel          String
+  status           NotificationOutboxStatus @default(PENDING)
+  attempts         Int                      @default(0)
+  lastError        String?                  @db.Text
+  nextAttemptAt    DateTime?
+  processedAt      DateTime?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+  event            OrderEvent               @relation(fields: [eventReference], references: [id], onDelete: Restrict)
+  order            Order                    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@unique([eventReference, notificationType, channel])
+  @@index([eventReference])
+  @@index([orderId])
+  @@index([status])
 }
