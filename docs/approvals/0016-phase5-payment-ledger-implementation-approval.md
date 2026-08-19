@@ -1,0 +1,18 @@
+# ROOTGRAIN — PHASE 5
+# PAYMENT LEDGER ACTIVATION — IMPLEMENTATION APPROVAL
+
+**Document:** `docs/approvals/0016-phase5-payment-ledger-implementation-approval.md`
+**Status:** APPROVED
+
+## 1. IMPLEMENTATION GATE REFERENCE
+- `docs/approvals/0016-phase5-payment-ledger-implementation-gate.md`
+
+## 2. FINAL REFERENCE UNIQUENESS DECISION
+METHOD-SCOPED UNIQUENESS.
+
+**Status:** APPROVED
+
+## 3. EXPLICIT IMPLEMENTATION BLOCK
+
+PAYMENT LEDGER IMPLEMENTATION:
+OPENED

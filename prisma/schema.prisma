@@ -38,9 +38,10 @@ model Order {
   subtotal        Int
   shippingCost    Int
   total           Int
-  requiredAdvance Int                  @default(0)
-  advancePaid     Int                  @default(0)
-  balanceDue      Int
+  requiredAdvance   Int                  @default(0)
+  legacyAdvancePaid Int                  @default(0)
+  advancePaid       Int                  @default(0)
+  balanceDue        Int
   status          OrderStatus          @default(PENDING_ADVANCE)
   productionState ProductionState      @default(NOT_STARTED)
   deliveryState   DeliveryState        @default(TBD)
@@ -56,9 +57,10 @@ model Order {
   user            User?                @relation(fields: [userId], references: [id])
   items           OrderItem[]
   paymentRecords  PaymentRecord[]
-  events          OrderEvent[]
-  documents       OrderDocument[]
-  outboxItems     NotificationOutbox[]
+  events                 OrderEvent[]
+  documents              OrderDocument[]
+  outboxItems            NotificationOutbox[]
+  paymentReferenceClaims PaymentReferenceClaim[]
 
   @@index([userId])
   @@index([status])
@@ -81,19 +83,31 @@ model OrderItem {
 }
 
 model PaymentRecord {
-  id         String        @id @default(cuid())
-  orderId    String
-  type       PaymentType
-  method     PaymentMethod
-  amount     Int
-  status     PaymentStatus @default(INITIATED)
-  bkashTrxId String?       @unique
-  paidAt     DateTime?
-  createdAt  DateTime      @default(now())
-  order      Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  id           String        @id @default(cuid())
+  orderId      String
+  type         PaymentType
+  method       PaymentMethod
+  amount       Int
+  status       PaymentStatus @default(INITIATED)
+  reference    String?
+  paidAt       DateTime?
+  recordedById String?
+  createdAt    DateTime      @default(now())
+  order        Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
 
   @@unique([orderId, type])
   @@index([status])
+}
+
+model PaymentReferenceClaim {
+  reference String
+  method    PaymentMethod
+  orderId   String
+  createdAt DateTime      @default(now())
+  order     Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@id([method, reference])
+  @@index([orderId])
 }
 
 model Testimonial {
@@ -449,6 +463,8 @@ enum PaymentMethod {
   MANUAL_BKASH
   BANK_TRANSFER
   COD
+  CASH
+  OTHER
 }
 
 enum PaymentStatus {
