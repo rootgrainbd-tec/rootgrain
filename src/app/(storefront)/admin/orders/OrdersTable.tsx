@@ -7,13 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateOrderStatus } from "@/app/actions/admin";
 import { OrderStatus } from "@prisma/client";
-import { Loader2, Eye, Download, Printer } from "lucide-react";
+import { Loader2, Eye, Download, Printer, Settings } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import Link from "next/link";
 
 export default function OrdersTable({ orders }: { orders: any[] }) {
   const [isPending, startTransition] = useTransition();
@@ -135,12 +136,21 @@ export default function OrdersTable({ orders }: { orders: any[] }) {
                     <Button 
                       variant="ghost" 
                       size="icon"
+                      asChild
+                    >
+                      <Link href={`/admin/orders/${order.id}`}>
+                        <Settings className="w-4 h-4 text-[var(--walnut)]" />
+                      </Link>
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
                       onClick={() => {
                         setViewOrder(order);
                         setIsViewModalOpen(true);
                       }}
                     >
-                      <Eye className="w-4 h-4 text-[var(--walnut)]" />
+                      <Eye className="w-4 h-4 text-gray-500" />
                     </Button>
                     <Button 
                       variant="ghost" 

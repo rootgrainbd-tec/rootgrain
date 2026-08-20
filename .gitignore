@@ -74,3 +74,5 @@ upload/
 .vercel
 .env*.local
 .env.*.test
+
+supabase/.temp/
