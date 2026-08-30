@@ -17,6 +17,10 @@ async function reconcile() {
 
     // Phase 8 Slice 4 Collision
     try {
+        await prisma.$executeRawUnsafe(`ALTER INDEX "PriceRevision_pkey" RENAME TO "PriceRevision_pkey_drift"`);
+        console.log("Renamed PriceRevision_pkey");
+    } catch(e) {}
+    try {
         await prisma.$executeRawUnsafe(`ALTER TABLE "PriceRevision" RENAME TO "PriceRevision_drift"`);
         console.log("Renamed PriceRevision");
     } catch(e) {}
