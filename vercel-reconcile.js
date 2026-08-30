@@ -46,6 +46,16 @@ async function reconcile() {
         console.log("Renamed actualCompletionDate");
     } catch(e) {}
 
+    try {
+        await prisma.$executeRawUnsafe(`ALTER TABLE "Order" RENAME COLUMN "trackingNumber" TO "trackingNumber_drift"`);
+        console.log("Renamed trackingNumber");
+    } catch(e) {}
+
+    try {
+        await prisma.$executeRawUnsafe(`ALTER TABLE "Order" RENAME COLUMN "trackingUrl" TO "trackingUrl_drift"`);
+        console.log("Renamed trackingUrl");
+    } catch(e) {}
+
     console.log("== VERCEL PROD RECONCILIATION SUCCESS ==");
   } catch (e) {
     console.error("== VERCEL PROD RECONCILIATION FAILED ==", e);

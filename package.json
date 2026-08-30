@@ -11,7 +11,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
-    "postinstall": "node vercel-reconcile.js && npx prisma migrate resolve --applied 20260828142208_rename_delivered_state && prisma generate"
+    "postinstall": "node vercel-reconcile.js && npx prisma migrate resolve --rolled-back 20260829032733_phase6_qc_schema_foundation && prisma generate"
   },
   "prisma": {
     "seed": "npx -y tsx prisma/seed.ts"
