@@ -4,14 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
-    "build": "next build",
+    "build": "if [ \"$VERCEL_ENV\" = \"production\" ]; then node vercel-reconcile.js && npx prisma migrate resolve --applied 20260823000000_phase6_mto_schema && npx prisma migrate deploy; fi && next build",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
-    "postinstall": "prisma generate"
+    "postinstall": "node vercel-reconcile.js && npx prisma migrate resolve --rolled-back 20260825_phase7_custom_request && prisma generate"
   },
   "prisma": {
     "seed": "npx -y tsx prisma/seed.ts"
@@ -54,6 +54,7 @@
     "@types/pdfkit": "^0.17.6",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
+    "@vercel/blob": "^2.8.0",
     "argon2": "^0.45.1",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
@@ -73,6 +74,7 @@
     "nodemailer": "^7.0.13",
     "pdfkit": "^0.19.1",
     "pino": "^10.3.1",
+    "playwright": "^1.62.1",
     "prisma": "^6.11.1",
     "react": "^19.0.0",
     "react-day-picker": "^9.8.0",
