@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
-    "build": "if [ \"$VERCEL_ENV\" = \"production\" ]; then node vercel-reconcile.js && npx prisma migrate resolve --applied 20260823000000_phase6_mto_schema && npx prisma migrate deploy; fi && next build",
+    "build": "if [ \"$VERCEL_ENV\" = \"production\" ]; then npx prisma migrate deploy; fi && next build",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
     "db:push": "prisma db push",
