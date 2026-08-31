@@ -62,6 +62,14 @@ export function UserNav({ isScrolled }: { isScrolled?: boolean }) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+          {(user as any).role === "ADMIN" && (
+            <DropdownMenuItem asChild>
+              <Link href="/admin" className="cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Admin Dashboard</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem asChild>
             <Link href="/account" className="cursor-pointer">
               <User className="mr-2 h-4 w-4" />

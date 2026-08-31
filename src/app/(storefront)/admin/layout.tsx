@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
-import { LayoutDashboard, MessageSquare, Users, ShoppingCart, Truck, Star, Ticket, Mail, Settings } from "lucide-react";
+import { LayoutDashboard, MessageSquare, Users, ShoppingCart, Truck, Star, Ticket, Mail, Settings, ClipboardList } from "lucide-react";
 import { Role } from "@prisma/client";
 
 export default async function AdminLayout({
@@ -19,6 +19,7 @@ export default async function AdminLayout({
   const navItems = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { name: "Inquiries", href: "/admin/inquiries", icon: MessageSquare },
+    { name: "Custom Requests", href: "/admin/custom-requests", icon: ClipboardList },
     { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
     { name: "Customers", href: "/admin/users", icon: Users },
     { name: "Subscribers", href: "/admin/subscribers", icon: Mail },

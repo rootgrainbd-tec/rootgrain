@@ -88,6 +88,15 @@ export function InquiryDialog({ product, whatsappNumber }: InquiryDialogProps) {
             Chat on WhatsApp
           </Button>
 
+          <Button 
+            asChild
+            className="w-full bg-[var(--gold)] hover:bg-[var(--walnut-dark)] text-[var(--ivory)] py-6 rounded-none flex items-center justify-center gap-2 mt-4"
+          >
+            <a href={`/custom-request?productId=${product.id}`}>
+              Start Custom Order
+            </a>
+          </Button>
+
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-[var(--walnut-light)]/20" />

@@ -11,6 +11,7 @@ export const NAV_LINKS: NavLink[] = [
   { href: "/collection", label: "Collection" },
   { href: "/#workshop", label: "Workshop" },
   { href: "/#philosophy", label: "Philosophy" },
+  { href: "/custom-request", label: "Custom Order" },
   { href: "/#contact", label: "Contact" },
 ];
 
