@@ -13,7 +13,7 @@ import { logger } from "@/lib/logger";
 import { generateGuestTrackingToken, hashGuestTrackingToken } from "@/lib/capability-token";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 
-function generateOrderNumber() {
+export function generateOrderNumber() {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const random = randomInt(100000, 1000000);
   return `RG-${date}-${random}`;

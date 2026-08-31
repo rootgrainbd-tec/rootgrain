@@ -107,3 +107,79 @@ export async function generateInvoicePDF(order: any): Promise<Buffer> {
     }
   });
 }
+export async function generateReceiptPDF(snapshot: any, templateVersion: string): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ margin: 50 });
+      const chunks: Buffer[] = [];
+
+      doc.on('data', chunk => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      // Header
+      doc.fontSize(25).fillColor('#5D4037').text(snapshot.branding?.companyName || 'Company', { align: 'right' });
+      doc.fontSize(10).fillColor('gray').text(
+        snapshot.branding?.address?.line1 ? `${snapshot.branding.address.line1}${snapshot.branding.address.line2 ? ', ' + snapshot.branding.address.line2 : ''}` : 'Address', 
+        { align: 'right' }
+      );
+      doc.text(`Email: ${snapshot.branding?.email || 'email'}`, { align: 'right' });
+      doc.text(`Phone: ${snapshot.branding?.phone || 'phone'}`, { align: 'right' });
+      doc.moveDown(2);
+
+      // Receipt Info
+      doc.fontSize(20).fillColor('black').text('PAYMENT RECEIPT', { underline: true });
+      doc.moveDown();
+      
+      if (snapshot.referenceIdentity) {
+        doc.fontSize(12).text(`Receipt Number: ${snapshot.referenceIdentity}`);
+      }
+      doc.text(`Date: ${snapshot.paidAt ? new Date(snapshot.paidAt).toLocaleDateString() : new Date().toLocaleDateString()}`);
+      
+      if (snapshot.linkedInvoiceReference) {
+        doc.text(`Linked Invoice: ${snapshot.linkedInvoiceReference}`);
+      }
+      doc.moveDown();
+
+      // Customer Info
+      doc.fontSize(14).fillColor('#5D4037').text('Received From:');
+      doc.fontSize(12).fillColor('black');
+      doc.text(`${snapshot.customerName || 'Customer'}`);
+      doc.moveDown(2);
+
+      // Payment Details
+      const tableTop = doc.y;
+      doc.font('Helvetica-Bold');
+      doc.text('Description', 50, tableTop);
+      doc.text('Amount', 400, tableTop, { width: 100, align: 'right' });
+      
+      const hrTop = tableTop + 15;
+      doc.moveTo(50, hrTop).lineTo(500, hrTop).stroke();
+
+      let yPosition = hrTop + 10;
+      doc.font('Helvetica');
+      doc.text(`Payment for ${snapshot.type} via ${snapshot.method}`, 50, yPosition, { width: 300 });
+      doc.text(`Tk ${snapshot.amount?.toLocaleString() || '0'}`, 400, yPosition, { width: 100, align: 'right' });
+      yPosition += 20;
+
+      if (snapshot.reference) {
+        doc.font('Helvetica-Oblique').fontSize(10);
+        doc.text(`Reference: ${snapshot.reference}`, 50, yPosition);
+        yPosition += 15;
+      }
+
+      const footerLineY = yPosition + 10;
+      doc.moveTo(50, footerLineY).lineTo(500, footerLineY).stroke();
+
+      // Footer Message
+      doc.moveDown(4);
+      doc.font('Helvetica').fontSize(10).fillColor('gray');
+      doc.text(`Thank you for your payment!`, { align: 'center' });
+      doc.fontSize(8).text(`Template Version: ${templateVersion}`, { align: 'center' });
+
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
