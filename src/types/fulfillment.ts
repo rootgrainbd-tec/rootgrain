@@ -6,7 +6,8 @@ export type LogisticsProvider =
   | "PRIVATE_FREIGHT" 
   | "PATHAO" 
   | "REDX" 
-  | "DHL";
+  | "DHL"
+  | "STEADFAST";
 
 /**
  * Corresponds to the Prisma TrackingState enum.
@@ -18,7 +19,7 @@ export type TrackingState =
   | "QUALITY_CHECK"
   | "DISPATCHED"
   | "OUT_FOR_DELIVERY"
-  | "DELIVERED_AND_COLLECTED";
+  | "DELIVERED";
 
 export interface ShippingAddress {
   fullName: string;
@@ -34,7 +35,7 @@ export const TRACKING_STATE_LABELS: Record<TrackingState, string> = {
   "QUALITY_CHECK": "Quality Check",
   "DISPATCHED": "Dispatched",
   "OUT_FOR_DELIVERY": "Out for Delivery",
-  "DELIVERED_AND_COLLECTED": "Delivered & Settled",
+  "DELIVERED": "Delivered",
 };
 
 export const LOGISTICS_PROVIDER_LABELS: Record<LogisticsProvider, string> = {
@@ -42,6 +43,7 @@ export const LOGISTICS_PROVIDER_LABELS: Record<LogisticsProvider, string> = {
   "PATHAO": "Pathao Courier",
   "REDX": "RedX Courier",
   "DHL": "DHL Express",
+  "STEADFAST": "Steadfast Courier",
 };
 
 /**

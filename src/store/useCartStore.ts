@@ -7,6 +7,7 @@ export interface CartItem {
   price: number;
   image: string;
   quantity: number;
+  isMto?: boolean;
 }
 
 interface CartState {
@@ -24,6 +25,10 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       addItem: (item) => set((state) => {
+        if (item.isMto) {
+          console.warn("Attempted to add MTO product to normal cart. Rejected.");
+          return state; // Reject MTO product from normal cart
+        }
         const existingItem = state.items.find((i) => i.id === item.id);
         if (existingItem) {
           return {

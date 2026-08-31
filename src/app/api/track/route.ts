@@ -29,6 +29,8 @@ export async function POST(request: Request) {
       createdAt: order.createdAt,
       status: order.status,
       total: order.total,
+      trackingNumber: order.trackingNumber,
+      trackingUrl: order.trackingUrl,
       items: order.items.map(item => ({
         id: item.id,
         productId: item.productId,

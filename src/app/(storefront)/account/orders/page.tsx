@@ -14,7 +14,13 @@ export default async function OrdersPage() {
   const orders = await prisma.order.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },
-    include: { items: true },
+    include: {
+      items: true,
+      documents: {
+        select: { id: true },
+        where: { documentType: "FINAL_INVOICE", storageKey: { not: null } }
+      }
+    },
   });
 
   return (
@@ -68,6 +74,15 @@ export default async function OrdersPage() {
                   </p>
                   <p className="text-gray-600 mt-2">Advance Paid: ৳{(order.advancePaid || 0).toLocaleString()}</p>
                   <p className="text-gray-600 font-medium">Pending: ৳{((order.total || 0) - (order.advancePaid || 0)).toLocaleString()}</p>
+                  {order.documents && order.documents.length > 0 && (
+                    <div className="mt-4 pt-2">
+                      <Button asChild variant="outline" className="text-[var(--walnut)] border-[var(--walnut)] hover:bg-[var(--walnut)] hover:text-white">
+                        <Link href={`/api/documents/download?documentId=${order.documents[0].id}`}>
+                          Download Invoice
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-8 mb-4">
                   <OrderTracker status={order.status} />

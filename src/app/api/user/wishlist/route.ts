@@ -16,10 +16,11 @@ export const POST = withAuth(async (req, ctx, session) => {
     console.log(`[API] parsed productId: ${data.productId}`);
     
     console.log(`[API] calling repository/service...`);
-    const wishlistItem = await userService.addWishlistItem(session.user.id, data.productId);
+    const toggleResult = await userService.toggleWishlistItem(session.user.id, data.productId);
     
-    console.log(`[API] returned result:`, wishlistItem);
-    return successResponse({ wishlistItem });
+    console.log(`[API] returned result:`, toggleResult);
+    // Keep response contract identical: { wishlistItem: item, action: 'added' | 'removed' }
+    return successResponse({ wishlistItem: toggleResult.item, action: toggleResult.action });
   } catch (error) {
     console.log(`[API] thrown exception:`, error);
     throw error;

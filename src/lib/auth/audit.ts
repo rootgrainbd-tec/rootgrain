@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 // import { AuthProvider, LoginFailureReason } from '@prisma/client';
 export const LoginFailureReason = { INVALID_CREDENTIALS: 'INVALID_CREDENTIALS', ACCOUNT_LOCKED: 'ACCOUNT_LOCKED', MISSING_IDENTITY: 'MISSING_IDENTITY', OAUTH_REJECTED: 'OAUTH_REJECTED' } as const;
+// eslint-disable-next-line no-redeclare
 export type LoginFailureReason = typeof LoginFailureReason[keyof typeof LoginFailureReason];
 
 export type AuditLogPayload = {

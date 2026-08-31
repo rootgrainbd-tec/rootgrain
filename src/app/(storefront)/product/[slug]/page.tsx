@@ -5,6 +5,7 @@ import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { getSiteConfig } from "@/data/site-config";
 import { formatPrice, PRODUCT_CATEGORY_LABELS } from "@/types/product";
+import prisma from "@/lib/prisma";
 import { ProductActions } from "@/components/product/ProductActions";
 import { ProductGallery } from "@/components/sections/ProductGallery";
 import { ProductReviews } from "@/components/product/ProductReviews";
@@ -90,7 +91,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   }
 
   const name = product.name || product.title || '';
-  const price = product.price || 0;
+  const prismaProduct = await prisma.product.findUnique({
+    where: { slug: resolvedParams.slug },
+    select: { isMto: true, price: true, inStock: true }
+  });
+
+  const price = prismaProduct ? prismaProduct.price : (product.price || 0);
   const comparePrice = product.comparePrice;
   const rawCategory = product.category?.name || '';
   const categoryLabel = PRODUCT_CATEGORY_LABELS[rawCategory] || rawCategory;
@@ -98,7 +104,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const dimensionsStr = product.dimensionsStr || (product.dimensions ? `${product.dimensions.length} x ${product.dimensions.width} x ${product.dimensions.height} ${product.dimensions.unit}` : null);
   const heroUrl = product.heroUrl || (product.heroImage ? urlForImage(product.heroImage).url() : "/placeholder.jpg");
   const desc = product.shortDescription || '';
-  const isAvailable = product.inStock ?? (product.availability === 'Available');
+  const isAvailable = prismaProduct ? prismaProduct.inStock : (product.inStock ?? (product.availability === 'Available'));
+  const isMto = prismaProduct?.isMto || false;
 
   return (
     <main className="min-h-screen bg-[var(--ivory)]">
@@ -151,7 +158,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               )}
               <div>
                 <span className="block text-xs tracking-wider uppercase text-[var(--walnut-light)] mb-1">Availability</span>
-                <span className="text-[var(--walnut-dark)]">{isAvailable ? "In Stock" : "Made to Order"}</span>
+                <span className="text-[var(--walnut-dark)]">{isMto ? "Made to Order" : (isAvailable ? "In Stock" : "Out of Stock")}</span>
               </div>
             </div>
 
@@ -161,7 +168,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 name: name,
                 price: price,
                 image: heroUrl,
-                isAvailable: isAvailable
+                isAvailable: isAvailable,
+                isMto: isMto
               }}
               whatsappNumber={SITE_CONFIG.support.phone.whatsapp}
             />

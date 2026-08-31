@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, ShoppingBag } from "lucide-react";
+import { Heart, ShoppingBag, Zap } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { toast } from "sonner";
 import { InquiryDialog } from "./InquiryDialog";
+import { useRouter } from "next/navigation";
 
 interface ProductActionsProps {
   product: {
@@ -14,6 +15,7 @@ interface ProductActionsProps {
     price: number;
     image: string;
     isAvailable: boolean;
+    isMto?: boolean;
   };
   whatsappNumber: string;
 }
@@ -21,8 +23,13 @@ interface ProductActionsProps {
 export function ProductActions({ product, whatsappNumber }: ProductActionsProps) {
   const [addingToWishlist, setAddingToWishlist] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
+  const router = useRouter();
 
   const handleAddToCart = () => {
+    if (product.isMto) {
+      toast.error("Made to Order products cannot be added to the normal cart.");
+      return;
+    }
     if (!product.isAvailable) {
       toast.error("This product is currently unavailable.");
       return;
@@ -37,7 +44,10 @@ export function ProductActions({ product, whatsappNumber }: ProductActionsProps)
     });
     
     toast.success("Added to cart!");
-    // We can emit an event or just rely on Zustand to update the Cart Sheet
+  };
+
+  const handleDirectBuy = () => {
+    router.push(`/checkout/mto?productId=${product.id}&qty=1`);
   };
 
   const handleAddToWishlist = async () => {
@@ -52,30 +62,23 @@ export function ProductActions({ product, whatsappNumber }: ProductActionsProps)
         body: JSON.stringify({ productId: product.id }),
       });
 
-      console.log(`[FRONTEND] Response status:`, res.status);
-      console.log(`[FRONTEND] Redirect detected?:`, res.redirected, `(url: ${res.url})`);
-
       if (!res.ok) {
-        const errText = await res.text();
-        console.log(`[FRONTEND] Response body (error):`, errText.slice(0, 200));
-        
         if (res.status === 401) {
-          toast.error("Please login to add to wishlist.");
+          toast.error("Please login to update wishlist.");
         } else {
-          console.log(`[FRONTEND] Throwing error`);
-          throw new Error(`Failed to add to wishlist (Status: ${res.status})`);
+          throw new Error(`Failed to update wishlist (Status: ${res.status})`);
         }
         return;
       }
 
-      const successData = await res.json();
-      console.log(`[FRONTEND] Response body (success):`, successData);
-      console.log(`[FRONTEND] Toast message: Added to wishlist!`);
-      toast.success("Added to wishlist!");
+      const resData = await res.json();
+      if (resData.data?.action === 'removed') {
+        toast.success("Removed from wishlist");
+      } else {
+        toast.success("Added to wishlist!");
+      }
     } catch (error) {
-      console.log(`[FRONTEND] Error thrown:`, error);
-      console.log(`[FRONTEND] Toast message: Failed to add to wishlist.`);
-      toast.error("Failed to add to wishlist.");
+      toast.error("Failed to update wishlist.");
     } finally {
       setAddingToWishlist(false);
     }
@@ -84,7 +87,15 @@ export function ProductActions({ product, whatsappNumber }: ProductActionsProps)
   return (
     <div className="space-y-4 mt-6">
       <div className="flex flex-col sm:flex-row gap-4">
-        {product.isAvailable ? (
+        {product.isMto ? (
+          <Button 
+            onClick={handleDirectBuy}
+            className="flex-1 bg-[var(--gold)] hover:bg-[var(--walnut-dark)] text-[var(--ivory)] py-8 text-sm tracking-widest uppercase transition-colors rounded-none"
+          >
+            <Zap className="w-4 h-4 mr-2" />
+            DIRECT BUY
+          </Button>
+        ) : product.isAvailable ? (
           <Button 
             onClick={handleAddToCart}
             className="flex-1 bg-[var(--walnut-dark)] hover:bg-[var(--gold)] text-[var(--ivory)] py-8 text-sm tracking-widest uppercase transition-colors rounded-none"

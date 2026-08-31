@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateOrderStatus } from "@/app/actions/admin";
+import { confirmMtoOrder } from "@/app/actions/admin.mto";
 import { OrderStatus } from "@prisma/client";
-import { Loader2, Eye, Download, Printer, Settings } from "lucide-react";
+import { Loader2, Eye, Download, Printer, Settings, Search } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,14 +16,62 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Link from "next/link";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
-export default function OrdersTable({ orders }: { orders: any[] }) {
+interface PaginationData {
+  page: number;
+  totalPages: number;
+  totalCount: number;
+}
+
+export default function OrdersTable({ 
+  orders, 
+  pagination, 
+  currentQuery = "", 
+  currentStatus = undefined 
+}: { 
+  orders: any[];
+  pagination: PaginationData;
+  currentQuery?: string;
+  currentStatus?: OrderStatus | undefined;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [isPending, startTransition] = useTransition();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [viewOrder, setViewOrder] = useState<any>(null);
   const [advanceAmount, setAdvanceAmount] = useState("");
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+
+  const [searchInput, setSearchInput] = useState(currentQuery);
+
+  const updateFilters = (newQuery: string | undefined, newStatus: string | undefined, newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (newQuery !== undefined) {
+      if (newQuery) params.set("query", newQuery);
+      else params.delete("query");
+    }
+    
+    if (newStatus !== undefined) {
+      if (newStatus && newStatus !== "ALL") params.set("status", newStatus);
+      else params.delete("status");
+    }
+    
+    params.set("page", newPage.toString());
+    
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`);
+    });
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateFilters(searchInput, undefined, 1);
+  };
 
   const exportCSV = () => {
     if (orders.length === 0) return;
@@ -45,9 +94,24 @@ export default function OrdersTable({ orders }: { orders: any[] }) {
   };
 
   const handleStatusUpdate = (orderId: string, status: OrderStatus) => {
+    const order = orders.find(o => o.id === orderId);
+
     if (status === "CONFIRMED") {
-      // Need advance amount
-      setSelectedOrder(orders.find(o => o.id === orderId));
+      if (order?.isMtoOrder) {
+        if (!confirm("Confirm this MTO order? A 48-hour payment deadline will be set.")) return;
+        startTransition(async () => {
+          const res = await confirmMtoOrder(orderId);
+          if (res.success) {
+            toast.success("MTO Order confirmed and deadline set.");
+          } else {
+            toast.error(res.error || "Failed to confirm MTO order");
+          }
+        });
+        return;
+      }
+
+      // Need advance amount for normal orders
+      setSelectedOrder(order);
       setIsConfirmModalOpen(true);
       return;
     }
@@ -85,10 +149,43 @@ export default function OrdersTable({ orders }: { orders: any[] }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Button onClick={exportCSV} variant="outline" className="gap-2">
-          <Download className="w-4 h-4" /> Export CSV
-        </Button>
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <form onSubmit={handleSearch} className="flex gap-2 w-full sm:w-auto">
+          <Input 
+            placeholder="Search order #, name, phone..." 
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="w-full sm:w-64"
+          />
+          <Button type="submit" variant="secondary" size="icon">
+            <Search className="w-4 h-4" />
+          </Button>
+        </form>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Select 
+            value={currentStatus || "ALL"} 
+            onValueChange={(val) => updateFilters(undefined, val, 1)}
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Statuses</SelectItem>
+              <SelectItem value="PENDING_ADVANCE">Pending Advance</SelectItem>
+              <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+              <SelectItem value="PROCESSING">Processing</SelectItem>
+              <SelectItem value="DISPATCHED">Dispatched</SelectItem>
+              <SelectItem value="DELIVERED">Delivered</SelectItem>
+              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+              <SelectItem value="REJECTED">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button onClick={exportCSV} variant="outline" className="gap-2">
+            <Download className="w-4 h-4" /> Export CSV
+          </Button>
+        </div>
       </div>
       <div className="bg-white rounded-sm border shadow-sm overflow-x-auto">
         <table className="w-full text-sm text-left">
@@ -98,7 +195,7 @@ export default function OrdersTable({ orders }: { orders: any[] }) {
               <th className="px-4 py-3 font-medium">Customer</th>
               <th className="px-4 py-3 font-medium">Items</th>
               <th className="px-4 py-3 font-medium">Total</th>
-              <th className="px-4 py-3 font-medium">Advance Paid</th>
+              <th className="px-4 py-3 font-medium">Advance</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium text-right">Actions</th>
             </tr>
@@ -110,7 +207,12 @@ export default function OrdersTable({ orders }: { orders: any[] }) {
               </tr>
             ) : orders.map((order) => (
               <tr key={order.id} className="hover:bg-muted/50">
-                <td className="px-4 py-3 font-medium">{order.orderNumber}</td>
+                <td className="px-4 py-3 font-medium">
+                  <div className="flex items-center gap-2">
+                    {order.orderNumber}
+                    {order.isMtoOrder && <span className="bg-yellow-100 text-yellow-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold">MTO</span>}
+                  </div>
+                </td>
                 <td className="px-4 py-3">
                   {order.shippingAddress?.name}<br/>
                   <span className="text-xs text-muted-foreground">{order.shippingAddress?.phone}</span>
@@ -121,7 +223,14 @@ export default function OrdersTable({ orders }: { orders: any[] }) {
                   </div>
                 </td>
                 <td className="px-4 py-3">৳{(order.total || 0).toLocaleString()}</td>
-                <td className="px-4 py-3">৳{(order.advancePaid || 0).toLocaleString()}</td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-green-700 font-medium whitespace-nowrap">Paid: ৳{(order.advancePaid || 0).toLocaleString()}</span>
+                    {order.isMtoOrder && (
+                      <span className="text-xs text-gray-500 whitespace-nowrap">Req: ৳{(order.requiredAdvance || 0).toLocaleString()}</span>
+                    )}
+                  </div>
+                </td>
                 <td className="px-4 py-3">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium
                     ${order.status === 'PENDING_ADVANCE' ? 'bg-yellow-100 text-yellow-800' : 
@@ -185,6 +294,34 @@ export default function OrdersTable({ orders }: { orders: any[] }) {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+        <div>
+          Showing {orders.length > 0 ? (pagination.page - 1) * 20 + 1 : 0} to{" "}
+          {Math.min(pagination.page * 20, pagination.totalCount)} of {pagination.totalCount} orders
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            disabled={pagination.page <= 1}
+            onClick={() => updateFilters(undefined, undefined, pagination.page - 1)}
+          >
+            Previous
+          </Button>
+          <div className="font-medium text-foreground px-2">
+            Page {pagination.page} of {pagination.totalPages}
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            disabled={pagination.page >= pagination.totalPages}
+            onClick={() => updateFilters(undefined, undefined, pagination.page + 1)}
+          >
+            Next
+          </Button>
+        </div>
       </div>
 
       <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>

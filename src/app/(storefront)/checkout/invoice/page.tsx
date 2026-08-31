@@ -14,6 +14,25 @@ export default async function InvoicePage(props: { searchParams: Promise<{ order
     include: { items: true },
   });
 
+  let snapshot: any = null;
+  let referenceIdentity = "";
+  let invoiceStatus = "";
+
+  if (order?.isMtoOrder) {
+    const invoice = await prisma.orderDocument.findFirst({
+      where: {
+        orderId: order.id,
+        documentType: "INVOICE",
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    if (invoice && invoice.snapshot) {
+      snapshot = invoice.snapshot;
+      referenceIdentity = invoice.referenceIdentity;
+      invoiceStatus = invoice.status;
+    }
+  }
+
   if (!order) notFound();
 
   const config = await getSiteConfig();
@@ -28,8 +47,15 @@ export default async function InvoicePage(props: { searchParams: Promise<{ order
       <div className="border border-gray-200 p-8 space-y-8">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-serif text-[var(--walnut-dark)] font-bold">INVOICE</h1>
-            <p className="text-gray-500 mt-1">Order # {order.orderNumber}</p>
+            <h1 className="text-3xl font-serif text-[var(--walnut-dark)] font-bold">
+              {snapshot?.invoiceType === "ADVANCE" ? "ADVANCE INVOICE" : "INVOICE"}
+            </h1>
+            <p className="text-gray-500 mt-1">
+              {referenceIdentity ? `Invoice # ${referenceIdentity}` : `Order # ${order.orderNumber}`}
+            </p>
+            {invoiceStatus === "VOIDED" && (
+              <p className="text-red-600 font-bold mt-1 text-lg uppercase">VOIDED</p>
+            )}
           </div>
           <div className="text-right">
             <h2 className="text-xl font-bold text-[var(--gold)] uppercase">{config.name}</h2>
@@ -43,13 +69,13 @@ export default async function InvoicePage(props: { searchParams: Promise<{ order
         <div className="flex justify-between border-t border-b border-gray-200 py-4">
           <div>
             <h3 className="font-semibold text-gray-700">Bill To:</h3>
-            <p className="text-gray-600 mt-1">{(order.shippingAddress as any).name}</p>
-            <p className="text-gray-600">{(order.shippingAddress as any).street}</p>
+            <p className="text-gray-600 mt-1">{(snapshot?.shippingAddress || order.shippingAddress as any).name}</p>
+            <p className="text-gray-600">{(snapshot?.shippingAddress || order.shippingAddress as any).street}</p>
             <p className="text-gray-600">
-              {(order.shippingAddress as any).district}, {(order.shippingAddress as any).division}
-              {(order.shippingAddress as any).postCode ? ` - ${(order.shippingAddress as any).postCode}` : ""}
+              {(snapshot?.shippingAddress || order.shippingAddress as any).district}, {(snapshot?.shippingAddress || order.shippingAddress as any).division}
+              {(snapshot?.shippingAddress || order.shippingAddress as any).postCode ? ` - ${(snapshot?.shippingAddress || order.shippingAddress as any).postCode}` : ""}
             </p>
-            <p className="text-gray-600">{(order.shippingAddress as any).phone}</p>
+            <p className="text-gray-600">{(snapshot?.shippingAddress || order.shippingAddress as any).phone}</p>
           </div>
           <div className="text-right">
             <p className="text-gray-600"><span className="font-semibold">Date:</span> {format(new Date(order.createdAt), 'PPP')}</p>
@@ -67,8 +93,8 @@ export default async function InvoicePage(props: { searchParams: Promise<{ order
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {order.items.map((item) => (
-              <tr key={item.id}>
+            {(snapshot?.items || order.items).map((item: any) => (
+              <tr key={item.id || item.productName}>
                 <td className="py-3 px-2">{item.productName}</td>
                 <td className="py-3 px-2 text-center">{item.quantity}</td>
                 <td className="py-3 px-2 text-right">৳{(item.unitPrice || 0).toLocaleString()}</td>
@@ -82,30 +108,45 @@ export default async function InvoicePage(props: { searchParams: Promise<{ order
           <div className="w-64 space-y-2">
             <div className="flex justify-between text-gray-600">
               <span>Subtotal:</span>
-              <span>৳{(order.subtotal || 0).toLocaleString()}</span>
+              <span>৳{(snapshot?.orderTotal || order.subtotal || 0).toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-gray-600">
               <span>Shipping:</span>
-              <span>৳{(order.shippingCost || 0).toLocaleString()}</span>
+              <span>৳{(snapshot?.shippingCost ?? order.shippingCost ?? 0).toLocaleString()}</span>
             </div>
-            {order.discountAmount > 0 && (
+            {(snapshot?.discountAmount ?? order.discountAmount ?? 0) > 0 && (
               <div className="flex justify-between text-green-600">
                 <span>Discount:</span>
-                <span>-৳{(order.discountAmount || 0).toLocaleString()}</span>
+                <span>-৳{(snapshot?.discountAmount ?? order.discountAmount ?? 0).toLocaleString()}</span>
               </div>
             )}
             <div className="flex justify-between text-lg font-bold border-t border-gray-300 pt-2 mt-2">
               <span>Total:</span>
-              <span>৳{(order.total || 0).toLocaleString()}</span>
+              <span>৳{(snapshot?.orderTotal || order.total || 0).toLocaleString()}</span>
             </div>
-            <div className="flex justify-between text-gray-600 pt-2">
-              <span>Advance Paid:</span>
-              <span>৳{(order.advancePaid || 0).toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between font-semibold text-[var(--walnut)]">
-              <span>Balance Due:</span>
-              <span>৳{((order.total || 0) - (order.advancePaid || 0)).toLocaleString()}</span>
-            </div>
+            {snapshot?.invoiceType === "ADVANCE" ? (
+               <>
+                 <div className="flex justify-between text-gray-600 pt-2 font-semibold text-[var(--gold)]">
+                   <span>Required Advance:</span>
+                   <span>৳{(snapshot?.requiredAdvance || 0).toLocaleString()}</span>
+                 </div>
+                 <div className="flex justify-between text-gray-600 pt-1">
+                   <span>Remaining Balance:</span>
+                   <span>৳{((snapshot?.orderTotal || 0) - (snapshot?.requiredAdvance || 0)).toLocaleString()}</span>
+                 </div>
+               </>
+            ) : (
+               <>
+                 <div className="flex justify-between text-gray-600 pt-2">
+                   <span>Advance Paid:</span>
+                   <span>৳{(order.advancePaid || 0).toLocaleString()}</span>
+                 </div>
+                 <div className="flex justify-between font-semibold text-[var(--walnut)]">
+                   <span>Balance Due:</span>
+                   <span>৳{((order.total || 0) - (order.advancePaid || 0)).toLocaleString()}</span>
+                 </div>
+               </>
+            )}
           </div>
         </div>
 

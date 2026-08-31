@@ -5,9 +5,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
-import { PaymentMethod, PaymentType } from "@prisma/client";
+import { Loader2, Ban } from "lucide-react";
+import { PaymentMethod, PaymentType, PaymentStatus } from "@prisma/client";
 import { recordAdminPaymentAction } from "@/app/actions/payment.admin";
+import { voidPaymentAction } from "@/app/actions/payment-void.admin";
 import { v4 as uuidv4 } from "uuid";
 
 interface PaymentRecord {
@@ -16,6 +17,7 @@ interface PaymentRecord {
   amount: number;
   type: PaymentType;
   method: PaymentMethod;
+  status: PaymentStatus;
   reference?: string | null;
 }
 
@@ -41,6 +43,11 @@ export default function PaymentLedger({ order }: { order: Order }) {
 
   // Validation State
   const [clientError, setClientError] = useState<string | null>(null);
+
+  // Void Confirmation State
+  const [voidConfirmId, setVoidConfirmId] = useState<string | null>(null);
+  const [voidIdempotencyKey, setVoidIdempotencyKey] = useState("");
+  const [isVoiding, startVoidTransition] = useTransition();
 
   useEffect(() => {
     setIdempotencyKey(uuidv4());
@@ -118,6 +125,55 @@ export default function PaymentLedger({ order }: { order: Order }) {
     });
   };
 
+  const handleVoidClick = (paymentId: string) => {
+    setVoidConfirmId(paymentId);
+    setVoidIdempotencyKey(uuidv4());
+  };
+
+  const handleVoidCancel = () => {
+    setVoidConfirmId(null);
+    setVoidIdempotencyKey("");
+  };
+
+  const handleVoidConfirm = () => {
+    if (!voidConfirmId || !voidIdempotencyKey) return;
+
+    startVoidTransition(async () => {
+      const formData = new FormData();
+      formData.append("paymentRecordId", voidConfirmId);
+      formData.append("idempotencyKey", voidIdempotencyKey);
+
+      const res = await voidPaymentAction(null, formData);
+
+      if (res.success) {
+        toast.success("Payment voided successfully.");
+        setVoidConfirmId(null);
+        setVoidIdempotencyKey("");
+      } else {
+        toast.error(res.error || "Failed to void payment.");
+      }
+    });
+  };
+
+  const isVoidable = (status: PaymentStatus) => {
+    return status === "INITIATED" || status === "COMPLETED";
+  };
+
+  const getStatusBadge = (status: PaymentStatus) => {
+    const styles: Record<string, string> = {
+      COMPLETED: "bg-green-100 text-green-800",
+      INITIATED: "bg-yellow-100 text-yellow-800",
+      FAILED: "bg-red-100 text-red-800",
+      REFUNDED: "bg-blue-100 text-blue-800",
+      VOIDED: "bg-gray-100 text-gray-500 line-through",
+    };
+    return (
+      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${styles[status] || "bg-gray-100 text-gray-700"}`}>
+        {status}
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-8">
       {/* Financial Summary */}
@@ -154,21 +210,70 @@ export default function PaymentLedger({ order }: { order: Order }) {
                     <th className="px-4 py-3 font-medium">Type</th>
                     <th className="px-4 py-3 font-medium">Method</th>
                     <th className="px-4 py-3 font-medium">Reference</th>
+                    <th className="px-4 py-3 font-medium">Status</th>
                     <th className="px-4 py-3 font-medium text-right">Amount</th>
+                    <th className="px-4 py-3 font-medium text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {order.paymentRecords.map((pr) => (
-                    <tr key={pr.id} className="hover:bg-muted/50">
+                    <tr key={pr.id} className={`hover:bg-muted/50 ${pr.status === "VOIDED" ? "opacity-60" : ""}`}>
                       <td className="px-4 py-3 text-gray-600">{new Date(pr.createdAt).toLocaleString()}</td>
                       <td className="px-4 py-3 font-medium">{pr.type}</td>
                       <td className="px-4 py-3">{pr.method}</td>
                       <td className="px-4 py-3 text-gray-500">{pr.reference || "-"}</td>
-                      <td className="px-4 py-3 text-right font-bold text-green-700">৳{pr.amount.toLocaleString()}</td>
+                      <td className="px-4 py-3">{getStatusBadge(pr.status)}</td>
+                      <td className={`px-4 py-3 text-right font-bold ${pr.status === "VOIDED" ? "text-gray-400 line-through" : "text-green-700"}`}>
+                        ৳{pr.amount.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {isVoidable(pr.status) ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            onClick={() => handleVoidClick(pr.id)}
+                            disabled={isVoiding}
+                          >
+                            <Ban className="w-4 h-4 mr-1" />
+                            Void
+                          </Button>
+                        ) : null}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* Void Confirmation Modal */}
+          {voidConfirmId && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4 space-y-4">
+                <h4 className="text-lg font-semibold text-gray-900">Confirm Payment Void</h4>
+                <p className="text-sm text-gray-600">
+                  Are you sure you want to void this payment? This action is <span className="font-bold text-red-600">irreversible</span> and will remove this payment from the order balance.
+                </p>
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleVoidCancel}
+                    disabled={isVoiding}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleVoidConfirm}
+                    disabled={isVoiding}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {isVoiding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Void Payment
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
         </div>

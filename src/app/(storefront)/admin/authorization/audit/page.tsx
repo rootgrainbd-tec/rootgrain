@@ -7,7 +7,7 @@ import { SearchBox } from "../shared/search-box";
 import { Pagination } from "../shared/pagination";
 
 export default function AuditPage() {
-  const [logs] = useState<AuditLogEntry[]>([
+  const [logs] = useState<AuditLogEntry[]>(() => [
     { id: "1", timestamp: new Date().toISOString(), actor: "user123", action: "read", resource: "orders", decision: "ALLOW", reason: "POLICY_ALLOW" },
     { id: "2", timestamp: new Date(Date.now() - 10000).toISOString(), actor: "user456", action: "delete", resource: "orders", decision: "DENY", reason: "DENY_BY_DEFAULT" },
   ]);
