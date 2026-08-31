@@ -85,25 +85,40 @@ export const userRepository = {
     });
   },
 
-  async addWishlistItem(userId: string, productId: string) {
-    console.log(`\n[REPOSITORY] Prisma query: upsert`);
+  async toggleWishlistItem(userId: string, productId: string) {
+    console.log(`\n[REPOSITORY] Prisma query: toggle`);
     console.log(`[REPOSITORY] Arguments: userId=${userId}, productId=${productId}`);
     try {
-      const result = await prisma.wishlist.upsert({
+      const existing = await prisma.wishlist.findUnique({
         where: {
           userId_productId: {
             userId,
             productId
           }
-        },
-        update: {},
-        create: {
-          userId,
-          productId
         }
       });
-      console.log(`[REPOSITORY] Returned object:`, result);
-      return result;
+
+      if (existing) {
+        await prisma.wishlist.delete({
+          where: {
+            userId_productId: {
+              userId,
+              productId
+            }
+          }
+        });
+        console.log(`[REPOSITORY] Item removed`);
+        return { action: "removed", item: existing };
+      } else {
+        const result = await prisma.wishlist.create({
+          data: {
+            userId,
+            productId
+          }
+        });
+        console.log(`[REPOSITORY] Item added`);
+        return { action: "added", item: result };
+      }
     } catch (error: any) {
       console.log(`[REPOSITORY] Thrown error code:`, error?.code);
       console.log(`[REPOSITORY] Thrown error full:`, error);

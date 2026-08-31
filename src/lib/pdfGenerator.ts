@@ -1,11 +1,7 @@
 import PDFDocument from 'pdfkit';
-import { getSiteConfig } from "@/data/site-config";
-import { BrandService } from "@/lib/brand";
+import { InvoiceSnapshot, ReceiptSnapshot } from "@/types/document";
 
-export async function generateInvoicePDF(order: any): Promise<Buffer> {
-  const config = await getSiteConfig();
-  const brand = new BrandService(config);
-
+export async function generateInvoicePDF(snapshot: InvoiceSnapshot, templateVersion: string): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ margin: 50 });
@@ -16,32 +12,43 @@ export async function generateInvoicePDF(order: any): Promise<Buffer> {
       doc.on('error', reject);
 
       // Header
-      doc.fontSize(25).fillColor('#5D4037').text(brand.getCompanyName(), { align: 'right' });
+      doc.fontSize(25).fillColor('#5D4037').text(snapshot.branding.companyName, { align: 'right' });
       doc.fontSize(10).fillColor('gray').text(
-        config.address?.line1 ? `${config.address.line1}${config.address.line2 ? ', ' + config.address.line2 : ''}` : '123 Furniture Street, Dhaka, Bangladesh', 
+        snapshot.branding.address?.line1 ? `${snapshot.branding.address.line1}${snapshot.branding.address.line2 ? ', ' + snapshot.branding.address.line2 : ''}` : '123 Furniture Street, Dhaka, Bangladesh', 
         { align: 'right' }
       );
-      doc.text(`Email: ${config.support?.email || 'support@rootgrain.bd'}`, { align: 'right' });
-      doc.text(`Phone: ${config.support?.phone?.display || '+880 1234-567890'}`, { align: 'right' });
+      doc.text(`Email: ${snapshot.branding.email}`, { align: 'right' });
+      doc.text(`Phone: ${snapshot.branding.phone}`, { align: 'right' });
       doc.moveDown(2);
 
       // Invoice Info
-      doc.fontSize(20).fillColor('black').text('INVOICE', { underline: true });
+      const invoiceTitle = snapshot.invoiceType === "FINAL" ? 'FINAL INVOICE' : 'INVOICE';
+      doc.fontSize(20).fillColor('black').text(invoiceTitle, { underline: true });
       doc.moveDown();
-      doc.fontSize(12).text(`Order Number: ${order.orderNumber}`);
-      doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`);
+      doc.fontSize(12).text(`Type: ${snapshot.invoiceType} Invoice`);
+      
+      if (snapshot.issuedAt) {
+        doc.text(`Date: ${new Date(snapshot.issuedAt).toLocaleDateString()}`);
+      } else {
+        doc.text(`Date: ${new Date().toLocaleDateString()}`);
+      }
+      
+      if (snapshot.referenceIdentity) {
+        doc.text(`Invoice Number: ${snapshot.referenceIdentity}`);
+      }
       doc.moveDown();
 
       // Customer Info
       doc.fontSize(14).fillColor('#5D4037').text('Bill To:');
       doc.fontSize(12).fillColor('black');
-      doc.text(`${order.shippingAddress?.name}`);
-      doc.text(`${order.shippingAddress?.address}`);
-      if (order.shippingAddress?.apartment) {
-        doc.text(`${order.shippingAddress?.apartment}`);
+      doc.text(`${snapshot.shippingAddress?.name || 'Customer'}`);
+      doc.text(`${snapshot.shippingAddress?.address || ''}`);
+      if (snapshot.shippingAddress?.apartment) {
+        doc.text(`${snapshot.shippingAddress?.apartment}`);
       }
-      doc.text(`${order.shippingAddress?.city}, ${order.shippingAddress?.postalCode}`);
-      doc.text(`Phone: ${order.shippingAddress?.phone}`);
+      doc.text(`${snapshot.shippingAddress?.city || ''}, ${snapshot.shippingAddress?.postalCode || ''}`);
+      doc.text(`Phone: ${snapshot.shippingAddress?.phone || ''}`);
+      doc.text(`Email: ${snapshot.customerEmail || ''}`);
       doc.moveDown(2);
 
       // Table Header
@@ -58,10 +65,11 @@ export async function generateInvoicePDF(order: any): Promise<Buffer> {
       let yPosition = hrTop + 10;
       doc.font('Helvetica');
 
-      order.items.forEach((item: any) => {
-        doc.text(item.productName, 50, yPosition, { width: 300 });
-        doc.text(item.quantity.toString(), 350, yPosition, { width: 50, align: 'right' });
-        doc.text(`Tk ${item.total.toLocaleString()}`, 400, yPosition, { width: 100, align: 'right' });
+      (snapshot.items || []).forEach((item: any) => {
+        doc.text(item.productName || item.name || 'Item', 50, yPosition, { width: 300 });
+        doc.text(item.quantity?.toString() || '1', 350, yPosition, { width: 50, align: 'right' });
+        const itemTotal = item.total || (item.price * item.quantity);
+        doc.text(`Tk ${itemTotal?.toLocaleString() || '0'}`, 400, yPosition, { width: 100, align: 'right' });
         yPosition += 20;
       });
 
@@ -70,36 +78,26 @@ export async function generateInvoicePDF(order: any): Promise<Buffer> {
 
       // Totals
       yPosition = footerLineY + 15;
-      doc.text('Subtotal:', 300, yPosition, { width: 100, align: 'right' });
-      doc.text(`Tk ${order.subtotal.toLocaleString()}`, 400, yPosition, { width: 100, align: 'right' });
-      yPosition += 20;
-
-      doc.text('Shipping:', 300, yPosition, { width: 100, align: 'right' });
-      doc.text(`Tk ${order.shippingCost.toLocaleString()}`, 400, yPosition, { width: 100, align: 'right' });
-      yPosition += 20;
-
-      if (order.discountAmount > 0) {
-        doc.fillColor('green');
-        doc.text('Discount:', 300, yPosition, { width: 100, align: 'right' });
-        doc.text(`-Tk ${order.discountAmount.toLocaleString()}`, 400, yPosition, { width: 100, align: 'right' });
-        yPosition += 20;
-        doc.fillColor('black');
-      }
-
       doc.font('Helvetica-Bold').fontSize(14);
       doc.text('Total:', 300, yPosition, { width: 100, align: 'right' });
-      doc.text(`Tk ${order.total.toLocaleString()}`, 400, yPosition, { width: 100, align: 'right' });
+      doc.text(`Tk ${snapshot.orderTotal?.toLocaleString() || '0'}`, 400, yPosition, { width: 100, align: 'right' });
 
-      // Advance
+      // Advance / Balance
       yPosition += 30;
       doc.font('Helvetica-Oblique').fontSize(12);
-      const advanceRequired = order.total * 0.2;
-      doc.fillColor('#5D4037').text(`Advance Required (20%): Tk ${advanceRequired.toLocaleString()}`, 50, yPosition);
+      if (snapshot.invoiceType === "FINAL" && snapshot.validPaidAtIssuance !== undefined && snapshot.balanceDueAtIssuance !== undefined) {
+        doc.fillColor('#2e7d32').text(`Valid Paid: Tk ${snapshot.validPaidAtIssuance.toLocaleString()}`, 50, yPosition);
+        yPosition += 20;
+        doc.fillColor('#d32f2f').text(`Balance Due: Tk ${snapshot.balanceDueAtIssuance.toLocaleString()}`, 50, yPosition);
+      } else {
+        doc.fillColor('#5D4037').text(`Required Advance: Tk ${snapshot.requiredAdvance?.toLocaleString() || '0'}`, 50, yPosition);
+      }
 
       // Footer Message
       doc.moveDown(4);
       doc.font('Helvetica').fontSize(10).fillColor('gray');
-      doc.text(`Thank you for choosing ${brand.getCompanyName()}!`, { align: 'center' });
+      doc.text(`Thank you for choosing ${snapshot.branding.companyName}!`, { align: 'center' });
+      doc.fontSize(8).text(`Template Version: ${templateVersion}`, { align: 'center' });
 
       doc.end();
     } catch (error) {
@@ -107,7 +105,8 @@ export async function generateInvoicePDF(order: any): Promise<Buffer> {
     }
   });
 }
-export async function generateReceiptPDF(snapshot: any, templateVersion: string): Promise<Buffer> {
+
+export async function generateReceiptPDF(snapshot: ReceiptSnapshot, templateVersion: string): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ margin: 50 });
@@ -118,13 +117,13 @@ export async function generateReceiptPDF(snapshot: any, templateVersion: string)
       doc.on('error', reject);
 
       // Header
-      doc.fontSize(25).fillColor('#5D4037').text(snapshot.branding?.companyName || 'Company', { align: 'right' });
+      doc.fontSize(25).fillColor('#5D4037').text(snapshot.branding.companyName, { align: 'right' });
       doc.fontSize(10).fillColor('gray').text(
-        snapshot.branding?.address?.line1 ? `${snapshot.branding.address.line1}${snapshot.branding.address.line2 ? ', ' + snapshot.branding.address.line2 : ''}` : 'Address', 
+        snapshot.branding.address?.line1 ? `${snapshot.branding.address.line1}${snapshot.branding.address.line2 ? ', ' + snapshot.branding.address.line2 : ''}` : '123 Furniture Street, Dhaka, Bangladesh', 
         { align: 'right' }
       );
-      doc.text(`Email: ${snapshot.branding?.email || 'email'}`, { align: 'right' });
-      doc.text(`Phone: ${snapshot.branding?.phone || 'phone'}`, { align: 'right' });
+      doc.text(`Email: ${snapshot.branding.email}`, { align: 'right' });
+      doc.text(`Phone: ${snapshot.branding.phone}`, { align: 'right' });
       doc.moveDown(2);
 
       // Receipt Info

@@ -2,6 +2,7 @@ import "server-only";
 import { randomInt } from "crypto";
 import prisma from "@/lib/prisma";
 import { CheckoutPayload } from "@/validations/checkout.schema";
+import { MtoCheckoutPayload } from "@/validations/mto-checkout.schema";
 import { ProductRepository } from "@/repositories/product.repository";
 import { ShippingRepository } from "@/repositories/shipping.repository";
 import { PromoRepository } from "@/repositories/promo.repository";
@@ -11,7 +12,10 @@ import { ShippingEngine, CartItemShipping } from "@/services/shipping-engine.ser
 import { ValidationError, NotFoundError } from "@/lib/errors/AppError";
 import { logger } from "@/lib/logger";
 import { generateGuestTrackingToken, hashGuestTrackingToken } from "@/lib/capability-token";
-import { sendOrderConfirmationEmail } from "@/lib/email";
+import { appendOrderEvent } from "@/lib/persistence/orderEvent";
+import { scheduleNotification } from "@/lib/persistence/outbox";
+import { inngest } from "@/inngest/client";
+import { getSiteConfig } from "@/data/site-config";
 
 export function generateOrderNumber() {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -149,7 +153,7 @@ export class CheckoutService {
     }
 
     // 5. Create Order
-    const order = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       if (appliedPromo) {
         const updateResult = await tx.promoCode.updateMany({
           where: {
@@ -164,7 +168,7 @@ export class CheckoutService {
         }
       }
 
-      return tx.order.create({
+      const newOrder = await tx.order.create({
         data: {
           orderNumber: generateOrderNumber(),
           user: userId ? { connect: { id: userId } } : undefined,
@@ -192,12 +196,45 @@ export class CheckoutService {
         },
         include: { items: true },
       });
+
+      const actor = { actorId: userId || "GUEST" };
+      const orderEvent = await appendOrderEvent(tx, newOrder.id, "ORDER_PLACED", {}, actor);
+      const outbox = await scheduleNotification(tx, newOrder.id, orderEvent.id, "ORDER_CONFIRMATION", "EMAIL");
+
+      // Generate invoice document
+      const siteConfig = await getSiteConfig();
+      const invoiceSnapshot = {
+        amount: total,
+        customerName: address.name || "Customer",
+        branding: {
+          companyName: siteConfig.name,
+          address: siteConfig.address,
+          email: siteConfig.support.email,
+          phone: siteConfig.support.phone.display,
+        }
+      };
+
+      const invoiceDoc = await tx.orderDocument.create({
+        data: {
+          orderId: newOrder.id,
+          documentType: "INVOICE",
+          referenceIdentity: `INV-${newOrder.orderNumber}-1`,
+          snapshot: invoiceSnapshot,
+          templateVersion: "1.0",
+          createdBy: "SYSTEM"
+        }
+      });
+
+      return { order: newOrder, outboxId: outbox.id, invoiceDocId: invoiceDoc.id };
     });
 
-    logger.info({ orderId: order.id, orderNumber: order.orderNumber }, "Order created successfully");
+    logger.info({ orderId: result.order.id, orderNumber: result.order.orderNumber }, "Order created successfully");
 
     // 5. Fire background jobs
-    sendOrderConfirmationEmail(order, address.email, rawGuestToken).catch(console.error);
+    await inngest.send([
+      { name: "document/generation.requested", data: { orderDocumentId: result.invoiceDocId, documentType: "INVOICE" } },
+      { name: "communication/email.requested", data: { outboxId: result.outboxId } }
+    ]);
 
     // 6. Recover abandoned cart
     try {
@@ -206,6 +243,172 @@ export class CheckoutService {
       logger.error({ err: e, email: address.email }, "Failed to update abandoned cart");
     }
 
-    return { order, rawGuestToken };
+    return { order: result.order, rawGuestToken };
+  }
+
+  static async processMtoCheckout(payload: MtoCheckoutPayload, userId: string | null) {
+    logger.info({ userId, productId: payload.productId, qty: payload.quantity }, "Processing MTO checkout");
+
+    const { productId, quantity, address, district, division, promoCode, customerNote } = payload;
+
+    // 1. Fetch authoritative product
+    const dbProd = await prisma.product.findUnique({ where: { slug: productId } });
+    if (!dbProd) {
+      throw new NotFoundError(`Product not found: ${productId}`);
+    }
+    if (!dbProd.isMto) {
+      throw new ValidationError(`Product ${dbProd.name} is not available for MTO direct buy.`);
+    }
+
+    const subtotal = dbProd.price * quantity;
+    const orderItemsData = [{
+      productId: dbProd.id,
+      productName: dbProd.name,
+      quantity: quantity,
+      unitPrice: dbProd.price,
+      total: subtotal,
+    }];
+
+    // 2. Calculate shipping
+    const shippingRates = await ShippingRepository.getAllShippingTypeRates();
+    const cartItemShippingList: CartItemShipping[] = [{
+      productId: dbProd.slug,
+      productName: dbProd.name,
+      shippingType: dbProd.shippingType || null,
+      quantity: quantity
+    }];
+    const shippingCost = ShippingEngine.calculate(cartItemShippingList, shippingRates);
+
+    // 3. Apply Promo Code
+    let discountAmount = 0;
+    let appliedPromo: any = null;
+    if (promoCode) {
+      const promo = await PromoRepository.getPromoByCode(promoCode);
+      if (
+        promo &&
+        promo.isActive &&
+        (!promo.expiryDate || new Date() <= promo.expiryDate) &&
+        (promo.maxUses === null || promo.currentUses < promo.maxUses)
+      ) {
+        if (promo.discountType === "PERCENTAGE") {
+          discountAmount = Math.floor(subtotal * (promo.discountValue / 100));
+        } else {
+          discountAmount = promo.discountValue;
+        }
+
+        if (discountAmount > subtotal) {
+          discountAmount = subtotal;
+        }
+        appliedPromo = promo;
+      } else {
+        logger.warn({ promoCode }, "Invalid or expired promo code used during MTO checkout");
+      }
+    }
+
+    const total = subtotal + shippingCost - discountAmount;
+    const requiredAdvance = Math.floor(total * 0.5);
+    const balanceDue = total;
+    
+    // Calculate Lead Time
+    const estimatedManufacturingDays = dbProd.baseLeadTimeDays + ((quantity - 1) * dbProd.additionalUnitLeadTimeDays);
+
+    // 4. Generate guest tracking capability token if applicable
+    let guestTokenHash: string | undefined;
+    let rawGuestToken: string | undefined;
+    
+    if (!userId) {
+      rawGuestToken = generateGuestTrackingToken();
+      guestTokenHash = hashGuestTrackingToken(rawGuestToken);
+    }
+
+    // 5. Create Order Atomically
+    const result = await prisma.$transaction(async (tx) => {
+      if (appliedPromo) {
+        const updateResult = await tx.promoCode.updateMany({
+          where: {
+            id: appliedPromo.id,
+            ...(appliedPromo.maxUses !== null ? { currentUses: { lt: appliedPromo.maxUses } } : {})
+          },
+          data: { currentUses: { increment: 1 } }
+        });
+
+        if (updateResult.count === 0) {
+          throw new ValidationError("Promo code is no longer valid or has reached its usage limit.");
+        }
+      }
+
+      const newOrder = await tx.order.create({
+        data: {
+          orderNumber: generateOrderNumber(),
+          user: userId ? { connect: { id: userId } } : undefined,
+          subtotal,
+          shippingCost,
+          total,
+          requiredAdvance,
+          balanceDue,
+          promoCode: appliedPromo ? promoCode : undefined,
+          discountAmount,
+          guestTokenHash,
+          status: "PENDING_ADVANCE",
+          logistics: "PRIVATE_FREIGHT",
+          isMtoOrder: true,
+          notes: customerNote || null,
+          estimatedManufacturingDays,
+          shippingAddress: {
+            name: address.name,
+            email: address.email,
+            phone: address.phone,
+            division,
+            district,
+            street: address.street,
+            postCode: address.postCode,
+          },
+          items: {
+            create: orderItemsData,
+          },
+        },
+        include: { items: true },
+      });
+
+      const actor = { actorId: userId || "GUEST" };
+      const orderEvent = await appendOrderEvent(tx, newOrder.id, "ORDER_PLACED", {}, actor);
+      const outbox = await scheduleNotification(tx, newOrder.id, orderEvent.id, "ORDER_CONFIRMATION", "EMAIL");
+
+      // Generate invoice document
+      const siteConfig = await getSiteConfig();
+      const invoiceSnapshot = {
+        amount: total,
+        customerName: address.name || "Customer",
+        branding: {
+          companyName: siteConfig.name,
+          address: siteConfig.address,
+          email: siteConfig.support.email,
+          phone: siteConfig.support.phone.display,
+        }
+      };
+
+      const invoiceDoc = await tx.orderDocument.create({
+        data: {
+          orderId: newOrder.id,
+          documentType: "INVOICE",
+          referenceIdentity: `INV-${newOrder.orderNumber}-1`,
+          snapshot: invoiceSnapshot,
+          templateVersion: "1.0",
+          createdBy: "SYSTEM"
+        }
+      });
+
+      return { order: newOrder, outboxId: outbox.id, invoiceDocId: invoiceDoc.id };
+    });
+
+    logger.info({ orderId: result.order.id, orderNumber: result.order.orderNumber }, "MTO Order created successfully");
+
+    // 6. Fire background jobs
+    await inngest.send([
+      { name: "document/generation.requested", data: { orderDocumentId: result.invoiceDocId, documentType: "INVOICE" } },
+      { name: "communication/email.requested", data: { outboxId: result.outboxId } }
+    ]);
+
+    return { order: result.order, rawGuestToken };
   }
 }

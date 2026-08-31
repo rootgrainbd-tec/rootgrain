@@ -77,15 +77,15 @@ export class UserService {
     return userRepository.getWishlist(userId);
   }
 
-  async addWishlistItem(userId: string, productId: string) {
+  async toggleWishlistItem(userId: string, productId: string) {
     if (!userId) throw new AppError("Missing User ID", 401);
     if (!productId) throw new AppError("Missing productId", 400);
 
-    console.log(`\n[SERVICE] Entering service addWishlistItem`);
+    console.log(`\n[SERVICE] Entering service toggleWishlistItem`);
     console.log(`[SERVICE] User ID: ${userId}`);
     console.log(`[SERVICE] Product ID: ${productId}`);
     try {
-      const result = await userRepository.addWishlistItem(userId, productId);
+      const result = await userRepository.toggleWishlistItem(userId, productId);
       console.log(`[SERVICE] Repository result:`, result);
       return result;
     } catch (error) {

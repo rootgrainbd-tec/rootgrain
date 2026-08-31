@@ -3,64 +3,78 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  directUrl         = env("DIRECT_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 model Product {
-  id           String      @id @default(cuid())
-  sanityId     String?     @unique
-  name         String
-  slug         String      @unique
-  category     String
-  price        Int
-  comparePrice Int?
-  wood         String
-  dimensions   String
-  image        String
-  description  String
-  shippingType String?
-  inStock      Boolean     @default(true)
-  isActive     Boolean     @default(true)
-  featured     Boolean     @default(false)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  orderItems   OrderItem[]
+  id                         String      @id @default(cuid())
+  sanityId                   String?     @unique
+  name                       String
+  slug                       String      @unique
+  category                   String
+  price                      Int
+  comparePrice               Int?
+  wood                       String
+  dimensions                 String
+  image                      String
+  description                String
+  inStock                    Boolean     @default(true)
+  isActive                   Boolean     @default(true)
+  featured                   Boolean     @default(false)
+  createdAt                  DateTime    @default(now())
+  updatedAt                  DateTime    @updatedAt
+  shippingType               String?
+  isMto                      Boolean     @default(false)
+  baseLeadTimeDays           Int         @default(30)
+  additionalUnitLeadTimeDays Int         @default(10)
+  orderItems                 OrderItem[]
 
   @@index([featured])
 }
 
 model Order {
-  id              String               @id @default(cuid())
-  orderNumber     String               @unique
-  userId          String?
-  subtotal        Int
-  shippingCost    Int
-  total           Int
-  requiredAdvance   Int                  @default(0)
-  legacyAdvancePaid Int                  @default(0)
-  advancePaid       Int                  @default(0)
-  balanceDue        Int
-  status          OrderStatus          @default(PENDING_ADVANCE)
-  productionState ProductionState      @default(NOT_STARTED)
-  deliveryState   DeliveryState        @default(TBD)
-  shippingAddress Json
-  promoCode       String?
-  discountAmount  Int                  @default(0)
-  notes           String?
-  logistics       LogisticsProvider    @default(PRIVATE_FREIGHT)
-  trackingState   TrackingState        @default(PENDING_PRODUCTION)
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  guestTokenHash  String?              @unique
-  user            User?                @relation(fields: [userId], references: [id])
-  items           OrderItem[]
-  paymentRecords  PaymentRecord[]
-  events                 OrderEvent[]
-  documents              OrderDocument[]
-  outboxItems            NotificationOutbox[]
-  paymentReferenceClaims PaymentReferenceClaim[]
+  id                         String                  @id @default(cuid())
+  orderNumber                String                  @unique
+  userId                     String?
+  subtotal                   Int
+  shippingCost               Int
+  total                      Int
+  advancePaid                Int                     @default(0)
+  balanceDue                 Int
+  status                     OrderStatus             @default(PENDING_ADVANCE)
+  shippingAddress            Json
+  promoCode                  String?
+  discountAmount             Int                     @default(0)
+  notes                      String?
+  logistics                  LogisticsProvider       @default(PRIVATE_FREIGHT)
+  trackingState              TrackingState           @default(PENDING_PRODUCTION)
+  createdAt                  DateTime                @default(now())
+  updatedAt                  DateTime                @updatedAt
+  guestTokenHash             String?                 @unique
+  deliveryState              DeliveryState           @default(TBD)
+  productionState            ProductionState         @default(NOT_STARTED)
+  requiredAdvance            Int                     @default(0)
+  legacyAdvancePaid          Int                     @default(0)
+  isMtoOrder                 Boolean                 @default(false)
+  advanceDeadline            DateTime?
+  estimatedManufacturingDays Int?
+  estimatedCompletionDate    DateTime?
+  trackingNumber             String?
+  trackingUrl                String?
+  internalNotes              AdminInternalNote[]
+  customRequest              CustomRequest?
+  outboxItems                NotificationOutbox[]
+  user                       User?                   @relation(fields: [userId], references: [id])
+  documents                  OrderDocument[]
+  events                     OrderEvent[]
+  items                      OrderItem[]
+  paymentRecords             PaymentRecord[]
+  paymentReferenceClaims     PaymentReferenceClaim[]
+  priceRevisions             PriceRevision[]
+  qualityInspections         QualityInspection[]
 
   @@index([userId])
   @@index([status])
@@ -68,35 +82,40 @@ model Order {
 }
 
 model OrderItem {
-  id          String  @id @default(cuid())
-  orderId     String
-  productId   String
-  productName String
-  quantity    Int
-  unitPrice   Int
-  total       Int
-  order       Order   @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  product     Product @relation(fields: [productId], references: [id])
+  id                  String          @id @default(cuid())
+  orderId             String
+  productId           String?
+  productName         String
+  quantity            Int
+  unitPrice           Int
+  total               Int
+  customSpecification String?
+  order               Order           @relation(fields: [orderId], references: [id])
+  product             Product?        @relation(fields: [productId], references: [id])
+  priceRevisions      PriceRevision[]
 
   @@index([orderId])
   @@index([productId])
 }
 
 model PaymentRecord {
-  id           String        @id @default(cuid())
-  orderId      String
-  type         PaymentType
-  method       PaymentMethod
-  amount       Int
-  status       PaymentStatus @default(INITIATED)
-  reference    String?
-  paidAt       DateTime?
-  recordedById String?
-  createdAt    DateTime      @default(now())
-  order        Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  id                String         @id @default(cuid())
+  orderId           String
+  type              PaymentType
+  method            PaymentMethod
+  amount            Int
+  status            PaymentStatus  @default(INITIATED)
+  paidAt            DateTime?
+  createdAt         DateTime       @default(now())
+  recordedById      String?
+  reference         String?
+  invoiceDocumentId String?
+  invoiceDocument   OrderDocument? @relation(fields: [invoiceDocumentId], references: [id], onDelete: Restrict)
+  order             Order          @relation(fields: [orderId], references: [id])
 
   @@unique([orderId, type])
   @@index([status])
+  @@index([invoiceDocumentId])
 }
 
 model PaymentReferenceClaim {
@@ -104,7 +123,7 @@ model PaymentReferenceClaim {
   method    PaymentMethod
   orderId   String
   createdAt DateTime      @default(now())
-  order     Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  order     Order         @relation(fields: [orderId], references: [id])
 
   @@id([method, reference])
   @@index([orderId])
@@ -125,18 +144,18 @@ model Testimonial {
 model Account {
   id                String   @id @default(cuid())
   userId            String
-  type              String
-  provider          String
   providerAccountId String
-  refresh_token     String?  @db.Text
-  access_token      String?  @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?  @db.Text
-  session_state     String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  provider          String
+  type              String
+  access_token      String?
+  refresh_token     String?
+  id_token          String?
+  token_type        String?
+  scope             String?
+  session_state     String?
+  expires_at        Int?
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
@@ -144,48 +163,47 @@ model Account {
 
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @unique
   userId       String
-  expires      DateTime
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  sessionToken String   @unique
+  expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
 model User {
-  id             String           @id @default(cuid())
-  name           String
-  email          String           @unique
-  phone          String?
-  role           Role             @default(USER)
-  createdAt      DateTime         @default(now())
-  deletedAt      DateTime?
-  failedAttempts Int              @default(0)
-  lockedUntil    DateTime?
-  passwordHash   String?
-  image          String?
-  updatedAt      DateTime         @updatedAt
-  emailVerified  DateTime?
-  abandonedCarts AbandonedCart[]
-  accounts       Account[]
-  addresses      Address[]
-  AuditLog       AuditLog[]
-  LoginAuditLog  LoginAuditLog[]
-  orders         Order[]
-  reviews        Review[]
-  sessions       Session[]
-  UserPermission UserPermission[]
-  UserRole       UserRole[]
-  wishlists      Wishlist[]
+  id                 String              @id @default(cuid())
+  name               String
+  email              String              @unique
+  phone              String?
+  role               Role                @default(USER)
+  createdAt          DateTime            @default(now())
+  deletedAt          DateTime?
+  failedAttempts     Int                 @default(0)
+  lockedUntil        DateTime?
+  passwordHash       String?
+  updatedAt          DateTime            @updatedAt
+  emailVerified      DateTime?
+  image              String?
+  abandonedCarts     AbandonedCart[]
+  accounts           Account[]
+  addresses          Address[]
+  LoginAuditLog      LoginAuditLog[]
+  orders             Order[]
+  reviews            Review[]
+  sessions           Session[]
+  permissions        UserPermission[]
+  wishlists          Wishlist[]
+  qualityInspections QualityInspection[]
 }
 
 model VerificationToken {
-  identifier String
-  token      String
-  expires    DateTime
+  token      String   @unique
   createdAt  DateTime @default(now())
+  identifier String
+  expires    DateTime
 
   @@unique([identifier, token])
 }
@@ -315,39 +333,6 @@ model PasswordResetToken {
   userId    String   @unique
 }
 
-model AuditLog {
-  id                String   @id
-  userId            String?
-  action            String
-  resource          String
-  principal         String
-  decision          String
-  eventHash         String   @unique
-  previousEventHash String?  @unique
-  metadata          Json?
-  createdAt         DateTime @default(now())
-  User              User?    @relation(fields: [userId], references: [id])
-
-  @@index([userId, resource, createdAt])
-}
-
-model AuthRole {
-  id             String           @id
-  description    String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime
-  RolePermission RolePermission[]
-  UserRole       UserRole[]
-}
-
-model FeatureFlag {
-  key         String   @id
-  isActive    Boolean  @default(false)
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime
-}
-
 model LoginAuditLog {
   id              String              @id
   userId          String?
@@ -369,60 +354,212 @@ model LoginAuditLog {
   @@index([userId])
 }
 
-model Permission {
-  id             String           @id
-  description    String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime
-  RolePermission RolePermission[]
-  UserPermission UserPermission[]
+model IdempotencyKey {
+  ownerType       IdempotencyOwnerType
+  ownerId         String
+  scope           String
+  key             String
+  fingerprint     String
+  status          IdempotencyStatus    @default(IN_PROGRESS)
+  resultReference String?
+  responsePayload Json?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@unique([ownerType, ownerId, scope, key])
 }
 
-model Policy {
-  id          String           @id
+model OrderEvent {
+  id                 String               @id @default(cuid())
+  orderId            String
+  sequence           Int
+  eventType          String
+  payload            Json
+  actor              Json
+  occurredAt         DateTime             @default(now())
+  NotificationOutbox NotificationOutbox[]
+  order              Order                @relation(fields: [orderId], references: [id])
+
+  @@unique([orderId, sequence])
+  @@index([orderId])
+}
+
+model OrderDocument {
+  id                String          @id @default(cuid())
+  orderId           String
+  documentType      String
+  referenceIdentity String
+  snapshot          Json
+  templateVersion   String
+  createdBy         String
+  createdAt         DateTime        @default(now())
+  status            String          @default("ISSUED")
+  checksum          String?
+  mimeType          String          @default("application/pdf")
+  size              Int?
+  storageKey        String?
+  order             Order           @relation(fields: [orderId], references: [id])
+  paymentRecords    PaymentRecord[]
+
+  @@unique([documentType, referenceIdentity])
+  @@index([orderId])
+}
+
+model NotificationOutbox {
+  id               String                   @id @default(cuid())
+  eventReference   String
+  orderId          String
+  notificationType String
+  channel          String
+  status           NotificationOutboxStatus @default(PENDING)
+  attempts         Int                      @default(0)
+  lastError        String?
+  nextAttemptAt    DateTime?
+  processedAt      DateTime?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+  event            OrderEvent               @relation(fields: [eventReference], references: [id])
+  order            Order                    @relation(fields: [orderId], references: [id])
+
+  @@unique([eventReference, notificationType, channel])
+  @@index([eventReference])
+  @@index([orderId])
+  @@index([status])
+}
+
+model AdminInternalNote {
+  id        String   @id @default(cuid())
+  orderId   String
+  content   String
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model CustomRequest {
+  id                      String               @id @default(cuid())
+  customerName            String
+  mobileNumber            String
+  email                   String?
+  channel                 CustomRequestChannel
+  status                  CustomRequestStatus  @default(SUBMITTED)
+  subtotal                Int                  @default(0)
+  deliveryCharge          Int                  @default(0)
+  total                   Int                  @default(0)
+  requiredAdvance         Int                  @default(0)
+  estimatedCompletionDate DateTime?
+  guestTokenHash          String?              @unique
+  orderId                 String?              @unique
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  order                   Order?               @relation(fields: [orderId], references: [id])
+  events                  CustomRequestEvent[]
+  items                   CustomRequestItem[]
+
+  @@index([mobileNumber])
+  @@index([status])
+  @@index([channel])
+  @@index([createdAt])
+}
+
+model CustomRequestItem {
+  id              String        @id @default(cuid())
+  customRequestId String
+  name            String
+  quantity        Int           @default(1)
+  designSpecs     String?
+  dimensions      String?
+  material        String?
+  finish          String?
+  notes           String?
+  referenceImages Json?
+  agreedUnitPrice Int?
+  customRequest   CustomRequest @relation(fields: [customRequestId], references: [id], onDelete: Cascade)
+
+  @@index([customRequestId])
+}
+
+model CustomRequestEvent {
+  id              String        @id @default(cuid())
+  customRequestId String
+  sequence        Int
+  eventType       String
+  payload         Json?
+  actor           Json
+  occurredAt      DateTime      @default(now())
+  customRequest   CustomRequest @relation(fields: [customRequestId], references: [id], onDelete: Cascade)
+
+  @@unique([customRequestId, sequence])
+  @@index([customRequestId])
+}
+
+model Permission {
+  id          String           @id @default(cuid())
   name        String           @unique
   description String?
-  effect      PermissionEffect
-  rules       Json
-  isActive    Boolean          @default(true)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime
-
-  @@index([isActive])
+  roles       RolePermission[]
+  users       UserPermission[]
 }
 
 model RolePermission {
-  roleId       String
+  id           String     @id @default(cuid())
+  role         Role
   permissionId String
-  createdAt    DateTime   @default(now())
-  Permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-  AuthRole     AuthRole   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
-  @@id([roleId, permissionId])
-  @@index([roleId])
+  @@unique([role, permissionId])
 }
 
 model UserPermission {
+  id           String     @id @default(cuid())
   userId       String
   permissionId String
-  effect       PermissionEffect @default(ALLOW)
-  createdAt    DateTime         @default(now())
-  Permission   Permission       @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-  User         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@id([userId, permissionId])
-  @@index([userId])
+  @@unique([userId, permissionId])
 }
 
-model UserRole {
-  userId    String
-  roleId    String
-  createdAt DateTime @default(now())
-  AuthRole  AuthRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model PriceRevision {
+  id                   String    @id @default(cuid())
+  orderId              String
+  orderItemId          String
+  previousProductPrice Int
+  adjustment           Int
+  newProductPrice      Int
+  reason               String
+  actor                Json
+  createdAt            DateTime  @default(now())
+  order                Order     @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  orderItem            OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
 
-  @@id([userId, roleId])
-  @@index([userId])
+  @@index([orderId])
+  @@index([orderItemId])
+}
+
+model QualityInspection {
+  id           String                  @id @default(cuid())
+  orderId      String
+  status       QualityInspectionStatus
+  notes        String?                 @db.Text
+  evidenceKeys Json?
+  inspectorId  String
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  order        Order                   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  inspector    User                    @relation(fields: [inspectorId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([inspectorId])
+}
+
+enum QualityInspectionStatus {
+  PASS
+  FAIL
 }
 
 enum Role {
@@ -456,7 +593,7 @@ enum DeliveryState {
   TBD
   FINALIZED
   OUT_FOR_DELIVERY
-  DELIVERED_AND_COLLECTED
+  DELIVERED
 }
 
 enum PaymentMethod {
@@ -472,6 +609,7 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
+  VOIDED
 }
 
 enum LogisticsProvider {
@@ -479,15 +617,18 @@ enum LogisticsProvider {
   PATHAO
   REDX
   DHL
+  STEADFAST
 }
 
 enum TrackingState {
   PENDING_PRODUCTION
   IN_PRODUCTION
   QUALITY_CHECK
+  REWORK
+  READY_FOR_DISPATCH
   DISPATCHED
   OUT_FOR_DELIVERY
-  DELIVERED_AND_COLLECTED
+  DELIVERED
 }
 
 enum ReviewStatus {
@@ -507,21 +648,12 @@ enum AbandonedCartStatus {
   EMAIL_SENT
 }
 
-// AuthProvider enum removed
-
 enum LoginFailureReason {
   INVALID_CREDENTIALS
   ACCOUNT_LOCKED
   OAUTH_STATE_MISMATCH
   OAUTH_REJECTED
   MISSING_IDENTITY
-}
-
-enum PermissionEffect {
-  ALLOW
-  DENY
-  OBFUSCATE
-  MASK
 }
 
 enum IdempotencyOwnerType {
@@ -536,70 +668,21 @@ enum IdempotencyStatus {
 
 enum NotificationOutboxStatus {
   PENDING
+  PROCESSING
+  SENT
+  FAILED
 }
 
-model IdempotencyKey {
-  ownerType       IdempotencyOwnerType
-  ownerId         String
-  scope           String
-  key             String
-  fingerprint     String
-  status          IdempotencyStatus    @default(IN_PROGRESS)
-  resultReference String?
-  responsePayload Json?
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-
-  @@unique([ownerType, ownerId, scope, key])
+enum CustomRequestStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  QUOTE_READY
+  CUSTOMER_DECLINED
+  CONVERTED
+  CANCELLED
 }
 
-model OrderEvent {
-  id                 String               @id @default(cuid())
-  orderId            String
-  sequence           Int
-  eventType          String
-  payload            Json
-  actor              Json
-  occurredAt         DateTime             @default(now())
-  order              Order                @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  NotificationOutbox NotificationOutbox[]
-
-  @@unique([orderId, sequence])
-  @@index([orderId])
-}
-
-model OrderDocument {
-  id                String   @id @default(cuid())
-  orderId           String
-  documentType      String
-  referenceIdentity String
-  snapshot          Json
-  templateVersion   String
-  createdBy         String
-  createdAt         DateTime @default(now())
-  order             Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
-
-  @@index([orderId])
-}
-
-model NotificationOutbox {
-  id               String                   @id @default(cuid())
-  eventReference   String
-  orderId          String
-  notificationType String
-  channel          String
-  status           NotificationOutboxStatus @default(PENDING)
-  attempts         Int                      @default(0)
-  lastError        String?                  @db.Text
-  nextAttemptAt    DateTime?
-  processedAt      DateTime?
-  createdAt        DateTime                 @default(now())
-  updatedAt        DateTime                 @updatedAt
-  event            OrderEvent               @relation(fields: [eventReference], references: [id], onDelete: Restrict)
-  order            Order                    @relation(fields: [orderId], references: [id], onDelete: Restrict)
-
-  @@unique([eventReference, notificationType, channel])
-  @@index([eventReference])
-  @@index([orderId])
-  @@index([status])
+enum CustomRequestChannel {
+  CUSTOMER_ONLINE
+  ADMIN_OFFLINE
 }
