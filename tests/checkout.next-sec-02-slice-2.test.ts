@@ -11,13 +11,19 @@ vi.mock('../src/repositories/product.repository');
 vi.mock('../src/repositories/shipping.repository');
 vi.mock('../src/repositories/promo.repository');
 vi.mock('../src/repositories/cart.repository');
+vi.mock('../src/inngest/client', () => ({
+  inngest: { send: vi.fn() }
+}));
 vi.mock('../src/lib/prisma', () => {
   return {
     default: {
       $transaction: vi.fn(async (cb) => {
         return await cb({
           promoCode: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
-          order: { create: vi.fn() }
+          order: { create: vi.fn() },
+          orderEvent: { aggregate: vi.fn().mockResolvedValue({ _max: { sequence: null } }), create: vi.fn().mockResolvedValue({ id: 'event-1' }) },
+          orderDocument: { create: vi.fn().mockResolvedValue({ id: 'doc-1' }) },
+          notificationOutbox: { upsert: vi.fn().mockResolvedValue({ id: 'outbox-1' }) }
         });
       })
     },
@@ -25,7 +31,10 @@ vi.mock('../src/lib/prisma', () => {
       $transaction: vi.fn(async (cb) => {
         return await cb({
           promoCode: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
-          order: { create: vi.fn() }
+          order: { create: vi.fn() },
+          orderEvent: { aggregate: vi.fn().mockResolvedValue({ _max: { sequence: null } }), create: vi.fn().mockResolvedValue({ id: 'event-1' }) },
+          orderDocument: { create: vi.fn().mockResolvedValue({ id: 'doc-1' }) },
+          notificationOutbox: { upsert: vi.fn().mockResolvedValue({ id: 'outbox-1' }) }
         });
       })
     }
@@ -48,14 +57,15 @@ const mockProduct = {
   name: 'Table',
   price: 100,
   isActive: true,
-  inStock: true
+  inStock: true,
+  shippingType: 'large'
 };
 
 describe('NEXT-SEC-02 Slice 2 - Checkout Token Generation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(ProductRepository.findProductsBySlugs).mockResolvedValue([mockProduct as any]);
-    vi.mocked(ShippingRepository.getShippingRateByDistrict).mockResolvedValue({ baseRate: 50, perItemRate: 10 } as any);
+    vi.mocked(ShippingRepository.getAllShippingTypeRates as any).mockResolvedValue([{ shippingType: 'large', baseRate: 50, additionalRate: 10, isActive: true }]);
     vi.mocked(CartRepository.markCartsAsRecovered).mockResolvedValue({ count: 0 });
   });
 
@@ -67,7 +77,10 @@ describe('NEXT-SEC-02 Slice 2 - Checkout Token Generation', () => {
         order: { create: async (data: any) => {
           capturedData = data.data;
           return { id: 'order-1', orderNumber: data.data.orderNumber };
-        }}
+        }},
+        orderEvent: { aggregate: vi.fn().mockResolvedValue({ _max: { sequence: null } }), create: vi.fn().mockResolvedValue({ id: 'event-1' }) },
+        orderDocument: { create: vi.fn().mockResolvedValue({ id: 'doc-1' }) },
+        notificationOutbox: { upsert: vi.fn().mockResolvedValue({ id: 'outbox-1' }) }
       });
     });
 
@@ -94,7 +107,10 @@ describe('NEXT-SEC-02 Slice 2 - Checkout Token Generation', () => {
         order: { create: async (data: any) => {
           capturedData = data.data;
           return { id: 'order-2', orderNumber: data.data.orderNumber };
-        }}
+        }},
+        orderEvent: { aggregate: vi.fn().mockResolvedValue({ _max: { sequence: null } }), create: vi.fn().mockResolvedValue({ id: 'event-2' }) },
+        orderDocument: { create: vi.fn().mockResolvedValue({ id: 'doc-1' }) },
+        notificationOutbox: { upsert: vi.fn().mockResolvedValue({ id: 'outbox-1' }) }
       });
     });
 

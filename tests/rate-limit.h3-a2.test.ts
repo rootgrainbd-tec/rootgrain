@@ -34,7 +34,7 @@ describe("SECURITY-H3-A2 Rate Limiting", () => {
 
   describe("Without Redis configured (Local/Test environment)", () => {
     it("Fail Closed endpoints block by default when Redis is unreachable", async () => {
-      const res = await checkRateLimit("192.168.1.1", "credentials");
+      const res = await checkRateLimit("192.168.1.1", "register");
       expect(res.success).toBe(false);
       expect(res.remaining).toBe(0);
     });
@@ -74,7 +74,7 @@ describe("SECURITY-H3-A2 Rate Limiting", () => {
 
   describe("Middleware Behavior", () => {
     it("Extracts IPv4 correctly", () => {
-      const req = new NextRequest("http://localhost/api/auth/register", {
+      const req = new NextRequest("http://localhost/api/v1/auth/register", {
         headers: { "x-forwarded-for": "10.0.0.1" }
       });
       // We can't easily mock the internals without triggering the block, 
@@ -83,7 +83,7 @@ describe("SECURITY-H3-A2 Rate Limiting", () => {
 
     it("Layer 1 block executes ZERO Prisma queries", async () => {
       // By virtue of not importing prisma in middleware, we guarantee ZERO queries.
-      const req = new NextRequest("http://localhost/api/auth/register", {
+      const req = new NextRequest("http://localhost/api/v1/auth/register", {
         headers: { "x-forwarded-for": "10.0.0.1" }
       });
       const res = await middleware(req);

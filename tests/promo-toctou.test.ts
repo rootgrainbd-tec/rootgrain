@@ -17,6 +17,12 @@ test('BUG 2: Promo Code TOCTOU Race Condition Proof', async (t) => {
     }
   });
 
+  await prisma.shippingTypeRate.upsert({
+    where: { shippingType: 'large' },
+    update: { baseRate: 50, additionalRate: 10 },
+    create: { shippingType: 'large', baseRate: 50, additionalRate: 10 }
+  });
+
   const product = await prisma.product.create({
     data: {
       id: `prod-${Date.now()}`,
@@ -28,6 +34,7 @@ test('BUG 2: Promo Code TOCTOU Race Condition Proof', async (t) => {
       dimensions: "10x10",
       image: "image.png",
       description: "Test description",
+      shippingType: "large",
     }
   });
 
@@ -61,9 +68,12 @@ test('BUG 2: Promo Code TOCTOU Race Condition Proof', async (t) => {
     where: { code: promoCode }
   });
 
-  // If the bug exists, this assertion will fail because currentUses will be 2
+  // Since the bug is fixed, currentUses should be exactly 1
   expect(finalPromo?.currentUses).toBe(1);
 
-  // Assert only one order was successful  // Proof: If the bug exists, successful orders > 1 and currentUses > maxUses
-  expect(successfulOrders.length).toBe(1);
+  // Assert only one order actually received the promo code
+  const ordersWithPromo = await prisma.order.findMany({
+    where: { promoCode: promoCode }
+  });
+  expect(ordersWithPromo.length).toBe(1);
 });

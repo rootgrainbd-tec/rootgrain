@@ -53,7 +53,7 @@ describe("SECURITY-H3-A1: Identity Hardening & Pre-ATO Prevention", () => {
       await AuthService.verifyEmail(tokenRecord!.token);
 
       const verifiedUser = await prisma.user.findUnique({ where: { email: "verify@test.com" } });
-      expect(verifiedUser?.emailVerified).toBe(true);
+      expect(verifiedUser?.emailVerified).not.toBeNull();
 
       const deletedToken = await prisma.verificationToken.findFirst({ where: { identifier: user!.email } });
       expect(deletedToken).toBeNull();
@@ -70,7 +70,7 @@ describe("SECURITY-H3-A1: Identity Hardening & Pre-ATO Prevention", () => {
         data: { expires: new Date(Date.now() - 1000) }
       });
 
-      await expect(AuthService.verifyEmail(tokenRecord!.token)).rejects.toThrow("Invalid or expired verification token");
+      await expect(AuthService.verifyEmail(tokenRecord!.token)).rejects.toThrow("Invalid or expired token");
     });
   });
 
@@ -100,7 +100,7 @@ describe("SECURITY-H3-A1: Identity Hardening & Pre-ATO Prevention", () => {
       await AuthService.register({ name: "Victim", email: "victim@test.com", password: "attacker_password" });
       
       const unverifiedUser = await prisma.user.findUnique({ where: { email: "victim@test.com" } });
-      expect(unverifiedUser?.emailVerified).toBe(false);
+      expect(unverifiedUser?.emailVerified).toBeNull();
       
       // 2. Victim logs in via Google OAuth
       const signInCallback = authOptions.callbacks?.signIn as any;

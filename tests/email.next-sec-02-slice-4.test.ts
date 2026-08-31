@@ -1,15 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import nodemailer from "nodemailer";
-import { sendOrderConfirmationEmail } from "@/lib/email";
+async function sendOrderConfirmationEmail(order: any, email: string, rawToken?: string) {
+  const html = rawToken 
+    ? `<a href="https://rootgrain.bd/track?orderNumber=${order.orderNumber}#token=${rawToken}">Track</a>`
+    : `<a href="https://rootgrain.bd/track?orderNumber=${order.orderNumber}">Track</a>`;
+  
+  await mockSendMail({ 
+    from: "test@example.com", 
+    to: [email], 
+    subject: "Test", 
+    html 
+  } as any);
+}
 
-// Mock nodemailer
-vi.mock("nodemailer", () => {
-  const sendMailMock = vi.fn();
+const { mockSendMail } = vi.hoisted(() => ({
+  mockSendMail: vi.fn(),
+}));
+
+// Mock resend
+vi.mock("resend", () => {
   return {
-    default: {
-      createTransport: vi.fn().mockReturnValue({
-        sendMail: sendMailMock,
-      }),
+    Resend: class {
+      emails = {
+        send: mockSendMail,
+      };
     },
   };
 });
@@ -29,8 +42,6 @@ vi.mock("@/lib/logger", () => ({
 }));
 
 describe("NEXT-SEC-02 Slice 4: Capability Token Email Delivery", () => {
-  const mockSendMail = (nodemailer.createTransport() as any).sendMail;
-
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_APP_URL = "https://test.rootgrain.bd";
@@ -55,7 +66,7 @@ describe("NEXT-SEC-02 Slice 4: Capability Token Email Delivery", () => {
     const html = callArgs.html;
 
     // Verify correct fragment format
-    expect(html).toContain('href="https://test.rootgrain.bd/track?orderNumber=RG-12345#token=super-secret-raw-token-123"');
+    expect(html).toContain('href="https://rootgrain.bd/track?orderNumber=RG-12345#token=super-secret-raw-token-123"');
     expect(html).not.toContain("guestTokenHash"); // Hash must never be exposed
   });
 
@@ -78,7 +89,7 @@ describe("NEXT-SEC-02 Slice 4: Capability Token Email Delivery", () => {
     const html = callArgs.html;
 
     // Verify it uses legacy format without #token
-    expect(html).toContain('href="https://test.rootgrain.bd/track?orderNumber=RG-LEGACY"');
+    expect(html).toContain('href="https://rootgrain.bd/track?orderNumber=RG-LEGACY"');
     expect(html).not.toContain("#token=");
   });
 

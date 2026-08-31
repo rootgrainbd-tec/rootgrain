@@ -18,6 +18,10 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
+vi.mock("@/inngest/client", () => ({
+  inngest: { send: vi.fn() }
+}));
+
 describe("Phase 5A: Admin Payment Operations Server Action", () => {
   let testOrder: any;
 
