@@ -25,21 +25,6 @@ async function reconcile() {
         console.log("Renamed PriceRevision");
     } catch(e) {}
 
-    // Other drifted columns added by patch_db.ts that might collide in future migrations
-    try {
-        await prisma.$executeRawUnsafe(`ALTER TABLE "Order" RENAME COLUMN "productionState" TO "productionState_drift"`);
-        console.log("Renamed productionState");
-    } catch(e) {}
-    
-    try {
-        await prisma.$executeRawUnsafe(`ALTER TABLE "Order" RENAME COLUMN "advanceDeadline" TO "advanceDeadline_drift"`);
-        console.log("Renamed advanceDeadline");
-    } catch(e) {}
-    
-    try {
-        await prisma.$executeRawUnsafe(`ALTER TABLE "Order" RENAME COLUMN "estimatedManufacturingDays" TO "estimatedManufacturingDays_drift"`);
-        console.log("Renamed estimatedManufacturingDays");
-    } catch(e) {}
     
     try {
         await prisma.$executeRawUnsafe(`ALTER TABLE "Order" RENAME COLUMN "actualCompletionDate" TO "actualCompletionDate_drift"`);
