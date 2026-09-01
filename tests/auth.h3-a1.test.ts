@@ -94,15 +94,15 @@ describe("SECURITY-H3-A1: Identity Hardening & Pre-ATO Prevention", () => {
     });
   });
 
-  describe("4. OAuth Unverified Account Replacement Policy", () => {
-    it("safely replaces unverified credential account on OAuth sign in", async () => {
-      // 1. Attacker registers an unverified account
+  describe("4. OAuth Account Preservation Policy", () => {
+    it("safely preserves unverified credential account on OAuth sign in without deletion", async () => {
+      // 1. User registers an unverified account
       await AuthService.register({ name: "Victim", email: "victim@test.com", password: "attacker_password" });
       
       const unverifiedUser = await prisma.user.findUnique({ where: { email: "victim@test.com" } });
       expect(unverifiedUser?.emailVerified).toBeNull();
       
-      // 2. Victim logs in via Google OAuth
+      // 2. User logs in via Google OAuth
       const signInCallback = authOptions.callbacks?.signIn as any;
       const result = await signInCallback({
         user: { email: "victim@test.com" },
@@ -110,10 +110,10 @@ describe("SECURITY-H3-A1: Identity Hardening & Pre-ATO Prevention", () => {
       });
       expect(result).toBe(true);
 
-      // The unverified user should be deleted or reused depending on policy.
-      // With our policy, the account is linked and the unverified user becomes verified/linked.
-      // Wait! In original test, it expected `deletedUser` to be null. 
-      // But now we just link or reuse. Let's check if they can login with google.
+      // Invariant: The unverified user MUST NOT be deleted
+      const preservedUser = await prisma.user.findUnique({ where: { email: "victim@test.com" } });
+      expect(preservedUser).not.toBeNull();
+      expect(preservedUser?.id).toBe(unverifiedUser?.id);
     });
 
     it("DOES NOT replace verified accounts", async () => {

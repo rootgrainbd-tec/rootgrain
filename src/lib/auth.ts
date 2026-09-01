@@ -110,37 +110,10 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account }) {
-      if (account && account.provider !== "credentials" && user.email) {
-        const existingUser = await prisma.user.findUnique({
-          where: { email: user.email },
-          include: {
-            accounts: true,
-            orders: true,
-            addresses: true,
-            reviews: true
-          }
-        });
-
-        if (
-          existingUser &&
-          existingUser.emailVerified === null &&
-          existingUser.accounts.length === 0 &&
-          existingUser.orders.length === 0 &&
-          existingUser.addresses.length === 0 &&
-          existingUser.reviews.length === 0 &&
-          existingUser.passwordHash !== null
-        ) {
-          // Unverified credential account blocking OAuth flow. Safe to replace.
-          try {
-            await prisma.$transaction([
-              prisma.session.deleteMany({ where: { userId: existingUser.id } }),
-              prisma.user.delete({ where: { id: existingUser.id } })
-            ]);
-            logger.info({ email: user.email }, "Safely replaced unverified credential account during OAuth sign-in");
-          } catch (error) {
-            logger.error({ err: error, email: user.email }, "Failed to replace unverified account");
-          }
-        }
+      // Core Invariant: Authentication must NEVER delete or mutate an existing User record.
+      // NextAuth v4 PrismaAdapter natively links OAuth accounts to existing Users via allowDangerousEmailAccountLinking: true.
+      if (account && account.provider !== "credentials" && user?.email) {
+        logger.info({ email: user.email, provider: account.provider }, "Processing OAuth sign-in");
       }
       return true;
     },
