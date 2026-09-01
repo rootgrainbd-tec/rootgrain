@@ -10,9 +10,10 @@ export const metadata = {
   title: "Custom Request Detail | Admin",
 };
 
-export default async function AdminCustomRequestDetailPage({ params }: { params: { id: string } }) {
+export default async function AdminCustomRequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const request = await prisma.customRequest.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       items: true,
       events: {
