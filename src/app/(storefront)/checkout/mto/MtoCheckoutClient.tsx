@@ -40,7 +40,9 @@ export function MtoCheckoutClient({ item, baseLeadTimeDays, additionalUnitLeadTi
 
   const items = [item];
   const subtotal = item.price * item.quantity;
-  const estimatedManufacturingDays = baseLeadTimeDays + ((item.quantity - 1) * additionalUnitLeadTimeDays);
+  const safeBaseLead = (typeof baseLeadTimeDays === "number" && Number.isInteger(baseLeadTimeDays) && baseLeadTimeDays > 0) ? baseLeadTimeDays : 30;
+  const safeAddLead = (typeof additionalUnitLeadTimeDays === "number" && Number.isInteger(additionalUnitLeadTimeDays) && additionalUnitLeadTimeDays > 0) ? additionalUnitLeadTimeDays : 10;
+  const estimatedManufacturingDays = safeBaseLead + ((item.quantity - 1) * safeAddLead);
 
   useEffect(() => {
     setIsShippingLoading(true);

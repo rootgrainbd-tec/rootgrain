@@ -84,6 +84,9 @@ export class CheckoutService {
       if (!dbProd.isActive || !dbProd.inStock) {
         throw new ValidationError(`Product ${dbProd.name} is currently unavailable.`);
       }
+      if (dbProd.isMto) {
+        throw new ValidationError(`Product ${dbProd.name} is Made-to-Order and must be purchased via Direct Buy.`);
+      }
 
       const itemTotal = dbProd.price * item.quantity;
       subtotal += itemTotal;
@@ -256,7 +259,7 @@ export class CheckoutService {
     if (!dbProd) {
       throw new NotFoundError(`Product not found: ${productId}`);
     }
-    if (!dbProd.isMto) {
+    if (!dbProd.isActive || !dbProd.isMto) {
       throw new ValidationError(`Product ${dbProd.name} is not available for MTO direct buy.`);
     }
 
@@ -310,7 +313,9 @@ export class CheckoutService {
     const balanceDue = total;
     
     // Calculate Lead Time
-    const estimatedManufacturingDays = dbProd.baseLeadTimeDays + ((quantity - 1) * dbProd.additionalUnitLeadTimeDays);
+    const baseLead = (typeof dbProd.baseLeadTimeDays === "number" && Number.isInteger(dbProd.baseLeadTimeDays) && dbProd.baseLeadTimeDays > 0) ? dbProd.baseLeadTimeDays : 30;
+    const addLead = (typeof dbProd.additionalUnitLeadTimeDays === "number" && Number.isInteger(dbProd.additionalUnitLeadTimeDays) && dbProd.additionalUnitLeadTimeDays > 0) ? dbProd.additionalUnitLeadTimeDays : 10;
+    const estimatedManufacturingDays = baseLead + ((quantity - 1) * addLead);
 
     // 4. Generate guest tracking capability token if applicable
     let guestTokenHash: string | undefined;

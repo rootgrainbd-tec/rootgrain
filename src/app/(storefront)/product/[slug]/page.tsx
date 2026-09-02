@@ -93,7 +93,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const name = product.name || product.title || '';
   const prismaProduct = await prisma.product.findUnique({
     where: { slug: resolvedParams.slug },
-    select: { isMto: true, price: true, inStock: true }
+    select: { isMto: true, price: true, inStock: true, isActive: true }
   });
 
   const price = prismaProduct ? prismaProduct.price : (product.price || 0);
@@ -104,8 +104,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const dimensionsStr = product.dimensionsStr || (product.dimensions ? `${product.dimensions.length} x ${product.dimensions.width} x ${product.dimensions.height} ${product.dimensions.unit}` : null);
   const heroUrl = product.heroUrl || (product.heroImage ? urlForImage(product.heroImage).url() : "/placeholder.jpg");
   const desc = product.shortDescription || '';
-  const isAvailable = prismaProduct ? prismaProduct.inStock : (product.inStock ?? (product.availability === 'Available'));
-  const isMto = prismaProduct?.isMto || false;
+  const isAvailable = prismaProduct ? (prismaProduct.isActive && prismaProduct.inStock) : (product.inStock ?? (product.availability === 'Available'));
+  const isMto = Boolean(prismaProduct?.isActive && prismaProduct?.isMto);
 
   return (
     <main className="min-h-screen bg-[var(--ivory)]">

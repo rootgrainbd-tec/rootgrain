@@ -57,7 +57,9 @@ export class SyncService {
       "image": heroImage.asset->url,
       "description": shortDescription,
       "inStock": availability != "Sold",
-      shippingType
+      shippingType,
+      availability,
+      leadTimeDays
     }`;
 
     let sanityProduct = null;
@@ -107,6 +109,19 @@ export class SyncService {
     if (sanityProduct.price === null || sanityProduct.price === undefined) throw new Error("Missing required field: price");
     if (!sanityProduct.category) throw new Error("Missing required field: category");
     if (!sanityProduct.image) throw new Error("Missing required field: image/heroImage");
+
+    // Phase 6 MTO Projection Contract
+    const isMto = sanityProduct.availability === "Made-to-Order";
+    const inStock = sanityProduct.availability !== "Sold";
+    const baseLeadTimeDays = (typeof sanityProduct.leadTimeDays === "number" && Number.isInteger(sanityProduct.leadTimeDays) && sanityProduct.leadTimeDays > 0)
+      ? sanityProduct.leadTimeDays
+      : 30;
+    const additionalUnitLeadTimeDays = 10;
+
+    sanityProduct.isMto = isMto;
+    sanityProduct.inStock = inStock;
+    sanityProduct.baseLeadTimeDays = baseLeadTimeDays;
+    sanityProduct.additionalUnitLeadTimeDays = additionalUnitLeadTimeDays;
 
     await ProductRepository.upsertProductBySanityId(canonicalSanityId, sanityProduct);
 

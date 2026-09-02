@@ -20,7 +20,7 @@ export default async function MtoCheckoutPage({ searchParams }: { searchParams: 
     where: { slug: productId }
   });
 
-  if (!product || !product.isMto) {
+  if (!product || !product.isActive || !product.isMto) {
     notFound();
   }
 

@@ -25,6 +25,9 @@ export class ProductRepository {
         description: data.description ?? "",
         shippingType: data.shippingType ?? null,
         inStock: data.inStock ?? true,
+        isMto: data.isMto ?? false,
+        baseLeadTimeDays: (typeof data.baseLeadTimeDays === "number" && Number.isInteger(data.baseLeadTimeDays) && data.baseLeadTimeDays > 0) ? data.baseLeadTimeDays : 30,
+        additionalUnitLeadTimeDays: (typeof data.additionalUnitLeadTimeDays === "number" && Number.isInteger(data.additionalUnitLeadTimeDays) && data.additionalUnitLeadTimeDays > 0) ? data.additionalUnitLeadTimeDays : 10,
         isActive: true,
       },
       create: {
@@ -39,6 +42,9 @@ export class ProductRepository {
         description: data.description ?? "",
         shippingType: data.shippingType ?? null,
         inStock: data.inStock ?? true,
+        isMto: data.isMto ?? false,
+        baseLeadTimeDays: (typeof data.baseLeadTimeDays === "number" && Number.isInteger(data.baseLeadTimeDays) && data.baseLeadTimeDays > 0) ? data.baseLeadTimeDays : 30,
+        additionalUnitLeadTimeDays: (typeof data.additionalUnitLeadTimeDays === "number" && Number.isInteger(data.additionalUnitLeadTimeDays) && data.additionalUnitLeadTimeDays > 0) ? data.additionalUnitLeadTimeDays : 10,
         isActive: true,
       },
     });
