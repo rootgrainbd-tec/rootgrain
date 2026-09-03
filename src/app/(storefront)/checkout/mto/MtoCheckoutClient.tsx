@@ -26,9 +26,6 @@ interface MtoCheckoutClientProps {
 
 export function MtoCheckoutClient({ item, baseLeadTimeDays, additionalUnitLeadTimeDays }: MtoCheckoutClientProps) {
   const router = useRouter();
-  const [shippingCost, setShippingCost] = useState<number>(0);
-  const [isShippingLoading, setIsShippingLoading] = useState(true);
-  const [shippingError, setShippingError] = useState<string | null>(null);
   const [selectedDivision, setSelectedDivision] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,30 +40,8 @@ export function MtoCheckoutClient({ item, baseLeadTimeDays, additionalUnitLeadTi
   const safeBaseLead = (typeof baseLeadTimeDays === "number" && Number.isInteger(baseLeadTimeDays) && baseLeadTimeDays > 0) ? baseLeadTimeDays : 30;
   const safeAddLead = (typeof additionalUnitLeadTimeDays === "number" && Number.isInteger(additionalUnitLeadTimeDays) && additionalUnitLeadTimeDays > 0) ? additionalUnitLeadTimeDays : 10;
   const estimatedManufacturingDays = safeBaseLead + ((item.quantity - 1) * safeAddLead);
-
-  useEffect(() => {
-    setIsShippingLoading(true);
-    setShippingError(null);
-    fetch("/api/checkout/shipping-preview", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items })
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || "Failed to calculate shipping");
-        }
-        setShippingCost(data.shippingCost);
-      })
-      .catch((err) => {
-        setShippingError(err.message);
-        toast.error(err.message);
-      })
-      .finally(() => {
-        setIsShippingLoading(false);
-      });
-  }, [item]);
+  // MTO Shipping: MTO products have no shipping charge (৳0)
+  const shippingCost = 0;
 
   useEffect(() => {
     fetch("/api/user/address")
@@ -128,10 +103,6 @@ export function MtoCheckoutClient({ item, baseLeadTimeDays, additionalUnitLeadTi
     e.preventDefault();
     if (!selectedDivision || !selectedDistrict) {
       toast.error("Please select both division and district");
-      return;
-    }
-    if (shippingError) {
-      toast.error(shippingError);
       return;
     }
     if (!address.name || !address.phone || !address.street) {
@@ -260,7 +231,7 @@ export function MtoCheckoutClient({ item, baseLeadTimeDays, additionalUnitLeadTi
             <Button 
               type="submit" 
               className="w-full bg-[var(--gold)] hover:bg-[var(--walnut-dark)] text-[var(--ivory)] py-6 text-lg tracking-wider"
-              disabled={isSubmitting || !!shippingError || isShippingLoading}
+              disabled={isSubmitting}
             >
               {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
               BOOK MTO ORDER
@@ -293,11 +264,9 @@ export function MtoCheckoutClient({ item, baseLeadTimeDays, additionalUnitLeadTi
                 <span className="text-gray-600">Subtotal (1 item)</span>
                 <span className="font-medium">৳{subtotal.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Shipping Estimate</span>
-                <span className="font-medium">
-                  {isShippingLoading ? 'Calculating...' : shippingError ? 'Not Available' : `৳${shippingCost.toLocaleString()}`}
-                </span>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">Shipping</span>
+                <span className="font-medium">৳{shippingCost.toLocaleString()}</span>
               </div>
               
               {/* Promo Code Section */}
@@ -346,7 +315,9 @@ export function MtoCheckoutClient({ item, baseLeadTimeDays, additionalUnitLeadTi
                   ৳{advanceRequired.toLocaleString()}
                 </span>
               </div>
-              <p className="text-xs text-gray-500 mt-2 text-right">Remaining amount is Cash on Delivery</p>
+              <p className="text-xs text-gray-500 mt-2 text-right">
+                Remaining balance is Cash on Delivery.
+              </p>
             </div>
           </div>
         </div>

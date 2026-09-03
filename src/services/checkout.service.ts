@@ -272,15 +272,8 @@ export class CheckoutService {
       total: subtotal,
     }];
 
-    // 2. Calculate shipping
-    const shippingRates = await ShippingRepository.getAllShippingTypeRates();
-    const cartItemShippingList: CartItemShipping[] = [{
-      productId: dbProd.slug,
-      productName: dbProd.name,
-      shippingType: dbProd.shippingType || null,
-      quantity: quantity
-    }];
-    const shippingCost = ShippingEngine.calculate(cartItemShippingList, shippingRates);
+    // 2. MTO Shipping: MTO products have no shipping charge (৳0)
+    const shippingCost = 0;
 
     // 3. Apply Promo Code
     let discountAmount = 0;

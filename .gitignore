@@ -9,6 +9,8 @@
 .env.production
 .env.*
 !.env.example
+db_url.txt
+direct_url.txt
 
 # ========================
 # Dependencies
