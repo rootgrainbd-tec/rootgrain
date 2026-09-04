@@ -233,11 +233,20 @@ export class CheckoutService {
 
     logger.info({ orderId: result.order.id, orderNumber: result.order.orderNumber }, "Order created successfully");
 
-    // 5. Fire background jobs
-    await inngest.send([
-      { name: "document/generation.requested", data: { orderDocumentId: result.invoiceDocId, documentType: "INVOICE" } },
-      { name: "communication/email.requested", data: { outboxId: result.outboxId } }
-    ]);
+    // 5. Fire background jobs (Best-effort dispatch)
+    try {
+      await inngest.send([
+        { name: "document/generation.requested", data: { orderDocumentId: result.invoiceDocId, documentType: "INVOICE" } },
+        { name: "communication/email.requested", data: { outboxId: result.outboxId } }
+      ]);
+    } catch (error) {
+      logger.error({ 
+        err: error, 
+        orderId: result.order.id, 
+        orderNumber: result.order.orderNumber,
+        events: ["document/generation.requested", "communication/email.requested"]
+      }, "Post-commit background dispatch failed");
+    }
 
     // 6. Recover abandoned cart
     try {
@@ -401,11 +410,20 @@ export class CheckoutService {
 
     logger.info({ orderId: result.order.id, orderNumber: result.order.orderNumber }, "MTO Order created successfully");
 
-    // 6. Fire background jobs
-    await inngest.send([
-      { name: "document/generation.requested", data: { orderDocumentId: result.invoiceDocId, documentType: "INVOICE" } },
-      { name: "communication/email.requested", data: { outboxId: result.outboxId } }
-    ]);
+    // 6. Fire background jobs (Best-effort dispatch)
+    try {
+      await inngest.send([
+        { name: "document/generation.requested", data: { orderDocumentId: result.invoiceDocId, documentType: "INVOICE" } },
+        { name: "communication/email.requested", data: { outboxId: result.outboxId } }
+      ]);
+    } catch (error) {
+      logger.error({ 
+        err: error, 
+        orderId: result.order.id, 
+        orderNumber: result.order.orderNumber,
+        events: ["document/generation.requested", "communication/email.requested"]
+      }, "Post-commit background dispatch failed");
+    }
 
     return { order: result.order, rawGuestToken };
   }

@@ -470,4 +470,34 @@ describe("MTO Checkout Decoupling and Hardening Suite", () => {
     const cost = ShippingEngine.calculate(items, rates);
     expect(cost).toBe(1600);
   });
+
+  // Test 16: MTO order creation gracefully handles post-commit Inngest dispatch failure
+  it("Test 16: MTO order creation gracefully handles post-commit Inngest dispatch failure without throwing 500", async () => {
+    vi.mocked(prisma.product.findUnique).mockResolvedValueOnce({
+      id: "prod-rg001",
+      name: "RG-001 Center Coffee Table",
+      slug: "rg-001-center-coffee-table",
+      price: 31000,
+      isMto: true,
+      isActive: true,
+      shippingType: null,
+      baseLeadTimeDays: 30,
+      additionalUnitLeadTimeDays: 10,
+    } as any);
+
+    // Mock inngest to throw an error (simulating 401 Unauthorized or network failure)
+    const { inngest } = await import("@/inngest/client");
+    vi.mocked(inngest.send).mockRejectedValueOnce(new Error("Inngest 401 Unauthorized"));
+
+    const getCreatedOrder = setupMockTx();
+    
+    // This should NOT throw an error. It should return the order successfully.
+    const result = await CheckoutService.processMtoCheckout(sampleMtoPayload, "user-1");
+
+    expect(result.order).toBeDefined();
+    expect(getCreatedOrder().shippingCost).toBe(0);
+    expect(getCreatedOrder().total).toBe(31000);
+    // Verify inngest was called and threw, but the service caught it
+    expect(inngest.send).toHaveBeenCalled();
+  });
 });
