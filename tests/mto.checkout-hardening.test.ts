@@ -36,9 +36,21 @@ vi.mock("@/inngest/client", () => {
   };
 });
 
+vi.mock("@/data/site-config", () => {
+  return {
+    getSiteConfig: vi.fn(),
+  };
+});
+
 describe("MTO Checkout Decoupling and Hardening Suite", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.resetAllMocks();
+    const { getSiteConfig } = await import("@/data/site-config");
+    vi.mocked(getSiteConfig).mockResolvedValue({
+      name: "RootGrain",
+      address: { line1: "", line2: "" },
+      support: { email: "", phone: { display: "" } }
+    } as any);
   });
 
   const sampleMtoPayload: MtoCheckoutPayload = {
@@ -504,5 +516,71 @@ describe("MTO Checkout Decoupling and Hardening Suite", () => {
     expect(getCreatedOrder().total).toBe(31000);
     // Verify inngest was called and threw, but the service caught it
     expect(inngest.send).toHaveBeenCalled();
+  });
+  // Test 17: getSiteConfig is executed BEFORE the Prisma transaction begins
+  it("Test 17: getSiteConfig is executed BEFORE the Prisma transaction begins and does not block the transaction", async () => {
+    vi.mocked(prisma.product.findUnique).mockResolvedValueOnce({
+      id: "prod-rg001",
+      name: "RG-001 Center Coffee Table",
+      slug: "rg-001-center-coffee-table",
+      price: 31000,
+      isMto: true,
+      isActive: true,
+      shippingType: null,
+      baseLeadTimeDays: 30,
+      additionalUnitLeadTimeDays: 10,
+    } as any);
+
+    const { getSiteConfig } = await import("@/data/site-config");
+    let getSiteConfigCalled = false;
+    let transactionStarted = false;
+
+    // We mock it to have an artificial delay, simulating Sanity latency.
+    vi.mocked(getSiteConfig).mockImplementationOnce(async () => {
+      getSiteConfigCalled = true;
+      expect(transactionStarted).toBe(false); // Must be called before tx
+      await new Promise(resolve => setTimeout(resolve, 50)); // Artificial delay
+      return {
+        name: "RootGrain",
+        address: { line1: "", line2: "" },
+        support: { email: "", phone: { display: "" } }
+      } as any;
+    });
+
+    vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback: any) => {
+      transactionStarted = true;
+      expect(getSiteConfigCalled).toBe(true); // getSiteConfig must have finished BEFORE tx started
+      const txMock = {
+        product: { findUnique: vi.fn() },
+        promoCode: { findUnique: vi.fn() },
+        orderEvent: {
+          aggregate: vi.fn().mockResolvedValue({ _max: { sequence: 0 } }),
+          create: vi.fn().mockResolvedValue({}),
+        },
+        notificationOutbox: {
+          upsert: vi.fn().mockResolvedValue({}),
+        },
+        orderDocument: {
+          create: vi.fn().mockResolvedValue({ id: "doc-123" }),
+        },
+        idempotencyKey: {
+          create: vi.fn().mockResolvedValue({}),
+          update: vi.fn().mockResolvedValue({}),
+        },
+        order: {
+          create: vi.fn().mockResolvedValue({
+            id: "ord-test-mto-123",
+            orderNumber: "ORD-MTO-123",
+          }),
+        },
+      };
+      return callback(txMock);
+    });
+
+    const result = await CheckoutService.processMtoCheckout(sampleMtoPayload, "user-1");
+
+    expect(result.order).toBeDefined();
+    expect(getSiteConfigCalled).toBe(true);
+    expect(transactionStarted).toBe(true);
   });
 });

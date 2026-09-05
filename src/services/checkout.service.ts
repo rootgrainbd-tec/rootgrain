@@ -162,7 +162,10 @@ export class CheckoutService {
       guestTokenHash = hashGuestTrackingToken(rawGuestToken);
     }
 
-    // 5. Create Order
+    // 5. Pre-fetch external data before opening transaction
+    const siteConfig = await getSiteConfig();
+
+    // 6. Create Order
     const result = await prisma.$transaction(async (tx) => {
       if (appliedPromo) {
         const updateResult = await tx.promoCode.updateMany({
@@ -211,8 +214,7 @@ export class CheckoutService {
       const orderEvent = await appendOrderEvent(tx, newOrder.id, "ORDER_PLACED", {}, actor);
       const outbox = await scheduleNotification(tx, newOrder.id, orderEvent.id, "ORDER_CONFIRMATION", "EMAIL");
 
-      // Generate invoice document
-      const siteConfig = await getSiteConfig();
+      // Generate invoice document using pre-fetched siteConfig
       const invoiceSnapshot = {
         amount: total,
         customerName: address.name || "Customer",
@@ -346,7 +348,10 @@ export class CheckoutService {
       guestTokenHash = hashGuestTrackingToken(rawGuestToken);
     }
 
-    // 5. Create Order Atomically
+    // 5. Pre-fetch external data before opening transaction
+    const siteConfig = await getSiteConfig();
+
+    // 6. Create Order Atomically
     let result;
     try {
       result = await prisma.$transaction(async (tx) => {
@@ -403,8 +408,7 @@ export class CheckoutService {
       const orderEvent = await appendOrderEvent(tx, newOrder.id, "ORDER_PLACED", {}, actor);
       const outbox = await scheduleNotification(tx, newOrder.id, orderEvent.id, "ORDER_CONFIRMATION", "EMAIL");
 
-      // Generate invoice document
-      const siteConfig = await getSiteConfig();
+      // Generate invoice document using pre-fetched siteConfig
       const invoiceSnapshot = {
         amount: total,
         customerName: address.name || "Customer",
