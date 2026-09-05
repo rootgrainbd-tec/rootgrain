@@ -36,6 +36,8 @@ export function MtoCheckoutClient({ item, baseLeadTimeDays, additionalUnitLeadTi
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   const [customerNote, setCustomerNote] = useState("");
   const [idempotencyKey, setIdempotencyKey] = useState("");
+  const [debugResult, setDebugResult] = useState<any>(null);
+  const [isDebugSubmitting, setIsDebugSubmitting] = useState(false);
 
   const items = [item];
   const subtotal = item.price * item.quantity;
@@ -149,6 +151,58 @@ export function MtoCheckoutClient({ item, baseLeadTimeDays, additionalUnitLeadTi
     }
   };
 
+  const handleDebugSubmit = async () => {
+    setIsDebugSubmitting(true);
+    setDebugResult(null);
+    const start = performance.now();
+    try {
+      const payload = {
+        productId: item.id,
+        quantity: 1,
+        division: "Dhaka",
+        district: "Dhaka",
+        address: {
+          name: "Diagnostic Test",
+          email: "diagnostic@rootgrain.bd",
+          phone: "01711000000",
+          street: "123 Diagnostic St",
+          postCode: "1000"
+        },
+        idempotencyKey: uuidv4(),
+      };
+
+      const res = await fetch("/api/checkout/mto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      
+      const duration = Math.round(performance.now() - start);
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        data = text;
+      }
+      
+      setDebugResult({
+        status: res.status,
+        duration,
+        data
+      });
+    } catch (error: any) {
+      const duration = Math.round(performance.now() - start);
+      setDebugResult({
+        status: "NETWORK_ERROR",
+        duration,
+        error: error.message
+      });
+    } finally {
+      setIsDebugSubmitting(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl md:text-4xl font-serif text-[var(--walnut-dark)] mb-8">Made-to-Order Checkout</h1>
@@ -246,6 +300,35 @@ export function MtoCheckoutClient({ item, baseLeadTimeDays, additionalUnitLeadTi
               BOOK MTO ORDER
             </Button>
           </form>
+
+          {/* DIAGNOSTIC BLOCK */}
+          <div className="mt-8 p-6 bg-red-50 border border-red-200 rounded-lg" data-testid="diagnostic-block">
+            <h3 className="text-red-800 font-bold mb-4">DIAGNOSTIC INSTRUMENT</h3>
+            <p className="text-sm text-red-700 mb-4">
+              This button bypasses client form state and validation, submitting a known-valid payload directly to POST /api/checkout/mto.
+            </p>
+            <Button 
+              type="button" 
+              variant="destructive"
+              className="w-full mb-4"
+              disabled={isDebugSubmitting}
+              onClick={handleDebugSubmit}
+              data-testid="diagnostic-btn"
+            >
+              {isDebugSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              DEBUG: DIRECT MTO ORDER
+            </Button>
+            
+            {debugResult && (
+              <div className="bg-gray-900 text-green-400 p-4 rounded text-xs font-mono overflow-auto max-h-96" data-testid="diagnostic-result">
+                <p data-testid="diagnostic-status">Status: {debugResult.status}</p>
+                <p data-testid="diagnostic-duration">Duration: {debugResult.duration}ms</p>
+                <pre className="mt-2 text-gray-300" data-testid="diagnostic-json">
+                  {JSON.stringify(debugResult.data || debugResult.error, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="lg:col-span-5">
