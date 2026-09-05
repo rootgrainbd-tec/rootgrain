@@ -169,6 +169,7 @@ export function MtoCheckoutClient({ item, baseLeadTimeDays, additionalUnitLeadTi
           postCode: "1000"
         },
         idempotencyKey: uuidv4(),
+        _diagnostic: true,
       };
 
       const res = await fetch("/api/checkout/mto", {

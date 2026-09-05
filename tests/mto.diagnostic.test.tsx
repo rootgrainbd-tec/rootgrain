@@ -69,7 +69,7 @@ describe("MTO Diagnostic Action", () => {
     const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.find(c => c[0] === "/api/checkout/mto");
     expect(call).toBeDefined();
     
-    const body = JSON.parse(call[1].body);
+    const body = JSON.parse(call![1].body);
     expect(body.productId).toBe("rg-001-center-coffee-table");
     expect(body.quantity).toBe(1);
     expect(body.idempotencyKey).toBeDefined();
