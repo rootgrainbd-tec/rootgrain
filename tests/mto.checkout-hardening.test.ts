@@ -53,6 +53,7 @@ describe("MTO Checkout Decoupling and Hardening Suite", () => {
       street: "123 Test Street",
       postCode: "1200",
     },
+    idempotencyKey: "123e4567-e89b-12d3-a456-426614174000",
   };
 
   const setupMockTx = () => {
@@ -70,6 +71,10 @@ describe("MTO Checkout Decoupling and Hardening Suite", () => {
         },
         orderDocument: {
           create: vi.fn().mockResolvedValue({ id: "doc-123" }),
+        },
+        idempotencyKey: {
+          create: vi.fn().mockResolvedValue({}),
+          update: vi.fn().mockResolvedValue({}),
         },
         order: {
           create: vi.fn().mockImplementation((args) => {

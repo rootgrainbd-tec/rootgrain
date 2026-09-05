@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { bdDivisions, bdDistricts } from "@/lib/bd-locations";
+import { v4 as uuidv4 } from "uuid";
 
 interface MtoCheckoutClientProps {
   item: {
@@ -34,6 +35,7 @@ export function MtoCheckoutClient({ item, baseLeadTimeDays, additionalUnitLeadTi
   const [appliedPromo, setAppliedPromo] = useState<any>(null);
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   const [customerNote, setCustomerNote] = useState("");
+  const [idempotencyKey, setIdempotencyKey] = useState("");
 
   const items = [item];
   const subtotal = item.price * item.quantity;
@@ -64,6 +66,8 @@ export function MtoCheckoutClient({ item, baseLeadTimeDays, additionalUnitLeadTi
         }
       })
       .catch(() => {});
+
+    setIdempotencyKey(uuidv4());
   }, []);
 
   const applyPromoCode = async () => {
@@ -109,6 +113,10 @@ export function MtoCheckoutClient({ item, baseLeadTimeDays, additionalUnitLeadTi
       toast.error("Please fill all address fields");
       return;
     }
+    if (!idempotencyKey) {
+      toast.error("Checkout is still initializing. Please wait a moment and try again.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -123,6 +131,7 @@ export function MtoCheckoutClient({ item, baseLeadTimeDays, additionalUnitLeadTi
           address,
           promoCode: appliedPromo?.code,
           customerNote: customerNote || undefined,
+          idempotencyKey,
         })
       });
 

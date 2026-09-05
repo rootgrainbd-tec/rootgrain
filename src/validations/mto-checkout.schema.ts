@@ -9,6 +9,7 @@ export const mtoCheckoutPayloadSchema = z.object({
   district: z.string().min(1, "District is required"),
   promoCode: z.string().optional(),
   customerNote: z.string().optional(),
+  idempotencyKey: z.string().uuid("Idempotency key is required"),
 });
 
 export type MtoCheckoutPayload = z.infer<typeof mtoCheckoutPayloadSchema>;

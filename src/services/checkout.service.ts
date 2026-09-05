@@ -14,6 +14,13 @@ import { logger } from "@/lib/logger";
 import { generateGuestTrackingToken, hashGuestTrackingToken } from "@/lib/capability-token";
 import { appendOrderEvent } from "@/lib/persistence/orderEvent";
 import { scheduleNotification } from "@/lib/persistence/outbox";
+import { 
+  claimIdempotencyKey, 
+  completeIdempotencyKey, 
+  recoverIdempotencyKey, 
+  IdempotencyClaimConflictSignal 
+} from "@/lib/persistence/idempotency";
+import { IdempotencyOwnerType } from "@prisma/client";
 import { inngest } from "@/inngest/client";
 import { getSiteConfig } from "@/data/site-config";
 
@@ -261,7 +268,18 @@ export class CheckoutService {
   static async processMtoCheckout(payload: MtoCheckoutPayload, userId: string | null) {
     logger.info({ userId, productId: payload.productId, qty: payload.quantity }, "Processing MTO checkout");
 
-    const { productId, quantity, address, district, division, promoCode, customerNote } = payload;
+    const { productId, quantity, address, district, division, promoCode, customerNote, idempotencyKey } = payload;
+
+    const ownerType: IdempotencyOwnerType = userId ? "USER" : "GUEST";
+    const ownerId = userId || "ANONYMOUS_GUEST";
+    const { idempotencyKey: _, ...fingerprintPayload } = payload;
+    const identity = {
+      ownerType,
+      ownerId,
+      scope: "mto-checkout",
+      key: idempotencyKey,
+      fingerprint: JSON.stringify(fingerprintPayload)
+    };
 
     // 1. Fetch authoritative product
     const dbProd = await prisma.product.findUnique({ where: { slug: productId } });
@@ -329,8 +347,12 @@ export class CheckoutService {
     }
 
     // 5. Create Order Atomically
-    const result = await prisma.$transaction(async (tx) => {
-      if (appliedPromo) {
+    let result;
+    try {
+      result = await prisma.$transaction(async (tx) => {
+        await claimIdempotencyKey(tx, identity);
+
+        if (appliedPromo) {
         const updateResult = await tx.promoCode.updateMany({
           where: {
             id: appliedPromo.id,
@@ -405,26 +427,52 @@ export class CheckoutService {
         }
       });
 
-      return { order: newOrder, outboxId: outbox.id, invoiceDocId: invoiceDoc.id };
+      await completeIdempotencyKey(tx, identity, newOrder.id, {
+        orderId: newOrder.id,
+        orderNumber: newOrder.orderNumber,
+        rawGuestToken
+      });
+
+      return { order: newOrder, outboxId: outbox.id, invoiceDocId: invoiceDoc.id, rawGuestToken, recovered: false };
     });
-
-    logger.info({ orderId: result.order.id, orderNumber: result.order.orderNumber }, "MTO Order created successfully");
-
-    // 6. Fire background jobs (Best-effort dispatch)
-    try {
-      await inngest.send([
-        { name: "document/generation.requested", data: { orderDocumentId: result.invoiceDocId, documentType: "INVOICE" } },
-        { name: "communication/email.requested", data: { outboxId: result.outboxId } }
-      ]);
     } catch (error) {
-      logger.error({ 
-        err: error, 
-        orderId: result.order.id, 
-        orderNumber: result.order.orderNumber,
-        events: ["document/generation.requested", "communication/email.requested"]
-      }, "Post-commit background dispatch failed");
+      if (error instanceof IdempotencyClaimConflictSignal) {
+        const recovered = await recoverIdempotencyKey(identity);
+        const recoveredPayload = recovered.responsePayload as any;
+        result = { 
+          order: { 
+            id: recoveredPayload?.orderId, 
+            orderNumber: recoveredPayload?.orderNumber 
+          } as any, 
+          rawGuestToken: recoveredPayload?.rawGuestToken,
+          recovered: true
+        } as any;
+      } else {
+        throw error;
+      }
     }
 
-    return { order: result.order, rawGuestToken };
+    if (!result.recovered) {
+      logger.info({ orderId: result.order.id, orderNumber: result.order.orderNumber }, "MTO Order created successfully");
+
+      // 6. Fire background jobs (Best-effort dispatch)
+      try {
+        await inngest.send([
+          { name: "document/generation.requested", data: { orderDocumentId: result.invoiceDocId, documentType: "INVOICE" } },
+          { name: "communication/email.requested", data: { outboxId: result.outboxId } }
+        ]);
+      } catch (error) {
+        logger.error({ 
+          err: error, 
+          orderId: result.order.id, 
+          orderNumber: result.order.orderNumber,
+          events: ["document/generation.requested", "communication/email.requested"]
+        }, "Post-commit background dispatch failed");
+      }
+    } else {
+      logger.info({ orderId: result.order.id, orderNumber: result.order.orderNumber }, "MTO Order successfully recovered via idempotency");
+    }
+
+    return { order: result.order, rawGuestToken: result.rawGuestToken };
   }
 }
