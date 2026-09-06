@@ -15,10 +15,12 @@ interface InquiryDialogProps {
     name: string;
   };
   whatsappNumber: string;
+  triggerText?: string;
 }
 
-export function InquiryDialog({ product, whatsappNumber }: InquiryDialogProps) {
+export function InquiryDialog({ product, whatsappNumber, triggerText = "Inquire / Custom Order" }: InquiryDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -31,6 +33,14 @@ export function InquiryDialog({ product, whatsappNumber }: InquiryDialogProps) {
   const handleWhatsApp = () => {
     const text = encodeURIComponent(`Hello RootGrain, I want to inquire about the product: ${product.name}\nLink: ${productUrl}`);
     window.open(`https://wa.me/${whatsappNumber}?text=${text}`, "_blank");
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      // Reset form view when modal closes
+      setTimeout(() => setShowEmailForm(false), 200);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,6 +63,7 @@ export function InquiryDialog({ product, whatsappNumber }: InquiryDialogProps) {
 
       toast.success("Inquiry submitted successfully! We will contact you soon.");
       setIsOpen(false);
+      setShowEmailForm(false);
       setFormData({
         name: "",
         phone: "",
@@ -66,91 +77,108 @@ export function InquiryDialog({ product, whatsappNumber }: InquiryDialogProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="flex-1 bg-[var(--walnut-dark)] hover:bg-[var(--gold)] text-[var(--ivory)] py-8 text-sm tracking-widest uppercase transition-colors rounded-none">
-          Inquire / Custom Order
+        <Button className="w-full h-full bg-[var(--walnut-dark)] hover:bg-[var(--gold)] text-[var(--ivory)] py-8 text-sm tracking-widest uppercase transition-colors rounded-none">
+          {triggerText}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md bg-[var(--ivory)] border-[var(--walnut-light)]/20">
+
+      <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md bg-[var(--ivory)] border-[var(--walnut-light)]/20 p-6">
         <DialogHeader>
-          <DialogTitle className="font-serif text-2xl text-[var(--walnut-dark)] font-light">
-            Inquire About {product.name}
+          <DialogTitle className="font-serif text-2xl text-[var(--walnut-dark)] font-light text-center">
+            {showEmailForm ? "Send an Inquiry" : "INQUIRE"}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-6 py-4">
-          <Button 
-            onClick={handleWhatsApp}
-            className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white py-6 rounded-none flex items-center justify-center gap-2"
-          >
-            <MessageCircle className="w-5 h-5" />
-            Chat on WhatsApp
-          </Button>
-
-          <Button 
-            asChild
-            className="w-full bg-[var(--gold)] hover:bg-[var(--walnut-dark)] text-[var(--ivory)] py-6 rounded-none flex items-center justify-center gap-2 mt-4"
-          >
-            <a href={`/custom-request?productId=${product.id}`}>
-              Start Custom Order
-            </a>
-          </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-[var(--walnut-light)]/20" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase tracking-widest">
-              <span className="bg-[var(--ivory)] px-2 text-[var(--walnut-light)]">Or send a message</span>
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-[var(--walnut-dark)] text-sm">Full Name</Label>
-              <Input
-                id="name"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="rounded-none border-[var(--walnut-light)]/30 focus-visible:ring-[var(--gold)] bg-transparent"
-                placeholder="John Doe"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="text-[var(--walnut-dark)] text-sm">Phone Number</Label>
-              <Input
-                id="phone"
-                required
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="rounded-none border-[var(--walnut-light)]/30 focus-visible:ring-[var(--gold)] bg-transparent"
-                placeholder="+880 1XX XXX XXXX"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="message" className="text-[var(--walnut-dark)] text-sm">Message</Label>
-              <Textarea
-                id="message"
-                required
-                value={formData.message}
-                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                className="rounded-none border-[var(--walnut-light)]/30 focus-visible:ring-[var(--gold)] bg-transparent min-h-[100px]"
-              />
+        {!showEmailForm ? (
+          <div className="flex flex-col gap-4 py-2">
+            <div className="text-center mb-2">
+              <p className="text-[var(--walnut-dark)] text-sm">Have a question about this piece?</p>
             </div>
 
             <Button 
-              type="submit" 
-              disabled={isSubmitting}
-              className="w-full bg-[var(--walnut-dark)] hover:bg-[var(--gold)] text-[var(--ivory)] py-6 text-sm tracking-widest uppercase transition-colors rounded-none mt-2"
+              onClick={handleWhatsApp}
+              className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white py-6 rounded-none flex items-center justify-center gap-2"
             >
-              {isSubmitting ? "Sending..." : "Submit Request"}
+              <MessageCircle className="w-5 h-5" />
+              Chat on WhatsApp
             </Button>
-          </form>
-        </div>
+
+            <Button 
+              onClick={() => setShowEmailForm(true)}
+              variant="outline"
+              className="w-full border-[var(--walnut-light)] text-[var(--walnut-dark)] hover:border-[var(--gold)] hover:text-[var(--gold)] py-6 rounded-none flex items-center justify-center gap-2 transition-colors"
+            >
+              <Mail className="w-5 h-5" />
+              Send an Inquiry
+            </Button>
+
+            <div className="mt-4 text-center border-t border-[var(--walnut-light)]/20 pt-6">
+              <p className="text-xs text-[var(--walnut-light)] mb-2 uppercase tracking-widest">Custom requirements?</p>
+              <a href={`/custom-request?productId=${product.id}`} className="text-sm font-medium text-[var(--walnut-dark)] hover:text-[var(--gold)] transition-colors inline-flex items-center">
+                Start a custom request &rarr;
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4 py-2">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-[var(--walnut-dark)] text-sm">Full Name</Label>
+                <Input
+                  id="name"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="rounded-none border-[var(--walnut-light)]/30 focus-visible:ring-[var(--gold)] bg-transparent"
+                  placeholder="John Doe"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-[var(--walnut-dark)] text-sm">Phone Number</Label>
+                <Input
+                  id="phone"
+                  required
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="rounded-none border-[var(--walnut-light)]/30 focus-visible:ring-[var(--gold)] bg-transparent"
+                  placeholder="+880 1XX XXX XXXX"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="message" className="text-[var(--walnut-dark)] text-sm">Message</Label>
+                <Textarea
+                  id="message"
+                  required
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  className="rounded-none border-[var(--walnut-light)]/30 focus-visible:ring-[var(--gold)] bg-transparent min-h-[100px]"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={() => setShowEmailForm(false)}
+                  className="flex-1 py-6 border-[var(--walnut-light)] text-[var(--walnut-dark)] hover:border-[var(--gold)] hover:text-[var(--gold)] rounded-none transition-colors"
+                >
+                  Back
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="flex-1 py-6 bg-[var(--walnut-dark)] hover:bg-[var(--gold)] text-[var(--ivory)] text-sm tracking-widest uppercase transition-colors rounded-none"
+                >
+                  {isSubmitting ? "Sending..." : "Submit"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

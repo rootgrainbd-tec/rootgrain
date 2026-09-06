@@ -178,7 +178,7 @@ export function ProductActions({ product, whatsappNumber, baseLeadTimeDays, addi
           </Button>
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
-              <InquiryDialog product={product} whatsappNumber={whatsappNumber} />
+              <InquiryDialog product={product} whatsappNumber={whatsappNumber} triggerText="INQUIRE" />
             </div>
             <Button 
               onClick={handleAddToWishlist}
