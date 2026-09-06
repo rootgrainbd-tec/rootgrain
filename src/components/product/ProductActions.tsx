@@ -176,7 +176,7 @@ export function ProductActions({ product, whatsappNumber, baseLeadTimeDays, addi
           >
             {isNavigating ? "Processing…" : "BUY"}
           </Button>
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex gap-3 items-stretch">
             <div className="flex-1">
               <InquiryDialog product={product} whatsappNumber={whatsappNumber} triggerText="INQUIRE" />
             </div>
@@ -185,7 +185,7 @@ export function ProductActions({ product, whatsappNumber, baseLeadTimeDays, addi
               disabled={addingToWishlist}
               variant="outline"
               aria-label="Add to Wishlist"
-              className="sm:flex-none border-[var(--walnut-light)] text-[var(--walnut-dark)] hover:border-[var(--gold)] hover:text-[var(--gold)] py-8 px-8 rounded-none transition-colors"
+              className="flex-none h-auto border-[var(--walnut-light)] text-[var(--walnut-dark)] hover:border-[var(--gold)] hover:text-[var(--gold)] py-8 px-8 rounded-none transition-colors"
             >
               <Heart className={`w-5 h-5 ${addingToWishlist ? 'animate-pulse' : ''}`} />
               <span className="sr-only">Add to Wishlist</span>
