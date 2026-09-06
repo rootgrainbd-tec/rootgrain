@@ -267,14 +267,14 @@ export class CheckoutService {
     return { order: result.order, rawGuestToken };
   }
 
-  static async processMtoCheckout(payload: MtoCheckoutPayload, userId: string | null, diagnosticState?: any) {
+  static async processMtoCheckout(payload: MtoCheckoutPayload, userId: string | null) {
     logger.info({ userId, productId: payload.productId, qty: payload.quantity }, "Processing MTO checkout");
 
     const { productId, quantity, address, district, division, promoCode, customerNote, idempotencyKey } = payload;
 
     const ownerType: IdempotencyOwnerType = userId ? "USER" : "GUEST";
     const ownerId = userId || "ANONYMOUS_GUEST";
-    const { idempotencyKey: _, _diagnostic, ...fingerprintPayload } = payload as any;
+    const { idempotencyKey: _, ...fingerprintPayload } = payload as any;
     const identity = {
       ownerType,
       ownerId,
@@ -285,7 +285,6 @@ export class CheckoutService {
 
     // 1. Fetch authoritative product
     const dbProd = await prisma.product.findUnique({ where: { slug: productId } });
-    diagnosticState?.mark("S7_PRODUCT_READ_COMPLETED");
     
     if (!dbProd) {
       throw new NotFoundError(`Product not found: ${productId}`);
@@ -352,21 +351,12 @@ export class CheckoutService {
 
     // 5. Pre-fetch external data before opening transaction
     const siteConfig = await getSiteConfig();
-    diagnosticState?.mark("S5_SITE_CONFIG_COMPLETED");
 
     // 6. Create Order Atomically
     let result;
     try {
-      if (diagnosticState) diagnosticState.commitBoundary = "BEFORE_TRANSACTION";
-      diagnosticState?.mark("S6_TRANSACTION_STARTED");
-      
       result = await prisma.$transaction(async (tx) => {
-        if (diagnosticState) diagnosticState.commitBoundary = "INSIDE_TRANSACTION";
-        
-        diagnosticState?.mark("S3_IDEMPOTENCY_CLAIM_STARTED");
         await claimIdempotencyKey(tx, identity);
-        diagnosticState?.mark("S4_IDEMPOTENCY_CLAIM_COMPLETED");
-        if (diagnosticState) diagnosticState.databaseEvidence.idempotencyClaimed = true;
 
         if (appliedPromo) {
         const updateResult = await tx.promoCode.updateMany({
@@ -414,21 +404,11 @@ export class CheckoutService {
         },
         include: { items: true },
       });
-      diagnosticState?.mark("S8_ORDER_CREATED");
-      diagnosticState?.mark("S9_ORDER_ITEMS_CREATED");
-      
-      if (diagnosticState) {
-        diagnosticState.databaseEvidence.orderCreated = true;
-        diagnosticState.databaseEvidence.orderId = newOrder.id;
-        diagnosticState.databaseEvidence.orderNumber = newOrder.orderNumber;
-      }
 
       const actor = { actorId: userId || "GUEST" };
       const orderEvent = await appendOrderEvent(tx, newOrder.id, "ORDER_PLACED", {}, actor);
-      diagnosticState?.mark("S10_ORDER_EVENT_CREATED");
       
       const outbox = await scheduleNotification(tx, newOrder.id, orderEvent.id, "ORDER_CONFIRMATION", "EMAIL");
-      diagnosticState?.mark("S11_OUTBOX_CREATED");
 
       // Generate invoice document using pre-fetched siteConfig
       const invoiceSnapshot = {
@@ -452,24 +432,15 @@ export class CheckoutService {
           createdBy: "SYSTEM"
         }
       });
-      diagnosticState?.mark("S12_DOCUMENT_CREATED");
 
       await completeIdempotencyKey(tx, identity, newOrder.id, {
         orderId: newOrder.id,
         orderNumber: newOrder.orderNumber,
         rawGuestToken
       });
-      diagnosticState?.mark("S13_IDEMPOTENCY_COMPLETED");
-      if (diagnosticState) diagnosticState.databaseEvidence.idempotencyCompleted = true;
 
       return { order: newOrder, outboxId: outbox.id, invoiceDocId: invoiceDoc.id, rawGuestToken, recovered: false };
     });
-    
-    diagnosticState?.mark("S14_TRANSACTION_COMMITTED");
-    if (diagnosticState) {
-      diagnosticState.commitBoundary = "TRANSACTION_COMMITTED";
-      diagnosticState.transactionCommitted = true;
-    }
     
     } catch (error) {
       if (error instanceof IdempotencyClaimConflictSignal) {
@@ -493,17 +464,10 @@ export class CheckoutService {
 
       // 6. Fire background jobs (Best-effort dispatch)
       try {
-        if (diagnosticState) diagnosticState.commitBoundary = "AFTER_COMMIT";
-        diagnosticState?.mark("S15_INNGEST_DISPATCH_STARTED");
-        if (diagnosticState) diagnosticState.inngestDispatchStarted = true;
-        
         await inngest.send([
           { name: "document/generation.requested", data: { orderDocumentId: result.invoiceDocId, documentType: "INVOICE" } },
           { name: "communication/email.requested", data: { outboxId: result.outboxId } }
         ]);
-        
-        diagnosticState?.mark("S16_INNGEST_DISPATCH_COMPLETED");
-        if (diagnosticState) diagnosticState.inngestDispatchCompleted = true;
       } catch (error) {
         logger.error({ 
           err: error, 
@@ -511,9 +475,6 @@ export class CheckoutService {
           orderNumber: result.order.orderNumber,
           events: ["document/generation.requested", "communication/email.requested"]
         }, "Post-commit background dispatch failed");
-        
-        // If it's a diagnostic request, rethrow it so the route catches it as AFTER_COMMIT_INNGEST_FAILURE
-        if (diagnosticState) throw error;
       }
     } else {
       logger.info({ orderId: result.order.id, orderNumber: result.order.orderNumber }, "MTO Order successfully recovered via idempotency");

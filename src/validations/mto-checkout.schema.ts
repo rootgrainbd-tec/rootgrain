@@ -10,7 +10,6 @@ export const mtoCheckoutPayloadSchema = z.object({
   promoCode: z.string().optional(),
   customerNote: z.string().optional(),
   idempotencyKey: z.string().uuid("Idempotency key is required"),
-  _diagnostic: z.boolean().optional(),
 });
 
 export type MtoCheckoutPayload = z.infer<typeof mtoCheckoutPayloadSchema>;
