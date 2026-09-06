@@ -93,7 +93,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const name = product.name || product.title || '';
   const prismaProduct = await prisma.product.findUnique({
     where: { slug: resolvedParams.slug },
-    select: { isMto: true, price: true, inStock: true, isActive: true }
+    select: { isMto: true, price: true, inStock: true, isActive: true, baseLeadTimeDays: true, additionalUnitLeadTimeDays: true }
   });
 
   const price = prismaProduct ? prismaProduct.price : (product.price || 0);
@@ -172,6 +172,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 isMto: isMto
               }}
               whatsappNumber={SITE_CONFIG.support.phone.whatsapp}
+              baseLeadTimeDays={prismaProduct?.baseLeadTimeDays}
+              additionalUnitLeadTimeDays={prismaProduct?.additionalUnitLeadTimeDays}
             />
           </div>
         </div>
