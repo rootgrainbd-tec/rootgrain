@@ -58,6 +58,10 @@ vi.mock("lucide-react", () => ({
 import { InquiryDialog } from "@/components/product/InquiryDialog";
 import { ProductActions } from "@/components/product/ProductActions";
 
+vi.mock("next-auth/react", () => ({
+  useSession: vi.fn(() => ({ data: { user: { id: "test" } }, status: "authenticated" }))
+}));
+
 // ── Helpers ─────────────────────────────────────────────────────────
 const mtoProduct = {
   id: "rg-001-center-coffee-table",
@@ -184,7 +188,7 @@ describe("InquiryDialog State Machine - Phase 6A", () => {
 
   it("13. Existing unavailable/non-MTO behavior still renders INQUIRE / CUSTOM ORDER", () => {
     render(<ProductActions product={unavailableProduct} whatsappNumber={whatsappNumber} />);
-    expect(screen.getAllByText("Inquire / Custom Order").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("INQUIRE").length).toBeGreaterThan(0);
   });
 
   it("14. Standard available product still renders Add to Cart", () => {

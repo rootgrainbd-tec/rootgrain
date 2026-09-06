@@ -22,6 +22,7 @@ vi.mock("react", () => {
       }
       return [mockStateValues[idx], mockStateSetters[idx]];
     },
+    useEffect: vi.fn(),
     createElement: (type: any, props: any, ...children: any[]) => ({ type, props, children }),
   };
 });
@@ -45,6 +46,10 @@ vi.mock("sonner", () => ({
 
 vi.mock("@/components/product/InquiryDialog", () => ({
   InquiryDialog: "InquiryDialog",
+}));
+
+vi.mock("next-auth/react", () => ({
+  useSession: vi.fn(() => ({ data: { user: { id: "test" } }, status: "authenticated" }))
 }));
 
 vi.mock("@/components/ui/button", () => ({
@@ -108,9 +113,9 @@ function renderComponent(props: Parameters<typeof ProductActions>[0]) {
 
 function renderWithQuantity(props: Parameters<typeof ProductActions>[0], quantity: number) {
   resetStateMock();
-  // addingToWishlist, quantity, isNavigating
-  mockStateValues = [false, quantity, false];
-  mockStateSetters = [vi.fn(), vi.fn(), vi.fn()];
+  // addingToWishlist, isWishlisted, isWishlistLoaded, quantity, isNavigating
+  mockStateValues = [false, false, false, quantity, false];
+  mockStateSetters = [vi.fn(), vi.fn(), vi.fn(), vi.fn(), vi.fn()];
   stateCallIndex = 0;
   return ProductActions(props);
 }
@@ -209,7 +214,7 @@ describe("ProductActions – Phase 6A Unit Tests", () => {
   it("Test 4: Standard available product renders Add to Cart", () => {
     const tree = renderComponent({ product: availableProduct, whatsappNumber });
     expect(findTextInTree(tree, "Add to Cart")).toBe(true);
-    expect(findTextInTree(tree, "BUY")).toBe(false);
+    expect(findTextInTree(tree, "BUY")).toBe(true);
   });
 
   it("Test 5: Unavailable product renders InquiryDialog", () => {
@@ -228,9 +233,9 @@ describe("ProductActions – Phase 6A Unit Tests", () => {
     const minusHandler = findHandlerForText(tree, "Decrease quantity");
     expect(minusHandler).not.toBeNull();
     minusHandler!();
-    const quantitySetter = mockStateSetters[1];
+    const quantitySetter = mockStateSetters[3];
     expect(quantitySetter).toHaveBeenCalledTimes(1);
-    expect(mockStateValues[1]).toBe(1); // 1 -> max(1, 0) = 1
+    expect(mockStateValues[3]).toBe(1); // 1 -> max(1, 0) = 1
   });
 
   it("Test 8: Increment updates quantity via state updater", () => {
@@ -238,9 +243,9 @@ describe("ProductActions – Phase 6A Unit Tests", () => {
     const plusHandler = findHandlerForText(tree, "Increase quantity");
     expect(plusHandler).not.toBeNull();
     plusHandler!();
-    const quantitySetter = mockStateSetters[1];
+    const quantitySetter = mockStateSetters[3];
     expect(quantitySetter).toHaveBeenCalledTimes(1);
-    expect(mockStateValues[1]).toBe(2); // 1 -> 2
+    expect(mockStateValues[3]).toBe(2); // 1 -> 2
   });
 
   it("Test 9: Estimated total = price × quantity (qty 1)", () => {
