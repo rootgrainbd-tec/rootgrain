@@ -4,6 +4,15 @@ export default defineType({
   name: 'product',
   title: 'Product',
   type: 'document',
+  validation: (Rule) => Rule.custom((doc: any) => {
+    if (doc?.availability === 'Available' && !doc?.shippingType) {
+      return {
+        message: 'Shipping type is required for Available products.',
+        paths: [['shippingType']],
+      };
+    }
+    return true;
+  }),
   groups: [
     { name: 'basic', title: 'Basic Info' },
     { name: 'details', title: 'Details & Specs' },
