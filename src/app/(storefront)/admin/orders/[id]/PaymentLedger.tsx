@@ -27,6 +27,8 @@ interface Order {
   total: number;
   advancePaid: number;
   legacyAdvancePaid: number;
+  requiredAdvance: number;
+  isMtoOrder: boolean;
   balanceDue: number;
   paymentRecords: PaymentRecord[];
 }
@@ -182,6 +184,12 @@ export default function PaymentLedger({ order }: { order: Order }) {
           <p className="text-sm text-gray-500 mb-1">Total</p>
           <p className="text-2xl font-bold text-gray-900">৳{order.total.toLocaleString()}</p>
         </div>
+        {order.isMtoOrder && (
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Required Advance</p>
+            <p className="text-2xl font-bold text-orange-600">৳{order.requiredAdvance.toLocaleString()}</p>
+          </div>
+        )}
         <div>
           <p className="text-sm text-gray-500 mb-1">Advance Paid</p>
           <p className="text-2xl font-bold text-green-700">৳{order.advancePaid.toLocaleString()}</p>

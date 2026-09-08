@@ -188,6 +188,7 @@ export class CheckoutService {
           subtotal,
           shippingCost,
           total,
+          requiredAdvance: Math.floor(total * 0.2),
           balanceDue,
           promoCode: appliedPromo ? promoCode : undefined,
           discountAmount,

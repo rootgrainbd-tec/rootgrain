@@ -5,6 +5,7 @@ import { checkoutPayloadSchema } from "@/validations/checkout.schema";
 import { AppError } from "@/lib/errors/AppError";
 import { logger } from "@/lib/logger";
 import { successResponse, handleAppError } from "@/lib/api-utils";
+import { signSuccessToken } from "@/lib/capability-token";
 
 export async function POST(request: Request) {
   try {
@@ -24,7 +25,13 @@ export async function POST(request: Request) {
     // 2. Process checkout via Service
     const { order } = await CheckoutService.processCheckout(payload, userId);
 
-    return successResponse({ orderId: order.id, orderNumber: order.orderNumber });
+    const token = signSuccessToken({
+      orderNumber: order.orderNumber,
+      requiredAdvance: order.requiredAdvance,
+      isMtoOrder: order.isMtoOrder
+    });
+
+    return successResponse({ orderId: order.id, orderNumber: order.orderNumber, token });
   } catch (error) {
     return handleAppError(error);
   }

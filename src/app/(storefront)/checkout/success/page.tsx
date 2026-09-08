@@ -1,14 +1,24 @@
-"use client";
-
-import { useSearchParams } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Suspense } from "react";
+import { verifySuccessToken } from "@/lib/capability-token";
 
-function SuccessContent() {
-  const searchParams = useSearchParams();
-  const orderNumber = searchParams.get("orderNumber");
+export default function CheckoutSuccessPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  const orderNumber = searchParams.orderNumber as string | undefined;
+  const token = searchParams.token as string | undefined;
+
+  let advanceRequired = 0;
+  let isMtoOrder = false;
+
+  const payload = verifySuccessToken(token);
+  if (payload && payload.orderNumber === orderNumber) {
+    advanceRequired = payload.requiredAdvance;
+    isMtoOrder = payload.isMtoOrder;
+  }
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4">
@@ -30,7 +40,13 @@ function SuccessContent() {
           <strong>Next Steps:</strong>
           <ul className="mt-2 space-y-1 list-disc list-inside">
             <li>Our representative will contact you shortly on your provided phone number.</li>
-            <li>You will need to pay the 20% advance via manual transaction to confirm the order.</li>
+            <li>
+              {payload ? (
+                <>You will need to pay the advance of <strong>৳{advanceRequired.toLocaleString()}</strong> via manual transaction to confirm the order.</>
+              ) : (
+                <>You will need to pay the required advance (check your email for the exact amount) via manual transaction to confirm the order.</>
+              )}
+            </li>
             <li>Once confirmed, production and shipping will begin.</li>
           </ul>
         </div>
@@ -47,13 +63,5 @@ function SuccessContent() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function CheckoutSuccessPage() {
-  return (
-    <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center">Loading...</div>}>
-      <SuccessContent />
-    </Suspense>
   );
 }

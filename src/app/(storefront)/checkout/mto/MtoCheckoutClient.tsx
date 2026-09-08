@@ -138,7 +138,7 @@ export function MtoCheckoutClient({ item, baseLeadTimeDays, additionalUnitLeadTi
       const data = await res.json();
       if (res.ok) {
         toast.success("MTO Order booked successfully!");
-        router.push(`/checkout/success?orderNumber=${data.data.orderNumber}`);
+        router.push(`/checkout/success?orderNumber=${data.data.orderNumber}&token=${data.data.token}`);
       } else {
         toast.error(data.error?.message || data.message || "Failed to book MTO order");
       }

@@ -131,10 +131,22 @@ export function getOrderItemsHtml(items: any[]) {
   return html;
 }
 
+/**
+ * Helper to ensure historical Standard Orders, which were saved with a 0 advance,
+ * correctly display the 20% advance required at their time of creation.
+ * New orders (both standard and MTO) will have their requiredAdvance correctly persisted.
+ */
+function resolveAuthoritativeAdvance(order: any): number {
+  if (order.requiredAdvance === 0 && !order.isMtoOrder && order.total > 0) {
+    return Math.floor(order.total * 0.2);
+  }
+  return order.requiredAdvance;
+}
+
 export async function renderOrderConfirmation(order: any, config: SiteConfig): Promise<{ subject: string, html: string }> {
   const customerName = escapeHtml(order.shippingAddress?.name || "Customer");
   const itemsHtml = getOrderItemsHtml(order.items);
-  const advanceRequired = order.total * 0.2;
+  const advanceRequired = resolveAuthoritativeAdvance(order);
   const baseUrl = config.url;
 
   let trackButtonHtml = `<a href="${baseUrl}/track?orderNumber=${order.orderNumber}" class="btn" style="margin-right: 10px;">Track Order</a>`;
@@ -168,7 +180,7 @@ export async function renderOrderConfirmation(order: any, config: SiteConfig): P
       </table>
       
       <div style="background-color: #f5ece9; padding: 15px; border-radius: 4px; margin-top: 15px; border-left: 4px solid ${EmailTheme.primary};">
-        <p style="margin: 0; color: ${EmailTheme.primary}; font-weight: bold;">Advance Required (20%): ৳${advanceRequired.toLocaleString()}</p>
+        <p style="margin: 0; color: ${EmailTheme.primary}; font-weight: bold;">Advance Required: ৳${advanceRequired.toLocaleString()}</p>
       </div>
     </div>
 

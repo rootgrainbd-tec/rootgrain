@@ -156,7 +156,7 @@ export default function CheckoutPage() {
       if (res.ok) {
         clearCart();
         toast.success("Order booked successfully!");
-        router.push(`/checkout/success?orderNumber=${data.data.orderNumber}`);
+        router.push(`/checkout/success?orderNumber=${data.data.orderNumber}&token=${data.data.token}`);
       } else {
         toast.error(data.error?.message || data.message || "Failed to book order");
       }
