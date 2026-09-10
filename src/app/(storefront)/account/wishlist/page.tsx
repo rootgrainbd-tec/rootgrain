@@ -80,7 +80,7 @@ export default async function WishlistPage() {
                 // Fallbacks if product was deleted in Sanity
                 const name = product?.title || "Product Unavailable";
                 const price = product?.price || 0;
-                const imageUrl = product?.heroImage ? urlForImage(product.heroImage).width(200).url() : "/placeholder.jpg";
+                const imageUrl = product?.heroImage?.asset ? urlForImage(product.heroImage).width(200).url() : "/placeholder.jpg";
                 const productUrl = product?.slug?.current ? `/product/${product.slug.current}` : "#";
 
                 return (

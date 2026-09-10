@@ -34,7 +34,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     comparePrice: p.comparePrice,
     wood: (p.wood || p.woodType) as WoodType,
     dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
-    image: p.heroImage ? urlForImage(p.heroImage).url() : '',
+    image: p.heroImage?.asset ? urlForImage(p.heroImage).url() : '',
     description: p.shortDescription || '',
     inStock: p.inStock ?? (p.availability === 'Available' ? true : false),
     featured: p.featured ?? false,

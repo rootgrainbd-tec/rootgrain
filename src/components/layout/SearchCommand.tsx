@@ -76,7 +76,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                 }}
                 className="flex items-center gap-4 cursor-pointer"
               >
-                {product.heroImage && (
+                {product.heroImage?.asset && (
                   <div className="relative w-12 h-12 rounded overflow-hidden shrink-0">
                     <Image
                       src={urlForImage(product.heroImage).width(100).height(100).url()}

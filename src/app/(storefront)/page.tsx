@@ -46,7 +46,7 @@ export default async function RootGrainHome() {
     comparePrice: p.comparePrice,
     wood: (p.wood || p.woodType) as WoodType,
     dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
-    image: p.heroImage ? urlForImage(p.heroImage).url() : '',
+    image: p.heroImage?.asset ? urlForImage(p.heroImage).url() : '',
     video: p.heroVideo?.asset?.playbackId ? { playbackId: p.heroVideo.asset.playbackId, status: p.heroVideo.asset.status } : undefined,
     description: p.shortDescription || '',
     inStock: p.inStock ?? true,

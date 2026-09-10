@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const name = product.name || product.title || "Product";
   const description = product.shortDescription || "Handcrafted wooden furniture by RootGrain.";
-  const imageUrl = product.heroImage ? urlForImage(product.heroImage).url() : undefined;
+  const imageUrl = product.heroImage?.asset ? urlForImage(product.heroImage).url() : undefined;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://rootgrain.com";
 
   return {
@@ -82,7 +82,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       name: p.name || p.title || '',
       category: p.category?.name as ProductCategory || 'Dining Tables',
       price: p.price || 0,
-      image: p.heroImage ? urlForImage(p.heroImage).url() : "/placeholder.jpg",
+      image: p.heroImage?.asset ? urlForImage(p.heroImage).url() : "/placeholder.jpg",
     }));
   }
 
@@ -102,7 +102,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const categoryLabel = PRODUCT_CATEGORY_LABELS[rawCategory] || rawCategory;
   const wood = product.wood || product.woodType;
   const dimensionsStr = product.dimensionsStr || (product.dimensions ? `${product.dimensions.length} x ${product.dimensions.width} x ${product.dimensions.height} ${product.dimensions.unit}` : null);
-  const heroUrl = product.heroUrl || (product.heroImage ? urlForImage(product.heroImage).url() : "/placeholder.jpg");
+  const heroUrl = product.heroUrl || (product.heroImage?.asset ? urlForImage(product.heroImage).url() : "/placeholder.jpg");
   const desc = product.shortDescription || '';
   const isAvailable = prismaProduct ? (prismaProduct.isActive && prismaProduct.inStock) : (product.inStock ?? (product.availability === 'Available'));
   const isMto = Boolean(prismaProduct?.isActive && prismaProduct?.isMto);

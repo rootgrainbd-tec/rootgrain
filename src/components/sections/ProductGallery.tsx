@@ -31,13 +31,14 @@ export function ProductGallery({ heroUrl, heroVideo, galleryImages, productName 
   const [isZoomed, setIsZoomed] = useState(false);
 
   // Parse gallery image URLs to strings or video objects
-  const parsedGallery: MediaItem[] = galleryImages.map((item) => {
+  const parsedGallery: MediaItem[] = galleryImages.reduce<MediaItem[]>((acc, item) => {
     if (item._type === "mux.video" && item.asset?.playbackId) {
-      return { type: "video", playbackId: item.asset.playbackId, status: item.asset.status, url: item.asset.playbackId };
-    } else {
-      return { type: "image", url: urlForImage(item as SanityImage).url() };
+      acc.push({ type: "video", playbackId: item.asset.playbackId, status: item.asset.status, url: item.asset.playbackId });
+    } else if (item.asset) {
+      acc.push({ type: "image", url: urlForImage(item as SanityImage).url() });
     }
-  });
+    return acc;
+  }, []);
 
   // Combine hero image with gallery images for the thumbnail list
   const allMedia = [

@@ -45,7 +45,7 @@ export function LifestyleInteriorsSection({ data }: { data?: SanityHomepage | an
           className="relative aspect-[21/9] overflow-hidden mb-8"
         >
           <UnifiedMedia
-            media={data?.lifestyleVideo?.asset?.playbackId ? { type: "video", playbackId: data.lifestyleVideo.asset.playbackId, status: data.lifestyleVideo.asset.status, alt: "RootGrain lifestyle interior", posterUrl: data?.lifestyleImage ? urlForImage(data.lifestyleImage).url() : undefined } : { type: "image", url: data?.lifestyleImage ? urlForImage(data.lifestyleImage).url() : "/images/lifestyle-interior.png", alt: "RootGrain furniture in a warm Japandi-style interior" }}
+            media={data?.lifestyleVideo?.asset?.playbackId ? { type: "video", playbackId: data.lifestyleVideo.asset.playbackId, status: data.lifestyleVideo.asset.status, alt: "RootGrain lifestyle interior", posterUrl: data?.lifestyleImage?.asset ? urlForImage(data.lifestyleImage).url() : undefined } : { type: "image", url: data?.lifestyleImage?.asset ? urlForImage(data.lifestyleImage).url() : "/images/lifestyle-interior.png", alt: "RootGrain furniture in a warm Japandi-style interior" }}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1280px"
             className="object-cover"

@@ -81,7 +81,7 @@ export function WorkshopStorySection({ data, stats }: { data?: SanityWorkshop | 
           >
             <div className="relative aspect-[4/5] overflow-hidden">
               <UnifiedMedia
-                media={data?.workshopVideo?.asset?.playbackId ? { type: "video", playbackId: data.workshopVideo.asset.playbackId, status: data.workshopVideo.asset.status, alt: "RootGrain Workshop", posterUrl: data?.workshopImage ? urlForImage(data.workshopImage).url() : undefined } : { type: "image", url: data?.workshopImage ? urlForImage(data.workshopImage).url() : "/images/workshop-interior.png", alt: "RootGrain Workshop" }}
+                media={data?.workshopVideo?.asset?.playbackId ? { type: "video", playbackId: data.workshopVideo.asset.playbackId, status: data.workshopVideo.asset.status, alt: "RootGrain Workshop", posterUrl: data?.workshopImage?.asset ? urlForImage(data.workshopImage).url() : undefined } : { type: "image", url: data?.workshopImage?.asset ? urlForImage(data.workshopImage).url() : "/images/workshop-interior.png", alt: "RootGrain Workshop" }}
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover"

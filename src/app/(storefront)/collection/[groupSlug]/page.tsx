@@ -84,7 +84,7 @@ export default async function CategoryGroupPage(
     comparePrice: p.comparePrice,
     wood: (p.woodType || p.wood) as WoodType,
     dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
-    image: p.heroImage ? urlForImage(p.heroImage).url() : '',
+    image: p.heroImage?.asset ? urlForImage(p.heroImage).url() : '',
     description: p.shortDescription || '',
     inStock: p.inStock ?? true,
     featured: p.featured ?? false,

@@ -27,7 +27,7 @@ export function HeroSection({ data }: { data?: SanityHomepage }) {
       <motion.div style={{ y, willChange: "transform" }} className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-b from-[var(--walnut-dark)]/60 via-[var(--walnut-dark)]/40 to-[var(--cream)] z-10" />
         <UnifiedMedia
-          media={data?.heroVideo?.asset?.playbackId ? { type: "video", playbackId: data.heroVideo.asset.playbackId, status: data.heroVideo.asset.status, alt: "RootGrain Artisan Workshop", posterUrl: data?.heroImage ? urlForImage(data.heroImage).url() : undefined } : { type: "image", url: data?.heroImage ? urlForImage(data.heroImage).url() : "/images/hero-workshop.webp", alt: "RootGrain Artisan Workshop" }}
+          media={data?.heroVideo?.asset?.playbackId ? { type: "video", playbackId: data.heroVideo.asset.playbackId, status: data.heroVideo.asset.status, alt: "RootGrain Artisan Workshop", posterUrl: data?.heroImage?.asset ? urlForImage(data.heroImage).url() : undefined } : { type: "image", url: data?.heroImage?.asset ? urlForImage(data.heroImage).url() : "/images/hero-workshop.webp", alt: "RootGrain Artisan Workshop" }}
           fill
           sizes="100vw"
           className="object-cover"
