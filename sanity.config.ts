@@ -1,6 +1,7 @@
 import { defineConfig } from 'sanity'
 import { structureTool } from 'sanity/structure'
 import { visionTool } from '@sanity/vision'
+import { muxInput } from 'sanity-plugin-mux-input'
 import { schema } from './sanity/schema'
 import { structure } from './sanity/structure'
 import { dataset, projectId } from './sanity/env'
@@ -20,6 +21,7 @@ export default defineConfig({
   plugins: [
     structureTool({ structure }),
     visionTool(),
+    muxInput(),
   ],
   document: {
     newDocumentOptions: (prev, { creationContext }) => {

@@ -17,14 +17,16 @@ export interface Product {
   dimensions: string;
   /** Primary image path (relative to /public) */
   image: string;
+  /** Optional hero video for the product */
+  video?: { playbackId: string; status?: string };
   /** Short description for cards and previews */
   description: string;
   /** Whether the item is currently available */
   inStock: boolean;
   /** Whether to feature on homepage */
   featured: boolean;
-  /** Array of image URLs for the product gallery */
-  gallery?: string[];
+  /** Array of media items for the product gallery */
+  gallery?: (string | { type: "video"; playbackId: string; status?: string })[];
 }
 
 export type ProductCategory = string;

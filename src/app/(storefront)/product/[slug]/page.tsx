@@ -20,7 +20,7 @@ export const revalidate = 60;
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
   const product = await client.fetch(`*[_type == "product" && slug.current == $slug][0] {
-    name, title, shortDescription, heroImage
+    name, title, shortDescription, heroImage, heroVideo{..., asset->{playbackId, status}}
   }`, { slug: resolvedParams.slug });
 
   if (!product) {
@@ -67,7 +67,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const resolvedParams = await params;
   const SITE_CONFIG = await getSiteConfig();
   const product = await client.fetch(`*[_type == "product" && slug.current == $slug][0] {
-    _id, name, title, category->{name}, price, comparePrice, woodType, wood, dimensions, heroImage, galleryImages, fullDescription, shortDescription, availability, inStock
+    _id, name, title, category->{name}, price, comparePrice, woodType, wood, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, galleryImages[]{..., _type == "mux.video" => {..., asset->{playbackId, status}}}, fullDescription, shortDescription, availability, inStock
   }`, { slug: resolvedParams.slug });
 
   let relatedProducts: Product[] = [];
@@ -117,6 +117,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           {/* Images */}
           <ProductGallery 
             heroUrl={heroUrl} 
+            heroVideo={product.heroVideo}
             galleryImages={product.galleryImages || []} 
             productName={name} 
           />

@@ -3,7 +3,7 @@
 import { useRef, Fragment } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import Image from "next/image";
+import { UnifiedMedia } from "@/components/media/UnifiedMedia";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { StyledText } from "@/components/ui/StyledText";
@@ -26,14 +26,17 @@ export function HeroSection({ data }: { data?: SanityHomepage }) {
       {/* Background Image */}
       <motion.div style={{ y, willChange: "transform" }} className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-b from-[var(--walnut-dark)]/60 via-[var(--walnut-dark)]/40 to-[var(--cream)] z-10" />
-        <Image
-          src={data?.heroImage ? urlForImage(data.heroImage).url() : "/images/hero-workshop.webp"}
-          alt="RootGrain Artisan Workshop"
+        <UnifiedMedia
+          media={data?.heroVideo?.asset?.playbackId ? { type: "video", playbackId: data.heroVideo.asset.playbackId, status: data.heroVideo.asset.status, alt: "RootGrain Artisan Workshop", posterUrl: data?.heroImage ? urlForImage(data.heroImage).url() : undefined } : { type: "image", url: data?.heroImage ? urlForImage(data.heroImage).url() : "/images/hero-workshop.webp", alt: "RootGrain Artisan Workshop" }}
           fill
           sizes="100vw"
           className="object-cover"
           priority
           unoptimized
+          autoPlay="muted"
+          loop
+          muted
+          playsInline
         />
       </motion.div>
 

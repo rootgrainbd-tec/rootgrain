@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import Image from "next/image";
+import { UnifiedMedia } from "@/components/media/UnifiedMedia";
 import { Button } from "@/components/ui/button";
 import type { SanityHomepage } from "@/types/sanity";
 import { urlForImage } from "../../../sanity/lib/image";
@@ -43,12 +44,15 @@ export function LifestyleInteriorsSection({ data }: { data?: SanityHomepage | an
           transition={{ duration: 1 }}
           className="relative aspect-[21/9] overflow-hidden mb-8"
         >
-          <Image
-            src={data?.lifestyleImage ? urlForImage(data.lifestyleImage).url() : "/images/lifestyle-interior.png"}
-            alt="RootGrain furniture in a warm Japandi-style interior"
+          <UnifiedMedia
+            media={data?.lifestyleVideo?.asset?.playbackId ? { type: "video", playbackId: data.lifestyleVideo.asset.playbackId, status: data.lifestyleVideo.asset.status, alt: "RootGrain lifestyle interior", posterUrl: data?.lifestyleImage ? urlForImage(data.lifestyleImage).url() : undefined } : { type: "image", url: data?.lifestyleImage ? urlForImage(data.lifestyleImage).url() : "/images/lifestyle-interior.png", alt: "RootGrain furniture in a warm Japandi-style interior" }}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1280px"
             className="object-cover"
+            autoPlay="muted"
+            loop
+            muted
+            playsInline
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--walnut-dark)]/30 to-transparent" />
           <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between">

@@ -171,6 +171,13 @@ export default defineType({
       validation: (Rule) => Rule.required().error('A hero image is required.'),
     }),
     defineField({
+      name: 'heroVideo',
+      title: 'Hero Video (Optional)',
+      type: 'mux.video',
+      group: 'media',
+      description: 'Optional video to display in the hero section. The Hero Image will be used as the poster fallback.',
+    }),
+    defineField({
       name: 'galleryImages',
       title: 'Gallery Images',
       type: 'array',
@@ -181,6 +188,10 @@ export default defineType({
           type: 'image', 
           options: { hotspot: true },
           fields: [{ name: 'alt', type: 'string', title: 'Alternative text', validation: (Rule) => Rule.required().error('Alt text is required.') }]
+        },
+        {
+          type: 'mux.video',
+          title: 'Video',
         }
       ],
     }),

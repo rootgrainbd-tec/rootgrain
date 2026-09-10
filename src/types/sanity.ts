@@ -33,12 +33,24 @@ export interface SanityProduct {
   woodType?: string;
   dimensions?: SanityDimensions;
   heroImage?: SanityImage;
+  heroVideo?: SanityMuxVideo;
+  galleryImages?: SanityGalleryItem[];
   description?: string;
   shortDescription?: string;
   availability?: string;
   inStock?: boolean;
   featured?: boolean;
 }
+
+export interface SanityMuxVideo {
+  _type: "mux.video";
+  asset: {
+    playbackId: string;
+    status?: string;
+  };
+}
+
+export type SanityGalleryItem = SanityImage | SanityMuxVideo;
 
 export interface SanityTestimonial {
   _id: string;
@@ -65,12 +77,14 @@ export interface SanityHomepage {
   subtitle?: string;
   heroText?: string;
   heroImage?: SanityImage;
+  heroVideo?: SanityMuxVideo;
   heroHeadline?: SanityStyledText | string;
   heroSubheadline?: SanityStyledText | string;
   statsItems?: any[];
   lifestyleTitle?: string;
   lifestyleDescription?: string;
   lifestyleImage?: SanityImage;
+  lifestyleVideo?: SanityMuxVideo;
   lifestyleSpace?: string;
 }
 
@@ -107,4 +121,6 @@ export interface SanityWorkshop {
   _id: string;
   title?: string;
   description?: string;
+  workshopImage?: SanityImage;
+  workshopVideo?: SanityMuxVideo;
 }

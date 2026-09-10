@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import Image from "next/image";
+import { UnifiedMedia } from "@/components/media/UnifiedMedia";
 
 import { urlForImage } from "../../../sanity/lib/image";
 import { PortableText } from "next-sanity";
@@ -80,12 +80,15 @@ export function WorkshopStorySection({ data, stats }: { data?: SanityWorkshop | 
             className="relative"
           >
             <div className="relative aspect-[4/5] overflow-hidden">
-              <Image
-                src={data?.workshopImage ? urlForImage(data.workshopImage).url() : "/images/workshop-interior.png"}
-                alt="RootGrain Workshop"
+              <UnifiedMedia
+                media={data?.workshopVideo?.asset?.playbackId ? { type: "video", playbackId: data.workshopVideo.asset.playbackId, status: data.workshopVideo.asset.status, alt: "RootGrain Workshop", posterUrl: data?.workshopImage ? urlForImage(data.workshopImage).url() : undefined } : { type: "image", url: data?.workshopImage ? urlForImage(data.workshopImage).url() : "/images/workshop-interior.png", alt: "RootGrain Workshop" }}
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover"
+                autoPlay="muted"
+                loop
+                muted
+                playsInline
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[var(--walnut-dark)]/60 to-transparent" />
             </div>

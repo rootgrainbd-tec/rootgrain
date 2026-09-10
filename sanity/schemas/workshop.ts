@@ -28,6 +28,13 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: 'workshopVideo',
+      title: 'Workshop Video (Optional)',
+      type: 'mux.video',
+      group: 'story',
+      description: 'Optional video for the workshop section. The Workshop Image is used as the poster fallback.',
+    }),
+    defineField({
       name: 'atelierAddress',
       title: 'Atelier Address',
       type: 'text',

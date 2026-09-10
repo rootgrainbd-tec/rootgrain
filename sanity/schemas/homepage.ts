@@ -37,6 +37,13 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: 'heroVideo',
+      title: 'Hero Video (Optional)',
+      type: 'mux.video',
+      group: 'hero',
+      description: 'Optional video for the hero section. The Hero Image is used as the poster fallback.',
+    }),
+    defineField({
       name: 'philosophyText',
       title: 'Philosophy Text',
       type: 'array',
@@ -96,6 +103,13 @@ export default defineType({
       description: 'An inspiring image showing the furniture in a real space.',
       fields: [{ name: 'alt', type: 'string', title: 'Alternative text', validation: (Rule) => Rule.required().error('Alt text is required.') }],
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'lifestyleVideo',
+      title: 'Lifestyle Video (Optional)',
+      type: 'mux.video',
+      group: 'lifestyle',
+      description: 'Optional video showing the furniture in a real space. The Lifestyle Image is used as the poster fallback.',
     }),
     defineField({
       name: 'lifestyleSpace',

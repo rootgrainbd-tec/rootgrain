@@ -21,11 +21,18 @@ export default async function RootGrainHome() {
   // Fetch everything concurrently from Sanity
   const [sanityProducts, sanityTestimonials, homepage, workshop, craftsmanshipSteps, SITE_CONFIG] = await Promise.all([
     client.fetch(`*[_type == "product"]{
-      _id, title, slug, category->{name}, price, comparePrice, woodType, inStock, heroImage, shortDescription, featured
+      _id, title, slug, category->{name}, price, comparePrice, woodType, inStock, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, featured
     }`),
     client.fetch(`*[_type == "testimonial" && approved == true]`),
-    client.fetch(`*[_type == "homepage"][0]`),
-    client.fetch(`*[_type == "workshop"][0]`),
+    client.fetch(`*[_type == "homepage"][0]{
+      ...,
+      heroVideo{..., asset->{playbackId, status}},
+      lifestyleVideo{..., asset->{playbackId, status}}
+    }`),
+    client.fetch(`*[_type == "workshop"][0]{
+      ...,
+      workshopVideo{..., asset->{playbackId, status}}
+    }`),
     client.fetch(`*[_type == "craftsmanshipStep"] | order(order asc)`),
     getSiteConfig(),
   ]);
@@ -40,6 +47,7 @@ export default async function RootGrainHome() {
     wood: (p.wood || p.woodType) as WoodType,
     dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
     image: p.heroImage ? urlForImage(p.heroImage).url() : '',
+    video: p.heroVideo?.asset?.playbackId ? { playbackId: p.heroVideo.asset.playbackId, status: p.heroVideo.asset.status } : undefined,
     description: p.shortDescription || '',
     inStock: p.inStock ?? true,
     featured: p.featured ?? true,
