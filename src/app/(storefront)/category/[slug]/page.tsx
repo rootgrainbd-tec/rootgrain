@@ -22,7 +22,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   }
 
   const sanityProducts: SanityProduct[] = await client.fetch(`*[_type == "product"] {
-    _id, name, title, slug, category->{name}, price, comparePrice, woodType, wood, dimensions, heroImage, shortDescription, availability, inStock, featured
+    _id, name, title, slug, category->{name}, price, comparePrice, woodType, wood, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, availability, inStock, featured
   }`);
 
   const sanityMappedProducts: Product[] = sanityProducts.map((p) => ({
@@ -35,6 +35,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     wood: (p.wood || p.woodType) as WoodType,
     dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
     image: p.heroImage?.asset ? urlForImage(p.heroImage).url() : '',
+    video: p.heroVideo?.asset?.playbackId ? { playbackId: p.heroVideo.asset.playbackId, status: p.heroVideo.asset.status } : undefined,
     description: p.shortDescription || '',
     inStock: p.inStock ?? (p.availability === 'Available' ? true : false),
     featured: p.featured ?? false,

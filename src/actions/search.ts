@@ -28,6 +28,7 @@ export async function searchProducts(query: string): Promise<SanityProduct[]> {
       price,
       comparePrice,
       heroImage,
+      heroVideo{..., asset->{playbackId, status}},
       category->{name}
     }[0...10]`,
     { searchTerm },

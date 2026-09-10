@@ -308,12 +308,22 @@ export function CollectionContent({
                   className="group cursor-pointer"
                 >
                   <div className="relative aspect-[4/5] overflow-hidden mb-6 bg-[var(--parchment)]">
-                    <Image
-                      src={product.image || "/placeholder.jpg"}
-                      alt={product.name}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
+                    {(() => {
+                      const mediaSrc = product.image
+                        ? product.image
+                        : (product.video?.playbackId
+                            ? `https://image.mux.com/${product.video.playbackId}/thumbnail.jpg?time=0`
+                            : null);
+
+                      return mediaSrc ? (
+                        <Image
+                          src={mediaSrc}
+                          alt={product.name}
+                          fill
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                      ) : null;
+                    })()}
                     <Link href={`/product/${product.slug}`} className="absolute inset-0 z-10">
                       <span className="sr-only">View Details</span>
                     </Link>

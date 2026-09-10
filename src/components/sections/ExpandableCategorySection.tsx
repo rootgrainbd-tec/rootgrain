@@ -123,13 +123,23 @@ export function ExpandableCategorySection({
                       className="group cursor-pointer flex flex-col"
                     >
                       <div className="relative aspect-[4/5] overflow-hidden mb-4 bg-[var(--parchment)]">
-                        <Image
-                          src={product.image || "/placeholder.jpg"}
-                          alt={product.name}
-                          fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          className="object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
+                        {(() => {
+                          const mediaSrc = product.image
+                            ? product.image
+                            : (product.video?.playbackId
+                                ? `https://image.mux.com/${product.video.playbackId}/thumbnail.jpg?time=0`
+                                : null);
+
+                          return mediaSrc ? (
+                            <Image
+                              src={mediaSrc}
+                              alt={product.name}
+                              fill
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                              className="object-cover transition-transform duration-700 group-hover:scale-105"
+                            />
+                          ) : null;
+                        })()}
                         <Link href={`/product/${product.slug}`} className="absolute inset-0 z-10">
                           <span className="sr-only">View Details</span>
                         </Link>
