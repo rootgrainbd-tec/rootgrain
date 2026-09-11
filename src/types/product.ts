@@ -1,3 +1,12 @@
+export interface ProductCardMediaData {
+  previewType: "default" | "image" | "video";
+  imageBehavior?: "fixed" | "slideshow";
+  videoAutoplay?: boolean;
+  heroImageUrl?: string;
+  heroVideoId?: string;
+  galleryImageUrls: string[];
+}
+
 export interface Product {
   /** Unique identifier — matches future Prisma `cuid()` */
   id: string;
@@ -27,6 +36,8 @@ export interface Product {
   featured: boolean;
   /** Array of media items for the product gallery */
   gallery?: (string | { type: "video"; playbackId: string; status?: string })[];
+  /** Normalized media preview configuration for product cards */
+  cardMedia?: ProductCardMediaData;
 }
 
 export type ProductCategory = string;

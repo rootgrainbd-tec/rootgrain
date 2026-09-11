@@ -69,27 +69,48 @@ export default async function CategoryGroupPage(
 
   // Fetch Paginated Products
   const sanityProducts = await client.fetch(`*[${queryFilter}] | order(_createdAt desc) [$start...$end] {
-    _id, title, slug, category->{name}, price, comparePrice, woodType, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, inStock, featured, availability
+    _id, title, slug, category->{name}, price, comparePrice, woodType, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, inStock, featured, availability, cardPreview, galleryImages[_type == "image" && defined(asset)]
   }`, { categories: group.categories || [], start, end });
 
   // Hardcode wood types so all options always appear
   const uniqueWoods = ['Teak', 'Mahogany', 'Sisu', 'Jackfruit', 'Jam', 'Kerosin', 'Neem', 'American Black Walnut', 'Cherry', 'White Oak'];
 
-  const products: Product[] = sanityProducts.map((p: any) => ({
-    id: p.slug?.current || p._id,
-    name: p.title || p.name || 'Untitled',
-    slug: p.slug?.current || '',
-    category: (p.category?.name as ProductCategory) || 'Dining Tables',
-    price: p.price,
-    comparePrice: p.comparePrice,
-    wood: (p.woodType || p.wood) as WoodType,
-    dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
-    image: p.heroImage?.asset ? urlForImage(p.heroImage).url() : '',
-    video: p.heroVideo?.asset?.playbackId ? { playbackId: p.heroVideo.asset.playbackId, status: p.heroVideo.asset.status } : undefined,
-    description: p.shortDescription || '',
-    inStock: p.inStock ?? true,
-    featured: p.featured ?? false,
-  }));
+  const products: Product[] = sanityProducts.map((p: any) => {
+    const heroImageUrl = p.heroImage?.asset ? urlForImage(p.heroImage).url() : undefined;
+    const heroVideoId = p.heroVideo?.asset?.playbackId;
+
+    let galleryUrls: string[] = [];
+    if (p.galleryImages && Array.isArray(p.galleryImages)) {
+      galleryUrls = p.galleryImages
+        .filter((img: any) => img?.asset)
+        .map((img: any) => urlForImage(img).url())
+        .filter((url: string) => url !== heroImageUrl);
+    }
+
+    return {
+      id: p.slug?.current || p._id,
+      name: p.title || p.name || 'Untitled',
+      slug: p.slug?.current || '',
+      category: (p.category?.name as ProductCategory) || 'Dining Tables',
+      price: p.price,
+      comparePrice: p.comparePrice,
+      wood: (p.woodType || p.wood) as WoodType,
+      dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
+      image: heroImageUrl || '',
+      video: heroVideoId ? { playbackId: heroVideoId, status: p.heroVideo.asset.status } : undefined,
+      description: p.shortDescription || '',
+      inStock: p.inStock ?? true,
+      featured: p.featured ?? false,
+      cardMedia: {
+        previewType: p.cardPreview?.previewType || "default",
+        imageBehavior: p.cardPreview?.imageBehavior,
+        videoAutoplay: p.cardPreview?.videoAutoplay,
+        heroImageUrl: heroImageUrl,
+        heroVideoId: heroVideoId,
+        galleryImageUrls: galleryUrls
+      }
+    };
+  });
 
   return (
     <main className="min-h-screen pt-24 bg-[var(--ivory)]">

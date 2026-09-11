@@ -8,6 +8,7 @@ import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Product, PRODUCT_CATEGORY_LABELS, formatPrice } from "@/types/product";
+import { ProductCardMedia } from "@/components/product/ProductCardMedia";
 
 export function ExpandableCategorySection({ 
   products,
@@ -123,23 +124,7 @@ export function ExpandableCategorySection({
                       className="group cursor-pointer flex flex-col"
                     >
                       <div className="relative aspect-[4/5] overflow-hidden mb-4 bg-[var(--parchment)]">
-                        {(() => {
-                          const mediaSrc = product.image
-                            ? product.image
-                            : (product.video?.playbackId
-                                ? `https://image.mux.com/${product.video.playbackId}/thumbnail.jpg?time=0`
-                                : null);
-
-                          return mediaSrc ? (
-                            <Image
-                              src={mediaSrc}
-                              alt={product.name}
-                              fill
-                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                              className="object-cover transition-transform duration-700 group-hover:scale-105"
-                            />
-                          ) : null;
-                        })()}
+                        <ProductCardMedia mediaData={product.cardMedia} altText={product.name} />
                         <Link href={`/product/${product.slug}`} className="absolute inset-0 z-10">
                           <span className="sr-only">View Details</span>
                         </Link>

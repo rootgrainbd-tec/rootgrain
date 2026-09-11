@@ -40,6 +40,12 @@ export interface SanityProduct {
   availability?: string;
   inStock?: boolean;
   featured?: boolean;
+  cardPreview?: {
+    previewType: "default" | "image" | "video";
+    imageBehavior?: "fixed" | "slideshow";
+    videoAutoplay?: boolean;
+  };
+  cardMedia?: import("./product").ProductCardMediaData;
 }
 
 export interface SanityMuxVideo {

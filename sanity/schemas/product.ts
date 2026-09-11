@@ -196,6 +196,48 @@ export default defineType({
       ],
     }),
     defineField({
+      name: 'cardPreview',
+      title: 'Card Preview Configuration',
+      type: 'object',
+      group: 'media',
+      description: 'Configure how this product appears in grids. If left empty, standard static image behavior applies.',
+      fields: [
+        {
+          name: 'previewType',
+          title: 'Preview Type',
+          type: 'string',
+          options: {
+            list: [
+              { title: 'Default / Legacy', value: 'default' },
+              { title: 'Image', value: 'image' },
+              { title: 'Video', value: 'video' }
+            ],
+            layout: 'radio'
+          }
+        },
+        {
+          name: 'imageBehavior',
+          title: 'Image Behavior',
+          type: 'string',
+          hidden: ({ parent }) => parent?.previewType !== 'image',
+          options: {
+            list: [
+              { title: 'Fixed Hero Image', value: 'fixed' },
+              { title: 'Auto Gallery', value: 'slideshow' }
+            ],
+            layout: 'radio'
+          }
+        },
+        {
+          name: 'videoAutoplay',
+          title: 'Video Autoplay',
+          type: 'boolean',
+          description: 'Play hero video automatically on scroll.',
+          hidden: ({ parent }) => parent?.previewType !== 'video',
+        }
+      ]
+    }),
+    defineField({
       name: 'dimensions',
       title: 'Dimensions',
       type: 'object',

@@ -21,7 +21,7 @@ export default async function RootGrainHome() {
   // Fetch everything concurrently from Sanity
   const [sanityProducts, sanityTestimonials, homepage, workshop, craftsmanshipSteps, SITE_CONFIG] = await Promise.all([
     client.fetch(`*[_type == "product"]{
-      _id, title, slug, category->{name}, price, comparePrice, woodType, inStock, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, featured
+      _id, title, slug, category->{name}, price, comparePrice, woodType, inStock, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, featured, cardPreview, galleryImages[_type == "image" && defined(asset)]
     }`),
     client.fetch(`*[_type == "testimonial" && approved == true]`),
     client.fetch(`*[_type == "homepage"][0]{
@@ -37,21 +37,42 @@ export default async function RootGrainHome() {
     getSiteConfig(),
   ]);
 
-  const sanityMappedProducts: Product[] = sanityProducts.map((p: any) => ({
-    id: p.slug?.current || p._id,
-    name: p.title || p.name || 'Untitled',
-    slug: p.slug?.current || '',
-    category: p.category?.name as ProductCategory || 'Dining Tables',
-    price: p.price,
-    comparePrice: p.comparePrice,
-    wood: (p.wood || p.woodType) as WoodType,
-    dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
-    image: p.heroImage?.asset ? urlForImage(p.heroImage).url() : '',
-    video: p.heroVideo?.asset?.playbackId ? { playbackId: p.heroVideo.asset.playbackId, status: p.heroVideo.asset.status } : undefined,
-    description: p.shortDescription || '',
-    inStock: p.inStock ?? true,
-    featured: p.featured ?? true,
-  }));
+  const sanityMappedProducts: Product[] = sanityProducts.map((p: any) => {
+    const heroImageUrl = p.heroImage?.asset ? urlForImage(p.heroImage).url() : undefined;
+    const heroVideoId = p.heroVideo?.asset?.playbackId;
+
+    let galleryUrls: string[] = [];
+    if (p.galleryImages && Array.isArray(p.galleryImages)) {
+      galleryUrls = p.galleryImages
+        .filter((img: any) => img?.asset)
+        .map((img: any) => urlForImage(img).url())
+        .filter((url: string) => url !== heroImageUrl);
+    }
+
+    return {
+      id: p.slug?.current || p._id,
+      name: p.title || p.name || 'Untitled',
+      slug: p.slug?.current || '',
+      category: p.category?.name as ProductCategory || 'Dining Tables',
+      price: p.price,
+      comparePrice: p.comparePrice,
+      wood: (p.wood || p.woodType) as WoodType,
+      dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
+      image: heroImageUrl || '',
+      video: heroVideoId ? { playbackId: heroVideoId, status: p.heroVideo.asset.status } : undefined,
+      description: p.shortDescription || '',
+      inStock: p.inStock ?? true,
+      featured: p.featured ?? true,
+      cardMedia: {
+        previewType: p.cardPreview?.previewType || "default",
+        imageBehavior: p.cardPreview?.imageBehavior,
+        videoAutoplay: p.cardPreview?.videoAutoplay,
+        heroImageUrl: heroImageUrl,
+        heroVideoId: heroVideoId,
+        galleryImageUrls: galleryUrls
+      }
+    };
+  });
 
   const products: Product[] = sanityMappedProducts;
 

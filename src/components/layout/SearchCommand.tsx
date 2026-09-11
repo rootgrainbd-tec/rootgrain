@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { urlForImage } from "../../../sanity/lib/image";
+import { ProductCardMedia } from "@/components/product/ProductCardMedia";
 import {
   CommandDialog,
   CommandEmpty,
@@ -76,24 +76,9 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                 }}
                 className="flex items-center gap-4 cursor-pointer"
               >
-                {(() => {
-                  const mediaSrc = product.heroImage?.asset
-                    ? urlForImage(product.heroImage).width(100).height(100).url()
-                    : (product.heroVideo?.asset?.playbackId
-                        ? `https://image.mux.com/${product.heroVideo.asset.playbackId}/thumbnail.jpg?time=0`
-                        : null);
-
-                  return mediaSrc ? (
-                    <div className="relative w-12 h-12 rounded overflow-hidden shrink-0">
-                      <Image
-                        src={mediaSrc}
-                        alt={product.title || "Product media"}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : null;
-                })()}
+                <div className="relative w-12 h-12 rounded overflow-hidden shrink-0">
+                  <ProductCardMedia mediaData={product.cardMedia} altText={product.title || "Product media"} />
+                </div>
                 <div className="flex flex-col">
                   <span className="font-serif text-lg text-[var(--walnut)]">{product.title}</span>
                   <span className="text-xs text-[var(--walnut-light)] uppercase tracking-wider">

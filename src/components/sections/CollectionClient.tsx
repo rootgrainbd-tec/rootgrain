@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/pagination";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
+import { ProductCardMedia } from "@/components/product/ProductCardMedia";
 
 export function CollectionContent({ 
   products,
@@ -308,22 +309,7 @@ export function CollectionContent({
                   className="group cursor-pointer"
                 >
                   <div className="relative aspect-[4/5] overflow-hidden mb-6 bg-[var(--parchment)]">
-                    {(() => {
-                      const mediaSrc = product.image
-                        ? product.image
-                        : (product.video?.playbackId
-                            ? `https://image.mux.com/${product.video.playbackId}/thumbnail.jpg?time=0`
-                            : null);
-
-                      return mediaSrc ? (
-                        <Image
-                          src={mediaSrc}
-                          alt={product.name}
-                          fill
-                          className="object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                      ) : null;
-                    })()}
+                    <ProductCardMedia mediaData={product.cardMedia} altText={product.name} />
                     <Link href={`/product/${product.slug}`} className="absolute inset-0 z-10">
                       <span className="sr-only">View Details</span>
                     </Link>
