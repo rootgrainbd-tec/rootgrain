@@ -34,6 +34,7 @@ export default async function CollectionPage(
 
   // Build GROQ Query Conditions
   const conditions = ['_type == "product"'];
+  const queryParams: Record<string, string> = {};
 
   if (searchQuery && searchQuery.trim() !== "") {
     conditions.push(`(title match "*${searchQuery.trim()}*" || description match "*${searchQuery.trim()}*")`);
@@ -42,7 +43,9 @@ export default async function CollectionPage(
     conditions.push(`category->name == "${category}"`);
   }
   if (wood && wood !== "All") {
-    conditions.push(`woodType match "*${wood}*"`);
+    conditions.push(`($wood in woodTypes || woodType match $woodWildcard)`);
+    queryParams.wood = wood;
+    queryParams.woodWildcard = `*${wood}*`;
   }
   if (availability && availability !== "All") {
     conditions.push(`availability == "${availability}"`);
@@ -58,13 +61,13 @@ export default async function CollectionPage(
   const queryFilter = conditions.join(" && ");
 
   // Fetch Total Count
-  const totalCount = await client.fetch(`count(*[${queryFilter}])`);
+  const totalCount = await client.fetch(`count(*[${queryFilter}])`, queryParams);
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   // Fetch Paginated Products
   const sanityProducts: SanityProduct[] = await client.fetch(`*[${queryFilter}] | order(_createdAt desc) [$start...$end] {
-    _id, title, slug, category->{name}, price, comparePrice, woodType, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, inStock, featured, availability, cardPreview, galleryImages[_type == "image" && defined(asset)]
-  }`, { start, end });
+    _id, title, slug, category->{name}, price, comparePrice, woodType, woodTypes, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, inStock, featured, availability, cardPreview, galleryImages[_type == "image" && defined(asset)]
+  }`, { ...queryParams, start, end });
 
   // Fetch all categories for the filter dropdown (so even empty ones show up)
   const uniqueCategories = await client.fetch(`*[_type == "category"].name`);
@@ -92,6 +95,7 @@ export default async function CollectionPage(
       price: p.price,
       comparePrice: p.comparePrice,
       wood: (p.woodType || p.wood) as WoodType,
+      woodTypes: (p.woodTypes?.length ? p.woodTypes : (p.woodType ? [p.woodType] : [])) as WoodType[],
       dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
       image: heroImageUrl || '',
       video: heroVideoId ? { playbackId: heroVideoId, status: p.heroVideo.asset.status } : undefined,

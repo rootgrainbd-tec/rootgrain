@@ -22,6 +22,8 @@ export interface Product {
   comparePrice?: number;
   /** Primary wood material */
   wood: WoodType;
+  /** Array of multiple wood types if applicable */
+  woodTypes?: WoodType[];
   /** Physical dimensions as display string */
   dimensions: string;
   /** Primary image path (relative to /public) */

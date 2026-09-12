@@ -31,6 +31,7 @@ export interface SanityProduct {
   comparePrice?: number;
   wood?: string;
   woodType?: string;
+  woodTypes?: string[];
   dimensions?: SanityDimensions;
   heroImage?: SanityImage;
   heroVideo?: SanityMuxVideo;

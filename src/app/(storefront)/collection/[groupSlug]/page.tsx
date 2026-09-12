@@ -46,9 +46,11 @@ export default async function CategoryGroupPage(
   // Build GROQ Query Conditions
   // Base condition: must be a product and belong to one of the categories in this group
   const conditions = ['_type == "product"', 'category->name in $categories'];
+  const queryParams: Record<string, string | string[]> = { categories: group.categories || [] };
 
   if (wood && wood !== "All") {
-    conditions.push(`woodType == "${wood}"`);
+    conditions.push(`($wood in woodTypes || woodType == $wood)`);
+    queryParams.wood = wood;
   }
   if (availability && availability !== "All") {
     conditions.push(`availability == "${availability}"`);
@@ -64,13 +66,13 @@ export default async function CategoryGroupPage(
   const queryFilter = conditions.join(" && ");
 
   // Fetch Total Count
-  const totalCount = await client.fetch(`count(*[${queryFilter}])`, { categories: group.categories || [] });
+  const totalCount = await client.fetch(`count(*[${queryFilter}])`, queryParams);
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   // Fetch Paginated Products
   const sanityProducts = await client.fetch(`*[${queryFilter}] | order(_createdAt desc) [$start...$end] {
-    _id, title, slug, category->{name}, price, comparePrice, woodType, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, inStock, featured, availability, cardPreview, galleryImages[_type == "image" && defined(asset)]
-  }`, { categories: group.categories || [], start, end });
+    _id, title, slug, category->{name}, price, comparePrice, woodType, woodTypes, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, inStock, featured, availability, cardPreview, galleryImages[_type == "image" && defined(asset)]
+  }`, { ...queryParams, start, end });
 
   // Hardcode wood types so all options always appear
   const uniqueWoods = ['Teak', 'Mahogany', 'Sisu', 'Jackfruit', 'Jam', 'Kerosin', 'Neem', 'American Black Walnut', 'Cherry', 'White Oak'];
@@ -95,6 +97,7 @@ export default async function CategoryGroupPage(
       price: p.price,
       comparePrice: p.comparePrice,
       wood: (p.woodType || p.wood) as WoodType,
+      woodTypes: (p.woodTypes?.length ? p.woodTypes : (p.woodType ? [p.woodType] : [])) as WoodType[],
       dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
       image: heroImageUrl || '',
       video: heroVideoId ? { playbackId: heroVideoId, status: p.heroVideo.asset.status } : undefined,

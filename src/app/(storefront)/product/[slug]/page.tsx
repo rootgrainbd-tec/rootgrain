@@ -68,7 +68,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const resolvedParams = await params;
   const SITE_CONFIG = await getSiteConfig();
   const product = await client.fetch(`*[_type == "product" && slug.current == $slug][0] {
-    _id, name, title, category->{name}, price, comparePrice, woodType, wood, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, galleryImages[]{..., _type == "mux.video" => {..., asset->{playbackId, status}}}, fullDescription, shortDescription, availability, inStock
+    _id, name, title, category->{name}, price, comparePrice, woodType, woodTypes, wood, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, galleryImages[]{..., _type == "mux.video" => {..., asset->{playbackId, status}}}, fullDescription, shortDescription, availability, inStock
   }`, { slug: resolvedParams.slug });
 
   let relatedProducts: Product[] = [];
@@ -101,7 +101,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const comparePrice = product.comparePrice;
   const rawCategory = product.category?.name || '';
   const categoryLabel = PRODUCT_CATEGORY_LABELS[rawCategory] || rawCategory;
-  const wood = product.wood || product.woodType;
+  const effectiveWoodTypes = product.woodTypes?.length
+    ? product.woodTypes
+    : (product.woodType ? [product.woodType] : (product.wood ? [product.wood] : []));
+  const woodDisplay = effectiveWoodTypes.join(' · ');
   const dimensionsStr = product.dimensionsStr || (product.dimensions ? `${product.dimensions.length} x ${product.dimensions.width} x ${product.dimensions.height} ${product.dimensions.unit}` : null);
   const heroUrl = product.heroUrl || (product.heroImage?.asset ? urlForImage(product.heroImage).url() : "/placeholder.jpg");
   const desc = product.shortDescription || '';
@@ -149,8 +152,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
             <div className="grid grid-cols-2 gap-y-6 gap-x-12 py-8 border-y border-[var(--walnut-light)]/20 mb-12">
               <div>
-                <span className="block text-xs tracking-wider uppercase text-[var(--walnut-light)] mb-1">Wood Type</span>
-                <span className="text-[var(--walnut-dark)]">{wood}</span>
+                <span className="block text-xs tracking-wider uppercase text-[var(--walnut-light)] mb-1">Wood Type{effectiveWoodTypes.length > 1 ? 's' : ''}</span>
+                <span className="text-[var(--walnut-dark)]">{woodDisplay}</span>
               </div>
               {dimensionsStr && (
                 <div>

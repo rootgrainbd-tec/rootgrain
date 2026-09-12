@@ -68,7 +68,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
             {results.map((product) => (
               <CommandItem
                 key={product._id}
-                value={`${product.title} ${product.category?.name || ""} ${product.woodType || ""}`}
+                value={`${product.title} ${product.category?.name || ""} ${product.woodType || ""} ${product.woodTypes ? product.woodTypes.join(" ") : ""}`}
                 onSelect={() => {
                   if (product.slug?.current) {
                     runCommand(() => router.push(`/product/${product.slug?.current}`));
