@@ -43,9 +43,8 @@ export default async function CollectionPage(
     conditions.push(`category->name == "${category}"`);
   }
   if (wood && wood !== "All") {
-    conditions.push(`($wood in woodTypes || woodType match $woodWildcard)`);
+    conditions.push(`($wood in woodTypes)`);
     queryParams.wood = wood;
-    queryParams.woodWildcard = `*${wood}*`;
   }
   if (availability && availability !== "All") {
     conditions.push(`availability == "${availability}"`);
@@ -66,7 +65,7 @@ export default async function CollectionPage(
 
   // Fetch Paginated Products
   const sanityProducts: SanityProduct[] = await client.fetch(`*[${queryFilter}] | order(_createdAt desc) [$start...$end] {
-    _id, title, slug, category->{name}, price, comparePrice, woodType, woodTypes, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, inStock, featured, availability, cardPreview, galleryImages[_type == "image" && defined(asset)]
+    _id, title, slug, category->{name}, price, comparePrice, woodTypes, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, inStock, featured, availability, cardPreview, galleryImages[_type == "image" && defined(asset)]
   }`, { ...queryParams, start, end });
 
   // Fetch all categories for the filter dropdown (so even empty ones show up)
@@ -94,8 +93,8 @@ export default async function CollectionPage(
       category: (p.category?.name as ProductCategory) || 'Dining Tables',
       price: p.price,
       comparePrice: p.comparePrice,
-      wood: (p.woodType || p.wood) as WoodType,
-      woodTypes: (p.woodTypes?.length ? p.woodTypes : (p.woodType ? [p.woodType] : [])) as WoodType[],
+      wood: p.woodTypes?.length ? p.woodTypes.join(' · ') : undefined,
+      woodTypes: (p.woodTypes || []),
       dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
       image: heroImageUrl || '',
       video: heroVideoId ? { playbackId: heroVideoId, status: p.heroVideo.asset.status } : undefined,

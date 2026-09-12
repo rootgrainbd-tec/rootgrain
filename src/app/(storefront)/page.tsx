@@ -21,7 +21,7 @@ export default async function RootGrainHome() {
   // Fetch everything concurrently from Sanity
   const [sanityProducts, sanityTestimonials, homepage, workshop, craftsmanshipSteps, SITE_CONFIG] = await Promise.all([
     client.fetch(`*[_type == "product"]{
-      _id, title, slug, category->{name}, price, comparePrice, woodType, woodTypes, inStock, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, featured, cardPreview, galleryImages[_type == "image" && defined(asset)]
+      _id, title, slug, category->{name}, price, comparePrice, woodTypes, inStock, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, featured, cardPreview, galleryImages[_type == "image" && defined(asset)]
     }`),
     client.fetch(`*[_type == "testimonial" && approved == true]`),
     client.fetch(`*[_type == "homepage"][0]{
@@ -56,8 +56,8 @@ export default async function RootGrainHome() {
       category: p.category?.name as ProductCategory || 'Dining Tables',
       price: p.price,
       comparePrice: p.comparePrice,
-      wood: (p.woodType || p.wood) as WoodType,
-      woodTypes: (p.woodTypes?.length ? p.woodTypes : (p.woodType ? [p.woodType] : [])) as WoodType[],
+      wood: p.woodTypes?.length ? p.woodTypes.join(' · ') : undefined,
+      woodTypes: (p.woodTypes || []),
       dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
       image: heroImageUrl || '',
       video: heroVideoId ? { playbackId: heroVideoId, status: p.heroVideo.asset.status } : undefined,

@@ -22,7 +22,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   }
 
   const sanityProducts: SanityProduct[] = await client.fetch(`*[_type == "product"] {
-    _id, name, title, slug, category->{name}, price, comparePrice, woodType, woodTypes, wood, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, availability, inStock, featured
+    _id, name, title, slug, category->{name}, price, comparePrice, woodTypes, wood, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, availability, inStock, featured
   }`);
 
   const sanityMappedProducts: Product[] = sanityProducts.map((p) => ({
@@ -32,8 +32,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     category: p.category?.name as ProductCategory || 'Dining Tables',
     price: p.price || 0,
     comparePrice: p.comparePrice,
-    wood: (p.woodType || p.wood) as WoodType,
-    woodTypes: (p.woodTypes?.length ? p.woodTypes : (p.woodType ? [p.woodType] : [])) as WoodType[],
+    wood: p.woodTypes?.length ? p.woodTypes.join(' · ') : undefined,
+    woodTypes: (p.woodTypes || []),
     dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
     image: p.heroImage?.asset ? urlForImage(p.heroImage).url() : '',
     video: p.heroVideo?.asset?.playbackId ? { playbackId: p.heroVideo.asset.playbackId, status: p.heroVideo.asset.status } : undefined,

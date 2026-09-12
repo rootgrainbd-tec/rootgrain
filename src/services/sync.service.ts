@@ -52,7 +52,7 @@ export class SyncService {
       "slug": slug.current,
       "category": category->name,
       price,
-      "wood": woodType,
+      "woodTypes": woodTypes,
       dimensions,
       "image": heroImage.asset->url,
       "description": shortDescription,
@@ -109,6 +109,11 @@ export class SyncService {
     if (sanityProduct.price === null || sanityProduct.price === undefined) throw new Error("Missing required field: price");
     if (!sanityProduct.category) throw new Error("Missing required field: category");
     if (!sanityProduct.image) throw new Error("Missing required field: image/heroImage");
+
+    // Map woodTypes to legacy database wood format
+    sanityProduct.wood = Array.isArray(sanityProduct.woodTypes) && sanityProduct.woodTypes.length > 0 
+      ? sanityProduct.woodTypes.join(" · ") 
+      : undefined;
 
     // Phase 6 MTO Projection Contract
     const isMto = sanityProduct.availability === "Made-to-Order";

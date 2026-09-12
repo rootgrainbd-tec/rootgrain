@@ -21,7 +21,7 @@ export interface Product {
   /** Original price for strike-through display, in BDT Taka */
   comparePrice?: number;
   /** Primary wood material */
-  wood: WoodType;
+  wood?: string;
   /** Array of multiple wood types if applicable */
   woodTypes?: WoodType[];
   /** Physical dimensions as display string */
@@ -88,15 +88,7 @@ export const PRODUCT_CATEGORY_LABELS: Record<string, string> = {
   "Kumiko Art": "Kumiko"
 };
 
-export type WoodType =
-  | "American Black Walnut"
-  | "White Oak"
-  | "Walnut"
-  | "Cherry"
-  | "Maple"
-  | "Teak"
-  | "Mahogany"
-  | "Mehogony and Sisu";
+export type WoodType = string;
 
 export interface ProductImage {
   url: string;

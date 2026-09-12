@@ -68,7 +68,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const resolvedParams = await params;
   const SITE_CONFIG = await getSiteConfig();
   const product = await client.fetch(`*[_type == "product" && slug.current == $slug][0] {
-    _id, name, title, category->{name}, price, comparePrice, woodType, woodTypes, wood, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, galleryImages[]{..., _type == "mux.video" => {..., asset->{playbackId, status}}}, fullDescription, shortDescription, availability, inStock
+    _id, name, title, category->{name}, price, comparePrice, woodTypes, wood, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, galleryImages[]{..., _type == "mux.video" => {..., asset->{playbackId, status}}}, fullDescription, shortDescription, availability, inStock
   }`, { slug: resolvedParams.slug });
 
   let relatedProducts: Product[] = [];
@@ -103,7 +103,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const categoryLabel = PRODUCT_CATEGORY_LABELS[rawCategory] || rawCategory;
   const effectiveWoodTypes = product.woodTypes?.length
     ? product.woodTypes
-    : (product.woodType ? [product.woodType] : (product.wood ? [product.wood] : []));
+    : (product.wood ? [product.wood] : []);
   const woodDisplay = effectiveWoodTypes.join(' · ');
   const dimensionsStr = product.dimensionsStr || (product.dimensions ? `${product.dimensions.length} x ${product.dimensions.width} x ${product.dimensions.height} ${product.dimensions.unit}` : null);
   const heroUrl = product.heroUrl || (product.heroImage?.asset ? urlForImage(product.heroImage).url() : "/placeholder.jpg");

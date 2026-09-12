@@ -71,27 +71,7 @@ export default defineType({
       group: 'basic',
       description: 'Optional unique identifier for this product.',
     }),
-    defineField({
-      name: 'woodType',
-      title: 'Wood Type',
-      type: 'string',
-      group: 'basic',
-      options: {
-        list: [
-          { title: 'Teak (Segun)', value: 'Teak' },
-          { title: 'Mahogany', value: 'Mahogany' },
-          { title: 'Sisu', value: 'Sisu' },
-          { title: 'Jackfruit', value: 'Jackfruit' },
-          { title: 'Jam', value: 'Jam' },
-          { title: 'Kerosin', value: 'Kerosin' },
-          { title: 'Neem', value: 'Neem' },
-          { title: 'American Black Walnut', value: 'American Black Walnut' },
-          { title: 'Cherry', value: 'Cherry' },
-          { title: 'White Oak', value: 'White Oak' },
-        ],
-      },
-      validation: (Rule) => Rule.required().error('Wood type is required.'),
-    }),
+
     defineField({
       name: 'woodTypes',
       title: 'Wood Types',
@@ -112,7 +92,7 @@ export default defineType({
           { title: 'White Oak', value: 'White Oak' },
         ],
       },
-      description: 'Select all wood types used in this product. Existing Wood Type remains the primary/legacy catalog value during this migration phase.',
+      description: 'Select all wood types used in this product.',
     }),
     defineField({
       name: 'price',

@@ -21,7 +21,6 @@ export async function searchProducts(query: string): Promise<SanityProduct[]> {
     `*[_type == "product" && (
       title match $searchTerm ||
       category->name match $searchTerm ||
-      woodType match $searchTerm ||
       woodTypes[] match $searchTerm
     )] {
       _id,
@@ -29,7 +28,6 @@ export async function searchProducts(query: string): Promise<SanityProduct[]> {
       slug,
       price,
       comparePrice,
-      woodType,
       woodTypes,
       heroImage,
       heroVideo{..., asset->{playbackId, status}},

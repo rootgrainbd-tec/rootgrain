@@ -11,6 +11,9 @@ export class ProductRepository {
     if (existingWithSlug && existingWithSlug.sanityId !== sanityId) {
       throw new Error(`Identity Collision: slug ${data.slug} is already in use by product with sanityId ${existingWithSlug.sanityId}`);
     }
+    
+    // Fetch existing by sanityId to safely preserve fields (like wood) when incoming data is missing
+    const existing = await prisma.product.findUnique({ where: { sanityId } });
 
     return prisma.product.upsert({
       where: { sanityId },
@@ -19,7 +22,7 @@ export class ProductRepository {
         slug: data.slug,
         category: data.category ?? "Uncategorized",
         price: data.price ?? 0,
-        wood: data.wood ?? "Unknown",
+        wood: data.wood ?? existing?.wood ?? "Unknown",
         dimensions: data.dimensions ?? "Unknown",
         image: data.image ?? "",
         description: data.description ?? "",
