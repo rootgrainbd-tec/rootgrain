@@ -14,6 +14,7 @@ import { RecentlyViewed } from "@/components/product/RecentlyViewed";
 import { RecentlyViewedTracker } from "@/components/product/RecentlyViewedTracker";
 import type { Metadata } from "next";
 import type { Product, ProductCategory, WoodType } from "@/types/product";
+import { PortableText } from "next-sanity";
 
 export const revalidate = 60;
 
@@ -179,6 +180,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </div>
         </div>
         
+        {product.fullDescription?.length ? (
+          <div className="pt-16 lg:pt-24 pb-8 lg:pb-12 border-t border-[var(--walnut-light)]/20 mt-16 lg:mt-24">
+            <h2 className="font-serif text-3xl md:text-4xl text-[var(--walnut-dark)] font-light mb-8">Description</h2>
+            <div className="prose prose-stone prose-lg text-[var(--walnut)] max-w-4xl">
+              <PortableText value={product.fullDescription} />
+            </div>
+          </div>
+        ) : null}
+
         <ProductReviews productId={product._id} />
         <RelatedProducts products={relatedProducts} />
         <RecentlyViewed currentProductId={resolvedParams.slug} />
