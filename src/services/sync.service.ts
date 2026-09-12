@@ -111,8 +111,8 @@ export class SyncService {
     if (!sanityProduct.image) throw new Error("Missing required field: image/heroImage");
 
     // Map woodTypes to legacy database wood format
-    sanityProduct.wood = Array.isArray(sanityProduct.woodTypes) && sanityProduct.woodTypes.length > 0 
-      ? sanityProduct.woodTypes.join(" · ") 
+    sanityProduct.wood = Array.isArray(sanityProduct.woodTypes) && sanityProduct.woodTypes.length > 0
+      ? sanityProduct.woodTypes.join(" · ")
       : undefined;
 
     // Phase 6 MTO Projection Contract
