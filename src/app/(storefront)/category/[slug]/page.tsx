@@ -22,25 +22,46 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   }
 
   const sanityProducts: SanityProduct[] = await client.fetch(`*[_type == "product"] {
-    _id, name, title, slug, category->{name}, price, comparePrice, woodTypes, wood, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, availability, inStock, featured
+    _id, name, title, slug, category->{name}, price, comparePrice, woodTypes, wood, dimensions, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, availability, inStock, featured, cardPreview, galleryImages[_type == "image" && defined(asset)]
   }`);
 
-  const sanityMappedProducts: Product[] = sanityProducts.map((p) => ({
-    id: p.slug?.current || p._id,
-    name: p.name || p.title || '',
-    slug: p.slug?.current || '',
-    category: p.category?.name as ProductCategory || 'Dining Tables',
-    price: p.price || 0,
-    comparePrice: p.comparePrice,
-    wood: p.woodTypes?.length ? p.woodTypes.join(' · ') : undefined,
-    woodTypes: (p.woodTypes || []),
-    dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
-    image: p.heroImage?.asset ? urlForImage(p.heroImage).url() : '',
-    video: p.heroVideo?.asset?.playbackId ? { playbackId: p.heroVideo.asset.playbackId, status: p.heroVideo.asset.status } : undefined,
-    description: p.shortDescription || '',
-    inStock: p.inStock ?? (p.availability === 'Available' ? true : false),
-    featured: p.featured ?? false,
-  }));
+  const sanityMappedProducts: Product[] = sanityProducts.map((p) => {
+    const heroImageUrl = p.heroImage?.asset ? urlForImage(p.heroImage).url() : undefined;
+    const heroVideoId = p.heroVideo?.asset?.playbackId;
+
+    let galleryUrls: string[] = [];
+    if (p.galleryImages && Array.isArray(p.galleryImages)) {
+      galleryUrls = p.galleryImages
+        .filter((img: any) => img?.asset)
+        .map((img: any) => urlForImage(img).url())
+        .filter((url: string) => url !== heroImageUrl);
+    }
+
+    return {
+      id: p.slug?.current || p._id,
+      name: p.name || p.title || '',
+      slug: p.slug?.current || '',
+      category: p.category?.name as ProductCategory || 'Dining Tables',
+      price: p.price || 0,
+      comparePrice: p.comparePrice,
+      wood: p.woodTypes?.length ? p.woodTypes.join(' · ') : undefined,
+      woodTypes: (p.woodTypes || []),
+      dimensions: p.dimensions ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height} ${p.dimensions.unit}` : '',
+      image: heroImageUrl || '',
+      video: heroVideoId ? { playbackId: heroVideoId, status: p.heroVideo?.asset?.status } : undefined,
+      description: p.shortDescription || '',
+      inStock: p.inStock ?? (p.availability === 'Available' ? true : false),
+      featured: p.featured ?? false,
+      cardMedia: {
+        previewType: p.cardPreview?.previewType || "default",
+        imageBehavior: p.cardPreview?.imageBehavior,
+        videoAutoplay: p.cardPreview?.videoAutoplay,
+        heroImageUrl: heroImageUrl,
+        heroVideoId: heroVideoId,
+        galleryImageUrls: galleryUrls
+      }
+    };
+  });
 
   const products: Product[] = sanityMappedProducts;
 
