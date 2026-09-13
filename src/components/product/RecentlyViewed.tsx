@@ -19,8 +19,10 @@ export function RecentlyViewed({ currentProductId }: RecentlyViewedProps) {
 
   if (!mounted) return null;
 
-  // Filter out the current product and ensure we have items to show
-  const displayItems = items.filter(item => item.id !== currentProductId).slice(0, 4);
+  // Filter out the current product, legacy placeholders, and ensure we have items to show
+  const displayItems = items
+    .filter(item => item.id !== currentProductId && item.image !== "/placeholder.jpg")
+    .slice(0, 4);
 
   if (displayItems.length === 0) return null;
 
