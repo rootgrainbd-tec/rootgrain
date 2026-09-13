@@ -134,11 +134,13 @@ export function ProductCardMedia({ mediaData, altText }: ProductCardMediaProps) 
   // 8. Render Helpers
   const renderStaticImage = (url: string | undefined) => {
     if (!url) return null;
+    const isMuxImage = url.startsWith("https://image.mux.com");
     return (
       <Image
         src={url}
         alt={altText}
         fill
+        unoptimized={isMuxImage}
         className="object-cover transition-transform duration-700 group-hover:scale-105"
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
       />
