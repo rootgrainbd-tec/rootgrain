@@ -40,6 +40,7 @@ export function RecentlyViewed({ currentProductId }: RecentlyViewedProps) {
                 alt={item.name}
                 fill
                 className="object-contain p-4 group-hover:scale-105 transition-transform duration-500"
+                unoptimized={item.image?.startsWith("https://image.mux.com")}
               />
             </div>
             <h3 className="font-medium text-[var(--walnut-dark)] truncate">{item.name}</h3>

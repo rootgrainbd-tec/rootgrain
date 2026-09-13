@@ -106,7 +106,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     : (product.wood ? [product.wood] : []);
   const woodDisplay = effectiveWoodTypes.join(' · ');
   const dimensionsStr = product.dimensionsStr || (product.dimensions ? `${product.dimensions.length} x ${product.dimensions.width} x ${product.dimensions.height} ${product.dimensions.unit}` : null);
-  const heroUrl = product.heroUrl || (product.heroImage?.asset ? urlForImage(product.heroImage).url() : "/placeholder.jpg");
+  const validHeroImageUrl = product.heroImage?.asset ? urlForImage(product.heroImage).url() : undefined;
+  const videoThumbnailUrl = product.heroVideo?.asset?.playbackId
+    ? `https://image.mux.com/${product.heroVideo.asset.playbackId}/thumbnail.jpg?time=0`
+    : undefined;
+  const exactHeroUrl = product.heroUrl || validHeroImageUrl;
+  const fallbackHeroUrl = exactHeroUrl || videoThumbnailUrl || "/placeholder.jpg";
   const desc = product.shortDescription || '';
   const isAvailable = prismaProduct ? (prismaProduct.isActive && prismaProduct.inStock) : (product.inStock ?? (product.availability === 'Available'));
   const isMto = Boolean(prismaProduct?.isActive && prismaProduct?.isMto);
@@ -120,7 +125,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           
           {/* Images */}
           <ProductGallery 
-            heroUrl={heroUrl} 
+            heroUrl={exactHeroUrl}
             heroVideo={product.heroVideo}
             galleryImages={product.galleryImages || []} 
             productName={name} 
@@ -172,7 +177,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 id: resolvedParams.slug,
                 name: name,
                 price: price,
-                image: heroUrl,
+                image: fallbackHeroUrl,
                 isAvailable: isAvailable,
                 isMto: isMto
               }}
@@ -202,7 +207,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           id: resolvedParams.slug,
           name: name,
           price: price,
-          image: heroUrl,
+          image: fallbackHeroUrl,
           category: rawCategory,
         }} 
       />
