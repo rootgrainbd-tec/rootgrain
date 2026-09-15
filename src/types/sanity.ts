@@ -86,6 +86,12 @@ export interface SanityHomepage {
   heroVideo?: SanityMuxVideo;
   heroHeadline?: SanityStyledText | string;
   heroSubheadline?: SanityStyledText | string;
+  philosophyEyebrow?: string;
+  philosophyTitle?: string;
+  philosophyText?: import("next-sanity").PortableTextBlock[];
+  philosophyImage?: SanityImage & { alt?: string };
+  philosophyCtaLabel?: string;
+  philosophyCtaUrl?: string;
   statsItems?: any[];
   lifestyleTitle?: string;
   lifestyleDescription?: string;

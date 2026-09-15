@@ -4,14 +4,25 @@ import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 import { PortableText } from "next-sanity";
+import { urlForImage } from "../../../sanity/lib/image";
 import type { SanityHomepage } from "@/types/sanity";
 
 export function MaterialPhilosophySection({ data }: { data?: SanityHomepage | any }) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  const eyebrow = data?.philosophyEyebrow || "Our Materials";
+  const title = data?.philosophyTitle || "Material Philosophy";
+  const imageUrl = data?.philosophyImage?.asset 
+    ? urlForImage(data.philosophyImage).url() 
+    : "/images/material-wood-grain.png";
+  const imageAlt = data?.philosophyImage?.alt || "Premium hardwood grain detail";
+  const ctaLabel = data?.philosophyCtaLabel || "Learn About Our Woods";
+  const ctaUrl = data?.philosophyCtaUrl;
 
   return (
     <section
@@ -28,10 +39,10 @@ export function MaterialPhilosophySection({ data }: { data?: SanityHomepage | an
           className="text-center mb-20"
         >
           <span className="text-[var(--gold)] text-sm tracking-[0.4em] uppercase font-medium mb-4 block">
-            Our Materials
+            {eyebrow}
           </span>
           <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl text-[var(--walnut-dark)] font-light mb-6">
-            Material Philosophy
+            {title}
           </h2>
           <div className="w-24 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent mx-auto mb-8" />
         </motion.div>
@@ -46,8 +57,8 @@ export function MaterialPhilosophySection({ data }: { data?: SanityHomepage | an
           >
             <div className="relative aspect-square overflow-hidden">
               <Image
-                src="/images/material-wood-grain.png"
-                alt="Premium hardwood grain detail"
+                src={imageUrl}
+                alt={imageAlt}
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover"
@@ -69,15 +80,19 @@ export function MaterialPhilosophySection({ data }: { data?: SanityHomepage | an
                 <PortableText value={data.philosophyText} />
               )}
 
-              <div className="pt-4">
-                <Button
-                  variant="outline"
-                  className="border-[var(--walnut)] text-[var(--walnut)] hover:bg-[var(--walnut)] hover:text-[var(--ivory)] px-6 py-5 rounded-none text-sm tracking-wider uppercase"
-                >
-                  Learn About Our Woods
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </div>
+              {ctaUrl && (
+                <div className="pt-4">
+                  <Link href={ctaUrl}>
+                    <Button
+                      variant="outline"
+                      className="border-[var(--walnut)] text-[var(--walnut)] hover:bg-[var(--walnut)] hover:text-[var(--ivory)] px-6 py-5 rounded-none text-sm tracking-wider uppercase"
+                    >
+                      {ctaLabel}
+                      <ArrowRight className="ml-2 w-4 h-4" />
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>
