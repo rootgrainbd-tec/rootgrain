@@ -68,45 +68,67 @@ export function LifestyleInteriorsSection({ data }: { data?: SanityHomepage | an
 
         {/* Two Column Images */}
         <div className="grid md:grid-cols-2 gap-8">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative aspect-[4/3] overflow-hidden group cursor-pointer"
-          >
-            <Image
-              src="/images/craft-finishing.png"
-              alt="Artisan finishing process"
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-[var(--walnut-dark)]/0 group-hover:bg-[var(--walnut-dark)]/20 transition-colors duration-500" />
-            <div className="absolute bottom-6 left-6">
-              <p className="font-serif text-xl text-[var(--ivory)]">The Finishing Touch</p>
-              <p className="text-[var(--ivory)]/70 text-sm mt-1">Hand-rubbed oil finishes</p>
-            </div>
-          </motion.div>
+          {(() => {
+            const card1 = data?.lifestyleCards?.[0];
+            const card1IsValid = Boolean(card1?.image?.asset && card1?.title && card1?.subtitle);
+            const card1ImageSrc = card1IsValid ? urlForImage(card1.image).url() : "/images/craft-finishing.png";
+            const card1Alt = card1IsValid ? (card1.image.alt || card1.title) : "Artisan finishing process";
+            const card1Title = card1IsValid ? card1.title : "The Finishing Touch";
+            const card1Subtitle = card1IsValid ? card1.subtitle : "Hand-rubbed oil finishes";
 
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="relative aspect-[4/3] overflow-hidden group cursor-pointer"
-          >
-            <Image
-              src="/images/product-decor.png"
-              alt="Artisan home decor pieces"
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-[var(--walnut-dark)]/0 group-hover:bg-[var(--walnut-dark)]/20 transition-colors duration-500" />
-            <div className="absolute bottom-6 left-6">
-              <p className="font-serif text-xl text-[var(--ivory)]">Artisan Decor</p>
-              <p className="text-[var(--ivory)]/70 text-sm mt-1">Handcrafted home accessories</p>
-            </div>
-          </motion.div>
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="relative aspect-[4/3] overflow-hidden group cursor-pointer"
+              >
+                <Image
+                  src={card1ImageSrc}
+                  alt={card1Alt}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-[var(--walnut-dark)]/0 group-hover:bg-[var(--walnut-dark)]/20 transition-colors duration-500" />
+                <div className="absolute bottom-6 left-6">
+                  <p className="font-serif text-xl text-[var(--ivory)]">{card1Title}</p>
+                  <p className="text-[var(--ivory)]/70 text-sm mt-1">{card1Subtitle}</p>
+                </div>
+              </motion.div>
+            );
+          })()}
+
+          {(() => {
+            const card2 = data?.lifestyleCards?.[1];
+            const card2IsValid = Boolean(card2?.image?.asset && card2?.title && card2?.subtitle);
+            const card2ImageSrc = card2IsValid ? urlForImage(card2.image).url() : "/images/product-decor.png";
+            const card2Alt = card2IsValid ? (card2.image.alt || card2.title) : "Artisan home decor pieces";
+            const card2Title = card2IsValid ? card2.title : "Artisan Decor";
+            const card2Subtitle = card2IsValid ? card2.subtitle : "Handcrafted home accessories";
+
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                className="relative aspect-[4/3] overflow-hidden group cursor-pointer"
+              >
+                <Image
+                  src={card2ImageSrc}
+                  alt={card2Alt}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-[var(--walnut-dark)]/0 group-hover:bg-[var(--walnut-dark)]/20 transition-colors duration-500" />
+                <div className="absolute bottom-6 left-6">
+                  <p className="font-serif text-xl text-[var(--ivory)]">{card2Title}</p>
+                  <p className="text-[var(--ivory)]/70 text-sm mt-1">{card2Subtitle}</p>
+                </div>
+              </motion.div>
+            );
+          })()}
         </div>
       </div>
     </section>

@@ -157,6 +157,48 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: 'lifestyleCards',
+      title: 'Lifestyle Cards',
+      type: 'array',
+      group: 'lifestyle',
+      description: 'The two small cards displayed below the main Lifestyle content.',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            {
+              name: 'image',
+              title: 'Image',
+              type: 'image',
+              options: { hotspot: true },
+              fields: [
+                {
+                  name: 'alt',
+                  type: 'string',
+                  title: 'Alternative text',
+                  validation: (Rule) => Rule.required().error('Alt text is required.'),
+                },
+              ],
+              validation: (Rule) => Rule.required(),
+            },
+            {
+              name: 'title',
+              title: 'Title',
+              type: 'string',
+              validation: (Rule) => Rule.required(),
+            },
+            {
+              name: 'subtitle',
+              title: 'Subtitle',
+              type: 'string',
+              validation: (Rule) => Rule.required(),
+            },
+          ],
+        },
+      ],
+      validation: (Rule) => Rule.max(2),
+    }),
+    defineField({
       name: 'seo',
       title: 'Search Engine Optimization',
       type: 'seo',

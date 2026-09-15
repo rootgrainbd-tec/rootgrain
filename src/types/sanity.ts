@@ -98,6 +98,11 @@ export interface SanityHomepage {
   lifestyleImage?: SanityImage;
   lifestyleVideo?: SanityMuxVideo;
   lifestyleSpace?: string;
+  lifestyleCards?: Array<{
+    image?: SanityImage & { alt?: string };
+    title?: string;
+    subtitle?: string;
+  }>;
 }
 
 export interface SanitySiteSettings {
