@@ -12,14 +12,14 @@ import { getSiteConfig } from "@/data/site-config";
 import type { Product, ProductCategory, WoodType } from "@/types/product";
 import { client } from "../../../sanity/lib/client";
 import { urlForImage } from "../../../sanity/lib/image";
-import type { SanityProduct, SanityTestimonial, SanityHomepage, SanityCraftsmanshipStep, SanityWorkshop } from "@/types/sanity";
+import type { SanityProduct, SanityTestimonial, SanityHomepage, SanityCraftsmanshipStep, SanityWorkshop, SanityCraftsmanshipSection } from "@/types/sanity";
 
 // Optional: Set revalidation time if using ISR
 export const revalidate = 60;
 
 export default async function RootGrainHome() {
   // Fetch everything concurrently from Sanity
-  const [sanityProducts, sanityTestimonials, homepage, workshop, craftsmanshipSteps, SITE_CONFIG] = await Promise.all([
+  const [sanityProducts, sanityTestimonials, homepage, workshop, craftsmanshipSteps, craftsmanshipSection, SITE_CONFIG] = await Promise.all([
     client.fetch(`*[_type == "product"]{
       _id, title, slug, category->{name}, price, comparePrice, woodTypes, inStock, heroImage, heroVideo{..., asset->{playbackId, status}}, shortDescription, featured, cardPreview, galleryImages[_type == "image" && defined(asset)]
     }`),
@@ -34,6 +34,7 @@ export default async function RootGrainHome() {
       workshopVideo{..., asset->{playbackId, status}}
     }`),
     client.fetch(`*[_type == "craftsmanshipStep"] | order(order asc)`),
+    client.fetch(`*[_id == "craftsmanshipSection"][0]`),
     getSiteConfig(),
   ]);
 
@@ -89,7 +90,7 @@ export default async function RootGrainHome() {
       <Navigation config={SITE_CONFIG} />
       <HeroSection data={homepage} />
       <div className="cv-auto">
-        <CraftsmanshipSection steps={craftsmanshipSteps} />
+        <CraftsmanshipSection data={craftsmanshipSection} steps={craftsmanshipSteps} />
       </div>
       <div className="cv-auto">
         <ExpandableCategorySection products={products} tabGroups={SITE_CONFIG.categoryGroups || []} />

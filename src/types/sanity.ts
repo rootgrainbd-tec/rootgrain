@@ -115,6 +115,16 @@ export interface SanitySiteSettings {
   origin?: string;
 }
 
+export interface SanityCraftsmanshipSection {
+  _id: string;
+  _type: "craftsmanshipSection";
+  sectionEyebrow?: string;
+  sectionTitle?: string;
+  sectionDescription?: string;
+  bannerImage?: any;
+  bannerQuote?: string;
+}
+
 export interface SanityCraftsmanshipStep {
   _id?: string;
   title: string;

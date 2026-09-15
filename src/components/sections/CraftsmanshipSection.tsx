@@ -5,9 +5,10 @@ import { motion, useInView } from "framer-motion";
 import Image from "next/image";
 
 import { Hammer } from "lucide-react";
-import type { SanityCraftsmanshipStep } from "@/types/sanity";
+import { urlForImage } from "../../../sanity/lib/image";
+import type { SanityCraftsmanshipStep, SanityCraftsmanshipSection } from "@/types/sanity";
 
-export function CraftsmanshipSection({ steps }: { steps?: SanityCraftsmanshipStep[] }) {
+export function CraftsmanshipSection({ data, steps }: { data?: SanityCraftsmanshipSection, steps?: SanityCraftsmanshipStep[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -28,16 +29,14 @@ export function CraftsmanshipSection({ steps }: { steps?: SanityCraftsmanshipSte
           className="text-center mb-20"
         >
           <span className="text-[var(--gold)] text-sm tracking-[0.4em] uppercase font-medium mb-4 block">
-            The Art of Making
+            {data?.sectionEyebrow || "The Art of Making"}
           </span>
           <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl text-[var(--walnut-dark)] font-light mb-6">
-            Craftsmanship
+            {data?.sectionTitle || "Craftsmanship"}
           </h2>
           <div className="w-24 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent mx-auto mb-8" />
-          <p className="text-[var(--walnut-light)] text-lg max-w-2xl mx-auto leading-relaxed">
-            Our furniture is born from patience, skill, and an unwavering commitment 
-            to the traditions of fine woodworking. Each piece passes through the hands 
-            of master craftsmen who have dedicated their lives to this ancient art.
+          <p className="text-[var(--walnut-light)] text-lg max-w-2xl mx-auto leading-relaxed whitespace-pre-wrap">
+            {data?.sectionDescription || "Our furniture is born from patience, skill, and an unwavering commitment \nto the traditions of fine woodworking. Each piece passes through the hands \nof master craftsmen who have dedicated their lives to this ancient art."}
           </p>
         </motion.div>
 
@@ -75,8 +74,8 @@ export function CraftsmanshipSection({ steps }: { steps?: SanityCraftsmanshipSte
           className="mt-20 relative aspect-[21/9] overflow-hidden"
         >
           <Image
-            src="/images/craftsmanship-detail.png"
-            alt="Artisan hands at work"
+            src={data?.bannerImage?.asset ? urlForImage(data.bannerImage).url() : "/images/craftsmanship-detail.png"}
+            alt={data?.bannerImage?.alt || "Artisan hands at work"}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1280px"
             className="object-cover"
@@ -84,7 +83,7 @@ export function CraftsmanshipSection({ steps }: { steps?: SanityCraftsmanshipSte
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--walnut-dark)]/40 to-transparent" />
           <div className="absolute bottom-8 left-8 right-8">
             <p className="font-serif text-2xl text-[var(--ivory)] max-w-xl">
-              "The hand that shapes the wood leaves its mark on the soul of the piece."
+              {data?.bannerQuote || "\"The hand that shapes the wood leaves its mark on the soul of the piece.\""}
             </p>
           </div>
         </motion.div>

@@ -4,6 +4,7 @@ import categoryGroup from './schemas/categoryGroup'
 import seo from './schemas/seo'
 import product from './schemas/product'
 import craftsmanshipStep from './schemas/craftsmanshipStep'
+import craftsmanshipSection from './schemas/craftsmanshipSection'
 import testimonial from './schemas/testimonial'
 import homepage from './schemas/homepage'
 import workshop from './schemas/workshop'
@@ -19,6 +20,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     category,
     product,
     craftsmanshipStep,
+    craftsmanshipSection,
     testimonial,
     homepage,
     workshop,

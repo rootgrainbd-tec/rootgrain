@@ -54,7 +54,16 @@ export const structure: StructureResolver = (S) =>
             .title('Workshop')
             .items([
               S.documentTypeListItem('workshop').title('Workshop'),
-              S.documentTypeListItem('craftsmanshipStep').title('Craftsmanship').icon(ComponentIcon),
+              S.listItem()
+                .title('Craftsmanship Section')
+                .id('craftsmanshipSection')
+                .icon(ComponentIcon)
+                .child(
+                  S.document()
+                    .schemaType('craftsmanshipSection')
+                    .documentId('craftsmanshipSection')
+                ),
+              S.documentTypeListItem('craftsmanshipStep').title('Craftsmanship Steps').icon(ComponentIcon),
             ])
         ),
       S.listItem()
