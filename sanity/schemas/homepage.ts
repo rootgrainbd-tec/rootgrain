@@ -157,6 +157,21 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: 'lifestyleCtaLabel',
+      title: 'Lifestyle CTA Label',
+      type: 'string',
+      group: 'lifestyle',
+      description: 'Optional label for the lifestyle CTA button. Defaults to "Explore Spaces".',
+      initialValue: 'Explore Spaces',
+    }),
+    defineField({
+      name: 'lifestyleCtaUrl',
+      title: 'Lifestyle CTA URL',
+      type: 'string',
+      group: 'lifestyle',
+      description: 'Optional valid internal or external destination URL (e.g. "/collection" or "/#house-and-home"). Do not prefill with a fake route. If left empty, the button acts as non-navigational.',
+    }),
+    defineField({
       name: 'lifestyleCards',
       title: 'Lifestyle Cards',
       type: 'array',

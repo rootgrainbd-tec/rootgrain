@@ -98,6 +98,8 @@ export interface SanityHomepage {
   lifestyleImage?: SanityImage;
   lifestyleVideo?: SanityMuxVideo;
   lifestyleSpace?: string;
+  lifestyleCtaLabel?: string;
+  lifestyleCtaUrl?: string;
   lifestyleCards?: Array<{
     image?: SanityImage & { alt?: string };
     title?: string;

@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
 import { UnifiedMedia } from "@/components/media/UnifiedMedia";
 import { Button } from "@/components/ui/button";
 import type { SanityHomepage } from "@/types/sanity";
@@ -60,9 +61,17 @@ export function LifestyleInteriorsSection({ data }: { data?: SanityHomepage | an
               <p className="text-[var(--ivory)]/70 text-sm tracking-wider uppercase mb-2">Featured Space</p>
               <p className="font-serif text-2xl text-[var(--ivory)]">{data?.lifestyleSpace || "A Japandi Dining Room"}</p>
             </div>
-            <Button className="bg-[var(--ivory)] text-[var(--walnut-dark)] hover:bg-[var(--gold)] rounded-none px-6 py-4 text-sm tracking-wider uppercase">
-              Explore Spaces
-            </Button>
+            {data?.lifestyleCtaUrl ? (
+              <Link href={data.lifestyleCtaUrl}>
+                <Button className="bg-[var(--ivory)] text-[var(--walnut-dark)] hover:bg-[var(--gold)] rounded-none px-6 py-4 text-sm tracking-wider uppercase">
+                  {data?.lifestyleCtaLabel || "Explore Spaces"}
+                </Button>
+              </Link>
+            ) : (
+              <Button className="bg-[var(--ivory)] text-[var(--walnut-dark)] hover:bg-[var(--gold)] rounded-none px-6 py-4 text-sm tracking-wider uppercase">
+                {data?.lifestyleCtaLabel || "Explore Spaces"}
+              </Button>
+            )}
           </div>
         </motion.div>
 
