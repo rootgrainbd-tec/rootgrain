@@ -51,8 +51,8 @@ export function Navigation({ config }: { config: SiteConfig }) {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className={`flex items-center justify-between transition-all duration-500 ${isScrolled ? "h-16" : "h-28"}`}>
             {/* Brand Logo & Name */}
-            <div className="flex items-center gap-2 z-10 shrink-0">
-              <Link href="/" className={`relative shrink-0 transition-all duration-500 ${isScrolled ? "w-[50px] h-[50px]" : "w-[90px] h-[90px] lg:w-[120px] lg:h-[120px]"}`}>
+            <div className="flex items-center gap-2 z-10 min-w-0">
+              <Link href="/" className={`relative shrink-0 transition-all duration-500 ${isScrolled ? "w-[40px] h-[40px] sm:w-[50px] sm:h-[50px]" : "w-[60px] h-[60px] sm:w-[90px] sm:h-[90px] lg:w-[120px] lg:h-[120px]"}`}>
                 <Image
                   src={isDarkText ? brand.getDarkLogo() : brand.getLogo()}
                   alt={`${brand.getCompanyName()} Logo`}
@@ -60,14 +60,14 @@ export function Navigation({ config }: { config: SiteConfig }) {
                   className="object-contain"
                 />
               </Link>
-              <Link href="/" className="flex flex-col justify-center group overflow-hidden">
-                <span className={`font-serif font-semibold tracking-wide leading-tight transition-all duration-500 ${
-                  isDarkText ? "text-xl text-[var(--walnut)]" : "text-2xl text-[var(--ivory)]"
+              <Link href="/" className="flex flex-col justify-center group overflow-hidden min-w-0">
+                <span className={`font-serif font-semibold tracking-wide leading-tight transition-all duration-500 whitespace-nowrap ${
+                  isDarkText ? "text-lg sm:text-xl text-[var(--walnut)]" : "text-xl sm:text-2xl text-[var(--ivory)]"
                 }`}>
                   {config.name.toUpperCase()}
                 </span>
-                <span className={`uppercase leading-tight transition-all duration-500 overflow-hidden ${
-                  isDarkText ? "text-[0px] tracking-[0px] opacity-0 h-0" : "text-xs tracking-[0.3em] opacity-100 h-4 mt-0.5 text-[var(--ivory)]/70"
+                <span className={`uppercase leading-tight transition-all duration-500 ${
+                  isDarkText ? "text-[0px] tracking-[0px] opacity-0 h-0" : "text-[10px] sm:text-xs tracking-wider sm:tracking-[0.3em] opacity-100 h-4 mt-0.5 text-[var(--ivory)]/70 hidden sm:block truncate"
                 }`}>
                   {config.tagline}
                 </span>
@@ -180,9 +180,9 @@ export function Navigation({ config }: { config: SiteConfig }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[var(--walnut-dark)]"
+            className="fixed inset-x-0 top-0 h-[100dvh] z-50 bg-[var(--walnut-dark)]"
           >
-            <div className="flex flex-col h-full p-6">
+            <div className="flex flex-col h-full px-6 pt-[max(env(safe-area-inset-top),1.5rem)] pb-[max(env(safe-area-inset-bottom),1.5rem)]">
               <div className="flex justify-end">
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}

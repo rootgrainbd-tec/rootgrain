@@ -22,7 +22,7 @@ export function HeroSection({ data }: { data?: SanityHomepage }) {
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
   return (
-    <section ref={ref} className="relative h-screen min-h-[700px] overflow-hidden">
+    <section ref={ref} className="relative flex items-center justify-center min-h-[100dvh] md:min-h-[700px] overflow-hidden py-24 md:py-0">
       {/* Background Image */}
       <motion.div style={{ y, willChange: "transform" }} className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-b from-[var(--walnut-dark)]/60 via-[var(--walnut-dark)]/40 to-[var(--cream)] z-10" />
@@ -43,7 +43,7 @@ export function HeroSection({ data }: { data?: SanityHomepage }) {
       {/* Content */}
       <motion.div
         style={{ opacity, willChange: "opacity" }}
-        className="relative z-20 h-full flex flex-col items-center justify-center text-center px-6"
+        className="relative z-20 w-full flex flex-col items-center justify-center text-center px-6"
       >
 
 
@@ -69,7 +69,7 @@ export function HeroSection({ data }: { data?: SanityHomepage }) {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="flex flex-col sm:flex-row gap-4 mt-12 translate-y-24 md:translate-y-32"
+          className="flex flex-col sm:flex-row gap-4 mt-8 md:mt-12 md:translate-y-32"
         >
           <Link href="/collection">
             <Button className="w-full sm:w-auto bg-[var(--gold)] hover:bg-[var(--gold-light)] text-[var(--walnut-dark)] px-8 py-6 rounded-none text-sm tracking-wider uppercase font-semibold">

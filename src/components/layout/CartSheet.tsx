@@ -105,7 +105,7 @@ export function CartSheet({ isScrolled }: CartSheetProps) {
               ))}
             </div>
 
-            <div className="border-t border-[var(--walnut-light)]/20 pt-6 pb-2 px-1">
+            <div className="border-t border-[var(--walnut-light)]/20 pt-6 pb-[max(env(safe-area-inset-bottom),1rem)] px-1">
               <div className="flex justify-between items-center mb-6">
                 <span className="text-[var(--walnut)] uppercase text-sm tracking-widest font-medium">Subtotal</span>
                 <span className="text-[var(--walnut-dark)] font-sans text-xl font-medium tracking-tight">
