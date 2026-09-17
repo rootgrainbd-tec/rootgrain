@@ -113,8 +113,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const exactHeroUrl = product.heroUrl || validHeroImageUrl;
   const fallbackHeroUrl = exactHeroUrl || videoThumbnailUrl || "/placeholder.jpg";
   const desc = product.shortDescription || '';
-  const isAvailable = prismaProduct ? (prismaProduct.isActive && prismaProduct.inStock) : (product.inStock ?? (product.availability === 'Available'));
-  const isMto = Boolean(prismaProduct?.isActive && prismaProduct?.isMto);
+  const hasCommerceRecord = Boolean(prismaProduct);
+  const isAvailable = hasCommerceRecord && Boolean(prismaProduct?.isActive && prismaProduct?.inStock);
+  const isMto = hasCommerceRecord && Boolean(prismaProduct?.isActive && prismaProduct?.isMto);
 
   return (
     <main className="min-h-screen bg-[var(--ivory)]">
@@ -168,7 +169,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               )}
               <div>
                 <span className="block text-xs tracking-wider uppercase text-[var(--walnut-light)] mb-1">Availability</span>
-                <span className="text-[var(--walnut-dark)]">{isMto ? "Made to Order" : (isAvailable ? "In Stock" : "Out of Stock")}</span>
+                <span className="text-[var(--walnut-dark)]">
+                  {isMto ? "Made to Order" : (hasCommerceRecord ? (isAvailable ? "In Stock" : "Out of Stock") : "Unavailable")}
+                </span>
               </div>
             </div>
 
