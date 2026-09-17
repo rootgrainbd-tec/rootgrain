@@ -42,6 +42,12 @@ export interface Product {
   cardMedia?: ProductCardMediaData;
 }
 
+export interface CommerceAwareProduct extends Product {
+  hasCommerceRecord: boolean;
+  isMto: boolean;
+  isActive: boolean;
+}
+
 export type ProductCategory = string;
 
 export const PRODUCT_CATEGORIES = [

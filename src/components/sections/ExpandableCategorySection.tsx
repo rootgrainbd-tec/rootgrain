@@ -7,19 +7,48 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Product, PRODUCT_CATEGORY_LABELS, formatPrice } from "@/types/product";
+import { Product, CommerceAwareProduct, PRODUCT_CATEGORY_LABELS, formatPrice } from "@/types/product";
 import { ProductCardMedia } from "@/components/product/ProductCardMedia";
+import { useCartStore } from "@/store/useCartStore";
+import { toast } from "sonner";
 
 export function ExpandableCategorySection({ 
   products,
   tabGroups 
 }: { 
-  products: Product[],
+  products: CommerceAwareProduct[],
   tabGroups: { id: string, label: string, slug: string, categories: string[] }[]
 }) {
   const router = useRouter();
+  const addItem = useCartStore((state) => state.addItem);
+  const [addingId, setAddingId] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
+
+  const handleQuickAdd = (e: React.MouseEvent, product: CommerceAwareProduct) => {
+    // Authoritative check immediately before adding
+    if (!product.hasCommerceRecord || product.isMto || !product.isActive || !product.inStock) {
+      return;
+    }
+    
+    if (addingId === product.id) return;
+    
+    setAddingId(product.id);
+    
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      quantity: 1,
+    });
+    
+    toast.success("Added to cart!");
+    
+    setTimeout(() => {
+      setAddingId(null);
+    }, 500);
+  };
 
   // If a group is active, filter by that group. Otherwise, show top 6 products as default.
   const currentGroup = tabGroups.find(g => g.id === activeGroup);
@@ -114,41 +143,60 @@ export function ExpandableCategorySection({
                     No products found in this category.
                   </motion.div>
                 ) : (
-                  filteredProducts.map((product, index) => (
-                    <motion.div
-                      key={product.id}
-                      initial={{ opacity: 0, scale: 0.97 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.97 }}
-                      transition={{ duration: 0.3, delay: index * 0.04 }}
-                      className="group cursor-pointer flex flex-col"
-                    >
-                      <div className="relative aspect-[4/5] overflow-hidden mb-4 bg-[var(--parchment)]">
-                        <ProductCardMedia mediaData={product.cardMedia} altText={product.name} />
-                        <Link href={`/product/${product.slug}`} className="absolute inset-0 z-10">
-                          <span className="sr-only">View Details</span>
+                  filteredProducts.map((product, index) => {
+                    const isQuickAddEligible = 
+                      product.hasCommerceRecord && 
+                      !product.isMto && 
+                      product.isActive && 
+                      product.inStock;
+
+                    return (
+                      <motion.div
+                        key={product.id}
+                        initial={{ opacity: 0, scale: 0.97 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.97 }}
+                        transition={{ duration: 0.3, delay: index * 0.04 }}
+                        className="group cursor-pointer flex flex-col"
+                      >
+                        <div className="relative aspect-[4/5] overflow-hidden mb-4 bg-[var(--parchment)]">
+                          <ProductCardMedia mediaData={product.cardMedia} altText={product.name} />
+                          <Link href={`/product/${product.slug}`} className="absolute inset-0 z-10">
+                            <span className="sr-only">View Details</span>
+                          </Link>
+                          <div className="absolute inset-0 bg-[var(--walnut-dark)]/0 group-hover:bg-[var(--walnut-dark)]/10 transition-colors duration-500" />
+                          <div className="absolute bottom-4 left-4 right-4 flex gap-2 z-20 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-500">
+                            <Link href={`/product/${product.slug}`} className="flex-1" tabIndex={-1}>
+                              <Button className="w-full bg-[var(--ivory)] text-[var(--walnut-dark)] hover:bg-[var(--gold)] hover:text-[var(--ivory)] rounded-none py-4 text-[10px] sm:text-xs tracking-wider uppercase transition-colors">
+                                View Details
+                              </Button>
+                            </Link>
+                            {isQuickAddEligible && (
+                              <Button 
+                                onClick={(e) => handleQuickAdd(e, product)}
+                                disabled={addingId === product.id}
+                                className="flex-1 bg-[var(--walnut-dark)] text-[var(--ivory)] hover:bg-[var(--gold)] rounded-none py-4 text-[10px] sm:text-xs tracking-wider uppercase transition-colors"
+                              >
+                                {addingId === product.id ? "Adding..." : "Quick Add"}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        <Link href={`/product/${product.slug}`} className="flex flex-col flex-grow">
+                          <span className="text-[var(--gold)] text-[10px] tracking-[0.2em] uppercase mb-1">
+                            {PRODUCT_CATEGORY_LABELS[product.category] || product.category}
+                          </span>
+                          <h3 className="font-serif text-lg text-[var(--walnut-dark)] mb-2 group-hover:text-[var(--oxblood)] transition-colors line-clamp-1">
+                            {product.name}
+                          </h3>
+                          <div className="mt-auto flex items-center justify-between text-sm">
+                            <span className="text-[var(--walnut)] text-xs">{product.wood}</span>
+                            <span className="font-serif text-base text-[var(--walnut-dark)]">{formatPrice(product.price)}</span>
+                          </div>
                         </Link>
-                        <div className="absolute inset-0 bg-[var(--walnut-dark)]/0 group-hover:bg-[var(--walnut-dark)]/10 transition-colors duration-500" />
-                        <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                          <Button className="w-full bg-[var(--ivory)] text-[var(--walnut-dark)] hover:bg-[var(--gold)] rounded-none py-4 text-xs tracking-wider uppercase">
-                            View Details
-                          </Button>
-                        </div>
-                      </div>
-                      <Link href={`/product/${product.slug}`} className="flex flex-col flex-grow">
-                        <span className="text-[var(--gold)] text-[10px] tracking-[0.2em] uppercase mb-1">
-                          {PRODUCT_CATEGORY_LABELS[product.category] || product.category}
-                        </span>
-                        <h3 className="font-serif text-lg text-[var(--walnut-dark)] mb-2 group-hover:text-[var(--oxblood)] transition-colors line-clamp-1">
-                          {product.name}
-                        </h3>
-                        <div className="mt-auto flex items-center justify-between text-sm">
-                          <span className="text-[var(--walnut)] text-xs">{product.wood}</span>
-                          <span className="font-serif text-base text-[var(--walnut-dark)]">{formatPrice(product.price)}</span>
-                        </div>
-                      </Link>
-                    </motion.div>
-                  ))
+                      </motion.div>
+                    );
+                  })
                 )}
               </AnimatePresence>
             </motion.div>

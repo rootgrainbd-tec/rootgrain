@@ -13,6 +13,7 @@ import type { Product, ProductCategory, WoodType } from "@/types/product";
 import { client } from "../../../sanity/lib/client";
 import { urlForImage } from "../../../sanity/lib/image";
 import type { SanityProduct, SanityTestimonial, SanityHomepage, SanityCraftsmanshipStep, SanityWorkshop, SanityCraftsmanshipSection } from "@/types/sanity";
+import { CatalogService } from "@/services/catalog.service";
 
 // Optional: Set revalidation time if using ISR
 export const revalidate = 60;
@@ -76,7 +77,7 @@ export default async function RootGrainHome() {
     };
   });
 
-  const products: Product[] = sanityMappedProducts;
+  const products = await CatalogService.enrichProducts(sanityMappedProducts);
 
   const testimonials = sanityTestimonials.map((t: any) => ({
     quote: t.quote,
