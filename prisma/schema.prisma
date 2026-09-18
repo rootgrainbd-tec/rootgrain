@@ -26,6 +26,8 @@ model Product {
   featured                   Boolean     @default(false)
   createdAt                  DateTime    @default(now())
   updatedAt                  DateTime    @updatedAt
+  sanityUpdatedAt            DateTime?
+  lastSyncedAt               DateTime?
   shippingType               String?
   isMto                      Boolean     @default(false)
   baseLeadTimeDays           Int         @default(30)
