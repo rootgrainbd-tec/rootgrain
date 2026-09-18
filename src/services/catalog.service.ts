@@ -3,6 +3,14 @@ import type { Product, CommerceAwareProduct } from "@/types/product";
 
 export class CatalogService {
   /**
+   * Enriches a single Sanity product with authoritative commerce state from PostgreSQL.
+   */
+  static async enrichProduct(product: Product): Promise<CommerceAwareProduct> {
+    const [enriched] = await this.enrichProducts([product]);
+    return enriched;
+  }
+
+  /**
    * Enriches an array of Sanity products with authoritative commerce state from PostgreSQL.
    */
   static async enrichProducts(products: Product[]): Promise<CommerceAwareProduct[]> {
@@ -37,7 +45,11 @@ export class CatalogService {
         isMto: Boolean(dbProduct?.isActive && dbProduct?.isMto),
         
         // Expose exact Active status from DB, preserving "available" fallback if missing
-        isActive: dbProduct ? dbProduct.isActive : true, 
+        isActive: dbProduct ? dbProduct.isActive : true,
+
+        // Expose exact lead times from DB
+        baseLeadTimeDays: dbProduct?.baseLeadTimeDays,
+        additionalUnitLeadTimeDays: dbProduct?.additionalUnitLeadTimeDays,
       };
     });
   }

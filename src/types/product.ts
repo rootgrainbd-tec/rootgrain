@@ -46,6 +46,8 @@ export interface CommerceAwareProduct extends Product {
   hasCommerceRecord: boolean;
   isMto: boolean;
   isActive: boolean;
+  baseLeadTimeDays?: number;
+  additionalUnitLeadTimeDays?: number;
 }
 
 export type ProductCategory = string;
