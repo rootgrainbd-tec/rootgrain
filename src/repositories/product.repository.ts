@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
 export class ProductRepository {
-  static async upsertProductBySanityId(sanityId: string, data: Partial<Prisma.ProductCreateInput> & { slug: string }) {
+  static async upsertProductBySanityId(sanityId: string, data: Partial<Prisma.ProductCreateInput> & { slug: string, sanityUpdatedAt?: Date, lastSyncedAt?: Date }) {
     if (!sanityId) throw new Error("sanityId is required");
 
     // Handle Prisma unique slug collision explicitly
@@ -32,6 +32,8 @@ export class ProductRepository {
         baseLeadTimeDays: (typeof data.baseLeadTimeDays === "number" && Number.isInteger(data.baseLeadTimeDays) && data.baseLeadTimeDays > 0) ? data.baseLeadTimeDays : 30,
         additionalUnitLeadTimeDays: (typeof data.additionalUnitLeadTimeDays === "number" && Number.isInteger(data.additionalUnitLeadTimeDays) && data.additionalUnitLeadTimeDays > 0) ? data.additionalUnitLeadTimeDays : 10,
         isActive: true,
+        sanityUpdatedAt: data.sanityUpdatedAt,
+        lastSyncedAt: data.lastSyncedAt,
       },
       create: {
         sanityId,
@@ -49,6 +51,8 @@ export class ProductRepository {
         baseLeadTimeDays: (typeof data.baseLeadTimeDays === "number" && Number.isInteger(data.baseLeadTimeDays) && data.baseLeadTimeDays > 0) ? data.baseLeadTimeDays : 30,
         additionalUnitLeadTimeDays: (typeof data.additionalUnitLeadTimeDays === "number" && Number.isInteger(data.additionalUnitLeadTimeDays) && data.additionalUnitLeadTimeDays > 0) ? data.additionalUnitLeadTimeDays : 10,
         isActive: true,
+        sanityUpdatedAt: data.sanityUpdatedAt,
+        lastSyncedAt: data.lastSyncedAt,
       },
     });
   }
@@ -59,7 +63,7 @@ export class ProductRepository {
     });
   }
 
-  static async archiveProductBySanityId(sanityId: string) {
+  static async archiveProductBySanityId(sanityId: string, lastSyncedAt?: Date) {
     if (!sanityId) throw new Error("sanityId is required");
     const existing = await prisma.product.findUnique({ where: { sanityId } });
     
@@ -73,7 +77,10 @@ export class ProductRepository {
 
     await prisma.product.update({
       where: { sanityId },
-      data: { isActive: false },
+      data: {
+        isActive: false,
+        lastSyncedAt: lastSyncedAt,
+      },
     });
 
     return "ARCHIVED";

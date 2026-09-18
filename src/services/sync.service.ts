@@ -48,6 +48,7 @@ export class SyncService {
     
     const query = `*[_type == "product" && _id == $id && !(_id in path("drafts.**"))][0] {
       _id,
+      _updatedAt,
       "name": title,
       "slug": slug.current,
       "category": category->name,
@@ -83,7 +84,8 @@ export class SyncService {
 
       if (!confirmationProduct || !confirmationProduct.slug) {
         logger.info({ sanityId: canonicalSanityId }, "Product confirmed absent in Sanity. Archiving.");
-        const archiveResult = await ProductRepository.archiveProductBySanityId(canonicalSanityId);
+        const lastSyncedAt = new Date();
+        const archiveResult = await ProductRepository.archiveProductBySanityId(canonicalSanityId, lastSyncedAt);
         return archiveResult as ReconciliationResult;
       }
 
@@ -110,6 +112,15 @@ export class SyncService {
     if (!sanityProduct.category) throw new Error("Missing required field: category");
     if (!sanityProduct.image) throw new Error("Missing required field: image/heroImage");
 
+    // Validate _updatedAt
+    if (!sanityProduct._updatedAt) {
+      throw new Error("Missing required field: _updatedAt from Sanity");
+    }
+    const sanityUpdatedAt = new Date(sanityProduct._updatedAt);
+    if (isNaN(sanityUpdatedAt.getTime())) {
+      throw new Error(`Invalid _updatedAt date format from Sanity: ${sanityProduct._updatedAt}`);
+    }
+
     // Map woodTypes to legacy database wood format
     sanityProduct.wood = Array.isArray(sanityProduct.woodTypes) && sanityProduct.woodTypes.length > 0
       ? sanityProduct.woodTypes.join(" · ")
@@ -127,6 +138,10 @@ export class SyncService {
     sanityProduct.inStock = inStock;
     sanityProduct.baseLeadTimeDays = baseLeadTimeDays;
     sanityProduct.additionalUnitLeadTimeDays = additionalUnitLeadTimeDays;
+    sanityProduct.sanityUpdatedAt = sanityUpdatedAt;
+
+    const lastSyncedAt = new Date();
+    sanityProduct.lastSyncedAt = lastSyncedAt;
 
     await ProductRepository.upsertProductBySanityId(canonicalSanityId, sanityProduct);
 
