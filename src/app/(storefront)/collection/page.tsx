@@ -7,6 +7,7 @@ import type { Product, ProductCategory, WoodType } from "@/types/product";
 import type { SanityProduct } from "@/types/sanity";
 import { client } from "../../../../sanity/lib/client";
 import { urlForImage } from "../../../../sanity/lib/image";
+import { CatalogService } from "@/services/catalog.service";
 
 export const dynamic = 'force-dynamic';
 
@@ -112,12 +113,14 @@ export default async function CollectionPage(
     };
   });
 
+  const enrichedProducts = await CatalogService.enrichProducts(products);
+
   return (
     <main className="min-h-screen pt-24 bg-[var(--ivory)]">
       <Navigation config={SITE_CONFIG} />
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
         <CollectionClient 
-          products={products} 
+          products={enrichedProducts}
           totalPages={totalPages}
           currentPage={currentPage}
           uniqueCategories={uniqueCategories}
