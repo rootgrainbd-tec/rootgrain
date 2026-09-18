@@ -77,7 +77,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       _id, name, title, slug, category->{name}, price, heroImage
     }`, { category: product.category.name, slug: resolvedParams.slug });
     
-    relatedProducts = related.map((p: any) => ({
+    const mappedRelated = related.map((p: any) => ({
       id: p._id,
       slug: p.slug?.current || '',
       name: p.name || p.title || '',
@@ -85,6 +85,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       price: p.price || 0,
       image: p.heroImage?.asset ? urlForImage(p.heroImage).url() : "/placeholder.jpg",
     }));
+
+    relatedProducts = await CatalogService.enrichProducts(mappedRelated);
   }
 
   if (!product) {
