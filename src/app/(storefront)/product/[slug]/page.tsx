@@ -5,7 +5,7 @@ import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { getSiteConfig } from "@/data/site-config";
 import { formatPrice, PRODUCT_CATEGORY_LABELS } from "@/types/product";
-import prisma from "@/lib/prisma";
+import { CatalogService } from "@/services/catalog.service";
 import { ProductActions } from "@/components/product/ProductActions";
 import { ProductGallery } from "@/components/sections/ProductGallery";
 import { ProductReviews } from "@/components/product/ProductReviews";
@@ -92,12 +92,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   }
 
   const name = product.name || product.title || '';
-  const prismaProduct = await prisma.product.findUnique({
-    where: { slug: resolvedParams.slug },
-    select: { isMto: true, price: true, inStock: true, isActive: true, baseLeadTimeDays: true, additionalUnitLeadTimeDays: true }
+  
+  // Resolve commerce state through the shared CatalogService
+  const enrichedProduct = await CatalogService.enrichProduct({
+    ...product,
+    slug: resolvedParams.slug
   });
 
-  const price = prismaProduct ? prismaProduct.price : (product.price || 0);
+  const price = enrichedProduct.price;
   const comparePrice = product.comparePrice;
   const rawCategory = product.category?.name || '';
   const categoryLabel = PRODUCT_CATEGORY_LABELS[rawCategory] || rawCategory;
@@ -113,9 +115,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const exactHeroUrl = product.heroUrl || validHeroImageUrl;
   const fallbackHeroUrl = exactHeroUrl || videoThumbnailUrl || "/placeholder.jpg";
   const desc = product.shortDescription || '';
-  const hasCommerceRecord = Boolean(prismaProduct);
-  const isAvailable = hasCommerceRecord && Boolean(prismaProduct?.isActive && prismaProduct?.inStock);
-  const isMto = hasCommerceRecord && Boolean(prismaProduct?.isActive && prismaProduct?.isMto);
+  
+  const hasCommerceRecord = enrichedProduct.hasCommerceRecord;
+  const isAvailable = hasCommerceRecord && Boolean(enrichedProduct.isActive && enrichedProduct.inStock);
+  const isMto = enrichedProduct.isMto;
 
   return (
     <main className="min-h-screen bg-[var(--ivory)]">
@@ -185,8 +188,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 isMto: isMto
               }}
               whatsappNumber={SITE_CONFIG.support.phone.whatsapp}
-              baseLeadTimeDays={prismaProduct?.baseLeadTimeDays}
-              additionalUnitLeadTimeDays={prismaProduct?.additionalUnitLeadTimeDays}
+              baseLeadTimeDays={enrichedProduct.baseLeadTimeDays}
+              additionalUnitLeadTimeDays={enrichedProduct.additionalUnitLeadTimeDays}
             />
           </div>
         </div>
