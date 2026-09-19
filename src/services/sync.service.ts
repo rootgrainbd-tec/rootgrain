@@ -3,6 +3,7 @@ import { ProductRepository } from "@/repositories/product.repository";
 import { client } from "../../sanity/lib/client";
 import { logger } from "@/lib/logger";
 import prisma from "@/lib/prisma";
+import { mapSanityToCommerceProjection } from "@/lib/commerce/product-projection";
 
 export type ReconciliationResult = "CREATED" | "UPDATED" | "REACTIVATED" | "ARCHIVED" | "NO_OP";
 
@@ -97,53 +98,17 @@ export class SyncService {
     // Map Product and Upsert
     // To accurately return CREATED / UPDATED / REACTIVATED, we peek first:
     const existing = await prisma.product.findUnique({ where: { sanityId: canonicalSanityId } });
-    
-    // Format dimensions object to a string before passing to Prisma
-    if (sanityProduct.dimensions && typeof sanityProduct.dimensions === 'object') {
-      const d = sanityProduct.dimensions;
-      sanityProduct.dimensions = d.length && d.width && d.height 
-        ? `${d.length}" L × ${d.width}" W × ${d.height}" H`
-        : "Unknown";
-    }
-
-    // Validate required fields explicitly to prevent silent fallbacks for malformed data
-    if (!sanityProduct.name) throw new Error("Missing required field: name/title");
-    if (sanityProduct.price === null || sanityProduct.price === undefined) throw new Error("Missing required field: price");
-    if (!sanityProduct.category) throw new Error("Missing required field: category");
-    if (!sanityProduct.image) throw new Error("Missing required field: image/heroImage");
-
-    // Validate _updatedAt
-    if (!sanityProduct._updatedAt) {
-      throw new Error("Missing required field: _updatedAt from Sanity");
-    }
-    const sanityUpdatedAt = new Date(sanityProduct._updatedAt);
-    if (isNaN(sanityUpdatedAt.getTime())) {
-      throw new Error(`Invalid _updatedAt date format from Sanity: ${sanityProduct._updatedAt}`);
-    }
-
-    // Map woodTypes to legacy database wood format
-    sanityProduct.wood = Array.isArray(sanityProduct.woodTypes) && sanityProduct.woodTypes.length > 0
-      ? sanityProduct.woodTypes.join(" · ")
-      : undefined;
-
-    // Phase 6 MTO Projection Contract
-    const isMto = sanityProduct.availability === "Made-to-Order";
-    const inStock = sanityProduct.availability !== "Sold";
-    const baseLeadTimeDays = (typeof sanityProduct.leadTimeDays === "number" && Number.isInteger(sanityProduct.leadTimeDays) && sanityProduct.leadTimeDays > 0)
-      ? sanityProduct.leadTimeDays
-      : 30;
-    const additionalUnitLeadTimeDays = 10;
-
-    sanityProduct.isMto = isMto;
-    sanityProduct.inStock = inStock;
-    sanityProduct.baseLeadTimeDays = baseLeadTimeDays;
-    sanityProduct.additionalUnitLeadTimeDays = additionalUnitLeadTimeDays;
-    sanityProduct.sanityUpdatedAt = sanityUpdatedAt;
+    const mappedProduct = mapSanityToCommerceProjection(sanityProduct);
 
     const lastSyncedAt = new Date();
-    sanityProduct.lastSyncedAt = lastSyncedAt;
+    // Merge mapped data with properties that sync service owns
+    const dbPayload = {
+      ...mappedProduct,
+      additionalUnitLeadTimeDays: 10,
+      lastSyncedAt,
+    };
 
-    await ProductRepository.upsertProductBySanityId(canonicalSanityId, sanityProduct);
+    await ProductRepository.upsertProductBySanityId(canonicalSanityId, dbPayload);
 
     if (!existing) {
       return "CREATED";
