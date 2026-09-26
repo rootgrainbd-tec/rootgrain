@@ -34,6 +34,8 @@ model Product {
   additionalUnitLeadTimeDays Int         @default(10)
   orderItems                 OrderItem[]
 
+  version                    Int         @default(1)
+
   @@index([featured])
 }
 

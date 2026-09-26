@@ -16,7 +16,7 @@ const { mockPrisma } = vi.hoisted(() => {
       findUnique: vi.fn(),
       findMany: vi.fn(),
     },
-    $transaction: vi.fn(),
+    $transaction: vi.fn(async (cb) => cb(mock)),
   };
   return { mockPrisma: mock };
 });
@@ -72,8 +72,8 @@ describe("MTO Checkout Decoupling and Hardening Suite", () => {
     let createdOrderData: any = null;
     vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback: any) => {
       const txMock = {
-        product: { findUnique: vi.fn() },
-        promoCode: { findUnique: vi.fn() },
+        product: mockPrisma.product,
+        promoCode: { findUnique: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
         orderEvent: {
           aggregate: vi.fn().mockResolvedValue({ _max: { sequence: 0 } }),
           create: vi.fn().mockResolvedValue({}),
@@ -422,7 +422,8 @@ describe("MTO Checkout Decoupling and Hardening Suite", () => {
     let createdOrderData: any = null;
     vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback: any) => {
       const txMock = {
-        promoCode: { findUnique: vi.fn() },
+        product: mockPrisma.product,
+        promoCode: { findUnique: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
         orderEvent: {
           aggregate: vi.fn().mockResolvedValue({ _max: { sequence: 0 } }),
           create: vi.fn().mockResolvedValue({}),
@@ -551,8 +552,8 @@ describe("MTO Checkout Decoupling and Hardening Suite", () => {
       transactionStarted = true;
       expect(getSiteConfigCalled).toBe(true); // getSiteConfig must have finished BEFORE tx started
       const txMock = {
-        product: { findUnique: vi.fn() },
-        promoCode: { findUnique: vi.fn() },
+        product: mockPrisma.product,
+        promoCode: { findUnique: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
         orderEvent: {
           aggregate: vi.fn().mockResolvedValue({ _max: { sequence: 0 } }),
           create: vi.fn().mockResolvedValue({}),

@@ -34,6 +34,7 @@ describe("SyncService Contract Tests", () => {
 
   it("missing required field throws safely", async () => {
     (vi.mocked(client.fetch) as any).mockResolvedValueOnce({
+      _updatedAt: '2026-09-26T00:00:00Z',
       _id: "missing-price",
       name: "Valid Title",
       slug: "valid-slug",
@@ -59,6 +60,7 @@ describe("SyncService Contract Tests", () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(null);
 
     (vi.mocked(client.fetch) as any).mockResolvedValueOnce({
+      _updatedAt: '2026-09-26T00:00:00Z',
       _id: "valid-id",
       name: "Valid Title",
       slug: "valid-slug",
@@ -98,6 +100,7 @@ describe("SyncService Contract Tests", () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(null);
 
     (vi.mocked(client.fetch) as any).mockResolvedValueOnce({
+      _updatedAt: '2026-09-26T00:00:00Z',
       _id: "mto-id",
       name: "MTO Artisan Desk",
       slug: "mto-artisan-desk",
@@ -134,6 +137,7 @@ describe("SyncService Contract Tests", () => {
 
     // Exact RG-001 Sanity document shape
     (vi.mocked(client.fetch) as any).mockResolvedValueOnce({
+      _updatedAt: '2026-09-26T00:00:00Z',
       _id: "clPgbyXUNMJiWikZuWZubV",
       name: "RG-001 Center Coffee Table",
       slug: "rg-001-center-coffee-table",
@@ -168,6 +172,7 @@ describe("SyncService Contract Tests", () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(null);
 
     (vi.mocked(client.fetch) as any).mockResolvedValueOnce({
+      _updatedAt: '2026-09-26T00:00:00Z',
       _id: "mto-undef",
       name: "MTO Undefined Lead",
       slug: "mto-undef-lead",
@@ -197,6 +202,7 @@ describe("SyncService Contract Tests", () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(null);
 
     (vi.mocked(client.fetch) as any).mockResolvedValueOnce({
+      _updatedAt: '2026-09-26T00:00:00Z',
       _id: "mto-zero",
       name: "MTO Zero Lead",
       slug: "mto-zero-lead",
@@ -226,6 +232,7 @@ describe("SyncService Contract Tests", () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(null);
 
     (vi.mocked(client.fetch) as any).mockResolvedValueOnce({
+      _updatedAt: '2026-09-26T00:00:00Z',
       _id: "mto-one",
       name: "MTO One Day Lead",
       slug: "mto-one-lead",
@@ -255,6 +262,7 @@ describe("SyncService Contract Tests", () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(null);
 
     (vi.mocked(client.fetch) as any).mockResolvedValueOnce({
+      _updatedAt: '2026-09-26T00:00:00Z',
       _id: "mto-thirty",
       name: "MTO Thirty Day Lead",
       slug: "mto-thirty-lead",
@@ -283,6 +291,7 @@ describe("SyncService Contract Tests", () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(null);
 
     (vi.mocked(client.fetch) as any).mockResolvedValueOnce({
+      _updatedAt: '2026-09-26T00:00:00Z',
       _id: "mto-neg",
       name: "MTO Negative Lead",
       slug: "mto-neg-lead",
@@ -311,6 +320,7 @@ describe("SyncService Contract Tests", () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(null);
 
     (vi.mocked(client.fetch) as any).mockResolvedValueOnce({
+      _updatedAt: '2026-09-26T00:00:00Z',
       _id: "mto-dec-1",
       name: "MTO Dec 1",
       slug: "mto-dec-1",
@@ -336,6 +346,7 @@ describe("SyncService Contract Tests", () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(null);
 
     (vi.mocked(client.fetch) as any).mockResolvedValueOnce({
+      _updatedAt: '2026-09-26T00:00:00Z',
       _id: "mto-dec-2",
       name: "MTO Dec 2",
       slug: "mto-dec-2",
@@ -363,6 +374,7 @@ describe("SyncService Contract Tests", () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(null);
 
     (vi.mocked(client.fetch) as any).mockResolvedValueOnce({
+      _updatedAt: '2026-09-26T00:00:00Z',
       _id: "mto-nan",
       name: "MTO NaN Lead",
       slug: "mto-nan-lead",
@@ -388,6 +400,7 @@ describe("SyncService Contract Tests", () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(null);
 
     (vi.mocked(client.fetch) as any).mockResolvedValueOnce({
+      _updatedAt: '2026-09-26T00:00:00Z',
       _id: "mto-inf",
       name: "MTO Inf Lead",
       slug: "mto-inf-lead",
@@ -416,6 +429,7 @@ describe("SyncService Contract Tests", () => {
     vi.mocked(prisma.product.findUnique).mockResolvedValueOnce({ id: "sold-id", isActive: true } as any);
 
     (vi.mocked(client.fetch) as any).mockResolvedValueOnce({
+      _updatedAt: '2026-09-26T00:00:00Z',
       _id: "sold-id",
       name: "Sold Table",
       slug: "sold-table",
@@ -446,7 +460,7 @@ describe("SyncService Contract Tests", () => {
 
     const result = await SyncService.reconcileProductBySanityId("absent-id");
 
-    expect(ProductRepository.archiveProductBySanityId).toHaveBeenCalledWith("absent-id");
+    expect(ProductRepository.archiveProductBySanityId).toHaveBeenCalledWith("absent-id", expect.any(Date));
     expect(result).toBe("ARCHIVED");
   });
 });

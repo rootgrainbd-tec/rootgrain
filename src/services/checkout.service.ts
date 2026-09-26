@@ -79,51 +79,8 @@ export class CheckoutService {
     const { items, address, district, division, promoCode } = payload;
     const productIds = items.map((i) => i.id);
 
-    // 1. Fetch products
-    const dbProducts = await ProductRepository.findProductsBySlugs(productIds);
-
-    let subtotal = 0;
-    const orderItemsData = items.map((item) => {
-      const dbProd = dbProducts.find((p) => p.slug === item.id);
-      if (!dbProd) {
-        throw new NotFoundError(`Product not found: ${item.id}`);
-      }
-      if (!dbProd.isActive || !dbProd.inStock) {
-        throw new ValidationError(`Product ${dbProd.name} is currently unavailable.`);
-      }
-      if (dbProd.isMto) {
-        throw new ValidationError(`Product ${dbProd.name} is Made-to-Order and must be purchased via Direct Buy.`);
-      }
-
-      const itemTotal = dbProd.price * item.quantity;
-      subtotal += itemTotal;
-
-      return {
-        productId: dbProd.id,
-        productName: dbProd.name,
-        quantity: item.quantity,
-        unitPrice: dbProd.price,
-        total: itemTotal,
-      };
-    });
-
-    // 2. Calculate shipping using the new ShippingEngine
+    // 1. Pre-fetch external data before opening transaction
     const shippingRates = await ShippingRepository.getAllShippingTypeRates();
-    
-    const cartItemShippingList: CartItemShipping[] = items.map(item => {
-      const dbProd = dbProducts.find((p) => p.slug === item.id);
-      return {
-        productId: item.id,
-        productName: dbProd?.name || item.id,
-        shippingType: dbProd?.shippingType || null,
-        quantity: item.quantity
-      };
-    });
-
-    const shippingCost = ShippingEngine.calculate(cartItemShippingList, shippingRates);
-
-    // 3. Apply Promo Code
-    let discountAmount = 0;
     let appliedPromo: any = null;
     if (promoCode) {
       const promo = await PromoRepository.getPromoByCode(promoCode);
@@ -133,24 +90,13 @@ export class CheckoutService {
         (!promo.expiryDate || new Date() <= promo.expiryDate) &&
         (promo.maxUses === null || promo.currentUses < promo.maxUses)
       ) {
-        if (promo.discountType === "PERCENTAGE") {
-          discountAmount = Math.floor(subtotal * (promo.discountValue / 100));
-        } else {
-          discountAmount = promo.discountValue;
-        }
-
-        if (discountAmount > subtotal) {
-          discountAmount = subtotal;
-        }
-
         appliedPromo = promo;
       } else {
         logger.warn({ promoCode }, "Invalid or expired promo code used during checkout");
       }
     }
 
-    const total = subtotal + shippingCost - discountAmount;
-    const balanceDue = total;
+    const siteConfig = await getSiteConfig();
 
     // 4. Generate guest tracking capability token if applicable
     let guestTokenHash: string | undefined;
@@ -162,11 +108,65 @@ export class CheckoutService {
       guestTokenHash = hashGuestTrackingToken(rawGuestToken);
     }
 
-    // 5. Pre-fetch external data before opening transaction
-    const siteConfig = await getSiteConfig();
-
-    // 6. Create Order
+    // 6. Create Order inside transaction
     const result = await prisma.$transaction(async (tx) => {
+      // Re-fetch products inside transaction to prevent archive race
+      const dbProducts = await tx.product.findMany({
+        where: { slug: { in: productIds } }
+      });
+
+      let subtotal = 0;
+      const orderItemsData = items.map((item) => {
+        const dbProd = dbProducts.find((p) => p.slug === item.id);
+        if (!dbProd) {
+          throw new NotFoundError(`Product not found: ${item.id}`);
+        }
+        if (!dbProd.isActive || !dbProd.inStock) {
+          throw new ValidationError(`Product ${dbProd.name} is currently unavailable.`);
+        }
+        if (dbProd.isMto) {
+          throw new ValidationError(`Product ${dbProd.name} is Made-to-Order and must be purchased via Direct Buy.`);
+        }
+
+        const itemTotal = dbProd.price * item.quantity;
+        subtotal += itemTotal;
+
+        return {
+          productId: dbProd.id,
+          productName: dbProd.name,
+          quantity: item.quantity,
+          unitPrice: dbProd.price,
+          total: itemTotal,
+        };
+      });
+
+      const cartItemShippingList: CartItemShipping[] = items.map(item => {
+        const dbProd = dbProducts.find((p) => p.slug === item.id);
+        return {
+          productId: item.id,
+          productName: dbProd?.name || item.id,
+          shippingType: dbProd?.shippingType || null,
+          quantity: item.quantity
+        };
+      });
+
+      const shippingCost = ShippingEngine.calculate(cartItemShippingList, shippingRates);
+
+      // Promo logic re-calculation since subtotal changed
+      let finalDiscountAmount = 0;
+      if (appliedPromo) {
+        if (appliedPromo.discountType === "PERCENTAGE") {
+          finalDiscountAmount = Math.floor(subtotal * (appliedPromo.discountValue / 100));
+        } else {
+          finalDiscountAmount = appliedPromo.discountValue;
+        }
+        if (finalDiscountAmount > subtotal) {
+          finalDiscountAmount = subtotal;
+        }
+      }
+      const total = subtotal + shippingCost - finalDiscountAmount;
+      const balanceDue = total;
+
       if (appliedPromo) {
         const updateResult = await tx.promoCode.updateMany({
           where: {
@@ -191,7 +191,7 @@ export class CheckoutService {
           requiredAdvance: Math.floor(total * 0.2),
           balanceDue,
           promoCode: appliedPromo ? promoCode : undefined,
-          discountAmount,
+          discountAmount: finalDiscountAmount,
           guestTokenHash,
           status: "PENDING_ADVANCE",
           logistics: "PRIVATE_FREIGHT",
@@ -284,25 +284,7 @@ export class CheckoutService {
       fingerprint: JSON.stringify(fingerprintPayload)
     };
 
-    // 1. Fetch authoritative product
-    const dbProd = await prisma.product.findUnique({ where: { slug: productId } });
-    
-    if (!dbProd) {
-      throw new NotFoundError(`Product not found: ${productId}`);
-    }
-    if (!dbProd.isActive || !dbProd.isMto) {
-      throw new ValidationError(`Product ${dbProd.name} is not available for MTO direct buy.`);
-    }
-
-    const subtotal = dbProd.price * quantity;
-    const orderItemsData = [{
-      productId: dbProd.id,
-      productName: dbProd.name,
-      quantity: quantity,
-      unitPrice: dbProd.price,
-      total: subtotal,
-    }];
-
+    // (Product validation and subtotal moved inside transaction)
     // 2. MTO Shipping: MTO products have no shipping charge (৳0)
     const shippingCost = 0;
 
@@ -317,29 +299,13 @@ export class CheckoutService {
         (!promo.expiryDate || new Date() <= promo.expiryDate) &&
         (promo.maxUses === null || promo.currentUses < promo.maxUses)
       ) {
-        if (promo.discountType === "PERCENTAGE") {
-          discountAmount = Math.floor(subtotal * (promo.discountValue / 100));
-        } else {
-          discountAmount = promo.discountValue;
-        }
-
-        if (discountAmount > subtotal) {
-          discountAmount = subtotal;
-        }
         appliedPromo = promo;
       } else {
         logger.warn({ promoCode }, "Invalid or expired promo code used during MTO checkout");
       }
     }
 
-    const total = subtotal + shippingCost - discountAmount;
-    const requiredAdvance = Math.floor(total * 0.5);
-    const balanceDue = total;
-    
-    // Calculate Lead Time
-    const baseLead = (typeof dbProd.baseLeadTimeDays === "number" && Number.isInteger(dbProd.baseLeadTimeDays) && dbProd.baseLeadTimeDays > 0) ? dbProd.baseLeadTimeDays : 30;
-    const addLead = (typeof dbProd.additionalUnitLeadTimeDays === "number" && Number.isInteger(dbProd.additionalUnitLeadTimeDays) && dbProd.additionalUnitLeadTimeDays > 0) ? dbProd.additionalUnitLeadTimeDays : 10;
-    const estimatedManufacturingDays = baseLead + ((quantity - 1) * addLead);
+    // (Promo discount and lead time calculation moved inside transaction)
 
     // 4. Generate guest tracking capability token if applicable
     let guestTokenHash: string | undefined;
@@ -357,6 +323,48 @@ export class CheckoutService {
     let result;
     try {
       result = await prisma.$transaction(async (tx) => {
+        // 1. Fetch authoritative product inside transaction
+        const dbProd = await tx.product.findUnique({ where: { slug: productId } });
+        
+        if (!dbProd) {
+          throw new NotFoundError(`Product not found: ${productId}`);
+        }
+        if (!dbProd.isActive || !dbProd.isMto) {
+          throw new ValidationError(`Product ${dbProd.name} is not available for MTO direct buy.`);
+        }
+
+        const subtotal = dbProd.price * quantity;
+        const orderItemsData = [{
+          productId: dbProd.id,
+          productName: dbProd.name,
+          quantity: quantity,
+          unitPrice: dbProd.price,
+          total: subtotal,
+        }];
+
+        // Re-calculate Promo Code
+        let finalDiscountAmount = 0;
+        if (appliedPromo) {
+          if (appliedPromo.discountType === "PERCENTAGE") {
+            finalDiscountAmount = Math.floor(subtotal * (appliedPromo.discountValue / 100));
+          } else {
+            finalDiscountAmount = appliedPromo.discountValue;
+          }
+
+          if (finalDiscountAmount > subtotal) {
+            finalDiscountAmount = subtotal;
+          }
+        }
+
+        const total = subtotal + shippingCost - finalDiscountAmount;
+        const requiredAdvance = Math.floor(total * 0.5);
+        const balanceDue = total;
+        
+        // Calculate Lead Time
+        const baseLead = (typeof dbProd.baseLeadTimeDays === "number" && Number.isInteger(dbProd.baseLeadTimeDays) && dbProd.baseLeadTimeDays > 0) ? dbProd.baseLeadTimeDays : 30;
+        const addLead = (typeof dbProd.additionalUnitLeadTimeDays === "number" && Number.isInteger(dbProd.additionalUnitLeadTimeDays) && dbProd.additionalUnitLeadTimeDays > 0) ? dbProd.additionalUnitLeadTimeDays : 10;
+        const estimatedManufacturingDays = baseLead + ((quantity - 1) * addLead);
+
         await claimIdempotencyKey(tx, identity);
 
         if (appliedPromo) {
@@ -383,7 +391,7 @@ export class CheckoutService {
           requiredAdvance,
           balanceDue,
           promoCode: appliedPromo ? promoCode : undefined,
-          discountAmount,
+          discountAmount: finalDiscountAmount,
           guestTokenHash,
           status: "PENDING_ADVANCE",
           logistics: "PRIVATE_FREIGHT",

@@ -19,22 +19,32 @@ vi.mock('../src/lib/prisma', () => {
     default: {
       $transaction: vi.fn(async (cb) => {
         return await cb({
+          product: { 
+            findMany: vi.fn().mockResolvedValue([mockProduct as any]),
+            findUnique: vi.fn().mockResolvedValue(mockProduct as any)
+          },
           promoCode: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
           order: { create: vi.fn() },
           orderEvent: { aggregate: vi.fn().mockResolvedValue({ _max: { sequence: null } }), create: vi.fn().mockResolvedValue({ id: 'event-1' }) },
           orderDocument: { create: vi.fn().mockResolvedValue({ id: 'doc-1' }) },
-          notificationOutbox: { upsert: vi.fn().mockResolvedValue({ id: 'outbox-1' }) }
+          notificationOutbox: { upsert: vi.fn().mockResolvedValue({ id: 'outbox-1' }) },
+          idempotencyKey: { create: vi.fn() }
         });
       })
     },
     prisma: {
       $transaction: vi.fn(async (cb) => {
         return await cb({
+          product: { 
+            findMany: vi.fn().mockResolvedValue([mockProduct as any]),
+            findUnique: vi.fn().mockResolvedValue(mockProduct as any)
+          },
           promoCode: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
           order: { create: vi.fn() },
           orderEvent: { aggregate: vi.fn().mockResolvedValue({ _max: { sequence: null } }), create: vi.fn().mockResolvedValue({ id: 'event-1' }) },
           orderDocument: { create: vi.fn().mockResolvedValue({ id: 'doc-1' }) },
-          notificationOutbox: { upsert: vi.fn().mockResolvedValue({ id: 'outbox-1' }) }
+          notificationOutbox: { upsert: vi.fn().mockResolvedValue({ id: 'outbox-1' }) },
+          idempotencyKey: { create: vi.fn() }
         });
       })
     }
@@ -73,6 +83,7 @@ describe('NEXT-SEC-02 Slice 2 - Checkout Token Generation', () => {
     let capturedData: any = null;
     (prisma as any).$transaction.mockImplementationOnce(async (cb: any) => {
       return await cb({
+        product: { findMany: vi.fn().mockResolvedValue([mockProduct]) },
         promoCode: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
         order: { create: async (data: any) => {
           capturedData = data.data;
@@ -103,6 +114,7 @@ describe('NEXT-SEC-02 Slice 2 - Checkout Token Generation', () => {
     let capturedData: any = null;
     (prisma as any).$transaction.mockImplementationOnce(async (cb: any) => {
       return await cb({
+        product: { findMany: vi.fn().mockResolvedValue([mockProduct]) },
         promoCode: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
         order: { create: async (data: any) => {
           capturedData = data.data;

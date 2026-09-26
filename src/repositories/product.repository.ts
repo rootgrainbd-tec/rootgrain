@@ -12,49 +12,65 @@ export class ProductRepository {
       throw new Error(`Identity Collision: slug ${data.slug} is already in use by product with sanityId ${existingWithSlug.sanityId}`);
     }
 
-    // Fetch existing by sanityId to safely preserve fields (like wood) when incoming data is missing
     const existing = await prisma.product.findUnique({ where: { sanityId } });
 
-    return prisma.product.upsert({
-      where: { sanityId },
-      update: {
-        name: data.name ?? "",
+    if (!existing) {
+      try {
+        return await prisma.product.create({
+          data: {
+            sanityId,
+            name: data.name ?? "Unknown",
+            slug: data.slug,
+            category: data.category ?? "Uncategorized",
+            price: data.price ?? 0,
+            wood: data.wood ?? "Unknown",
+            dimensions: data.dimensions ?? "Unknown",
+            image: data.image ?? "",
+            description: data.description ?? "",
+            shippingType: data.shippingType ?? null,
+            inStock: data.inStock ?? true,
+            isMto: data.isMto ?? false,
+            baseLeadTimeDays: (typeof data.baseLeadTimeDays === "number" && Number.isInteger(data.baseLeadTimeDays) && data.baseLeadTimeDays > 0) ? data.baseLeadTimeDays : 30,
+            additionalUnitLeadTimeDays: (typeof data.additionalUnitLeadTimeDays === "number" && Number.isInteger(data.additionalUnitLeadTimeDays) && data.additionalUnitLeadTimeDays > 0) ? data.additionalUnitLeadTimeDays : 10,
+            isActive: true, // Created products start active
+            sanityUpdatedAt: data.sanityUpdatedAt,
+            lastSyncedAt: data.lastSyncedAt,
+            version: 1
+          }
+        });
+      } catch (e) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+          throw new Error("OCC_CONFLICT");
+        }
+        throw e;
+      }
+    }
+
+    const result = await prisma.product.updateMany({
+      where: { sanityId, version: existing.version },
+      data: {
+        name: data.name ?? existing.name,
         slug: data.slug,
-        category: data.category ?? "Uncategorized",
-        price: data.price ?? 0,
-        wood: data.wood ?? existing?.wood ?? "Unknown",
-        dimensions: data.dimensions ?? "Unknown",
-        image: data.image ?? "",
-        description: data.description ?? "",
-        shippingType: data.shippingType ?? null,
-        inStock: data.inStock ?? true,
-        isMto: data.isMto ?? false,
-        baseLeadTimeDays: (typeof data.baseLeadTimeDays === "number" && Number.isInteger(data.baseLeadTimeDays) && data.baseLeadTimeDays > 0) ? data.baseLeadTimeDays : 30,
-        additionalUnitLeadTimeDays: (typeof data.additionalUnitLeadTimeDays === "number" && Number.isInteger(data.additionalUnitLeadTimeDays) && data.additionalUnitLeadTimeDays > 0) ? data.additionalUnitLeadTimeDays : 10,
-        isActive: true,
+        category: data.category ?? existing.category,
+        price: data.price ?? existing.price,
+        wood: data.wood ?? existing.wood,
+        dimensions: data.dimensions ?? existing.dimensions,
+        image: data.image ?? existing.image,
+        description: data.description ?? existing.description,
+        shippingType: data.shippingType ?? existing.shippingType,
+        inStock: data.inStock ?? existing.inStock,
+        isMto: data.isMto ?? existing.isMto,
+        baseLeadTimeDays: (typeof data.baseLeadTimeDays === "number" && Number.isInteger(data.baseLeadTimeDays) && data.baseLeadTimeDays > 0) ? data.baseLeadTimeDays : existing.baseLeadTimeDays,
+        additionalUnitLeadTimeDays: (typeof data.additionalUnitLeadTimeDays === "number" && Number.isInteger(data.additionalUnitLeadTimeDays) && data.additionalUnitLeadTimeDays > 0) ? data.additionalUnitLeadTimeDays : existing.additionalUnitLeadTimeDays,
+        isActive: existing.isActive, // Do not auto-reactivate, wait for explicit policy
         sanityUpdatedAt: data.sanityUpdatedAt,
         lastSyncedAt: data.lastSyncedAt,
-      },
-      create: {
-        sanityId,
-        name: data.name ?? "Unknown",
-        slug: data.slug,
-        category: data.category ?? "Uncategorized",
-        price: data.price ?? 0,
-        wood: data.wood ?? "Unknown",
-        dimensions: data.dimensions ?? "Unknown",
-        image: data.image ?? "",
-        description: data.description ?? "",
-        shippingType: data.shippingType ?? null,
-        inStock: data.inStock ?? true,
-        isMto: data.isMto ?? false,
-        baseLeadTimeDays: (typeof data.baseLeadTimeDays === "number" && Number.isInteger(data.baseLeadTimeDays) && data.baseLeadTimeDays > 0) ? data.baseLeadTimeDays : 30,
-        additionalUnitLeadTimeDays: (typeof data.additionalUnitLeadTimeDays === "number" && Number.isInteger(data.additionalUnitLeadTimeDays) && data.additionalUnitLeadTimeDays > 0) ? data.additionalUnitLeadTimeDays : 10,
-        isActive: true,
-        sanityUpdatedAt: data.sanityUpdatedAt,
-        lastSyncedAt: data.lastSyncedAt,
-      },
+        version: { increment: 1 }
+      }
     });
+
+    if (result.count === 0) throw new Error("OCC_CONFLICT");
+    return prisma.product.findUnique({ where: { sanityId } });
   }
 
   static async findProductsBySlugs(slugs: string[]) {
@@ -67,22 +83,63 @@ export class ProductRepository {
     if (!sanityId) throw new Error("sanityId is required");
     const existing = await prisma.product.findUnique({ where: { sanityId } });
     
-    if (!existing) {
-      return "NO_OP";
-    }
-    
-    if (!existing.isActive) {
+    if (!existing || !existing.isActive) {
       return "NO_OP";
     }
 
-    await prisma.product.update({
-      where: { sanityId },
+    const result = await prisma.product.updateMany({
+      where: { sanityId, version: existing.version },
       data: {
         isActive: false,
         lastSyncedAt: lastSyncedAt,
+        version: { increment: 1 }
       },
     });
 
+    if (result.count === 0) throw new Error("OCC_CONFLICT");
     return "ARCHIVED";
+  }
+
+  static async updateProductSyncMetadata(
+    sanityId: string,
+    metadata: { sanityUpdatedAt: Date },
+    snapshot: {
+      expectedDbId: string;
+      expectedSanityUpdatedAt: Date | null;
+      expectedLastSyncedAt: Date | null;
+    }
+  ) {
+    if (!sanityId) throw new Error("sanityId is required");
+
+    const existing = await prisma.product.findUnique({ where: { sanityId } });
+    if (!existing) return "NOT_FOUND";
+
+    if (existing.sanityUpdatedAt && existing.lastSyncedAt) {
+      return "ALREADY_COMPLETE";
+    }
+
+    if (
+      existing.id !== snapshot.expectedDbId ||
+      existing.sanityUpdatedAt?.getTime() !== snapshot.expectedSanityUpdatedAt?.getTime() ||
+      existing.lastSyncedAt?.getTime() !== snapshot.expectedLastSyncedAt?.getTime()
+    ) {
+      return "CONCURRENT_CHANGE / SNAPSHOT_DRIFT";
+    }
+
+    const result = await prisma.product.updateMany({
+      where: {
+        id: snapshot.expectedDbId,
+        sanityId,
+        version: existing.version,
+      },
+      data: {
+        sanityUpdatedAt: metadata.sanityUpdatedAt,
+        version: { increment: 1 }
+      },
+    });
+
+    if (result.count === 1) return "UPDATED";
+    
+    throw new Error("OCC_CONFLICT");
   }
 }

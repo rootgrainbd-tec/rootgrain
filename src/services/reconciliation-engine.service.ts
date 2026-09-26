@@ -6,6 +6,7 @@ import { Product } from "@prisma/client";
 
 export type DiscrepancyStatus = 
   | "IN_SYNC"
+  | "METADATA_INCOMPLETE"
   | "STALE"
   | "FIELD_MISMATCH"
   | "MISSING_IN_DB"
@@ -27,6 +28,7 @@ export interface ReconciliationReport {
   summary: {
     totalScanned: number;
     inSync: number;
+    metadataIncomplete: number;
     stale: number;
     fieldMismatch: number;
     missingInDb: number;
@@ -46,6 +48,7 @@ export class ReconciliationEngine {
       summary: {
         totalScanned: 0,
         inSync: 0,
+        metadataIncomplete: 0,
         stale: 0,
         fieldMismatch: 0,
         missingInDb: 0,
@@ -100,14 +103,14 @@ export class ReconciliationEngine {
 
       // 2. Scan PostgreSQL Universe (ALL rows)
       const dbLimit = 500;
-      let lastDbSanityId: string | null = null;
+      let lastDbId: string | null = null;
       
       while (true) {
         const page: Product[] = await prisma.product.findMany({
           take: dbLimit,
-          skip: lastDbSanityId ? 1 : 0,
-          cursor: lastDbSanityId ? { sanityId: lastDbSanityId } : undefined,
-          orderBy: { sanityId: "asc" }
+          skip: lastDbId ? 1 : 0,
+          cursor: lastDbId ? { id: lastDbId } : undefined,
+          orderBy: { id: "asc" }
         });
 
         for (const row of page) {
@@ -119,7 +122,7 @@ export class ReconciliationEngine {
         if (page.length < dbLimit || page.length === 0) {
           break;
         }
-        lastDbSanityId = page[page.length - 1].sanityId;
+        lastDbId = page[page.length - 1].id;
       }
 
       // 3. Compare
@@ -182,8 +185,8 @@ export class ReconciliationEngine {
             reasons.push("Published Sanity product exists but no PostgreSQL row found.");
           } else {
             // Both exist and Sanity is well-formed.
-            // Check staleness precedence
-            const isStale = (sanityUpdatedAt.getTime() > (dbSanityUpdatedAt?.getTime() ?? 0)) || (!dbSanityUpdatedAt);
+            const isMetadataIncomplete = !dbSanityUpdatedAt || !dbRow.lastSyncedAt;
+            const isStale = !isMetadataIncomplete && sanityUpdatedAt.getTime() !== dbSanityUpdatedAt!.getTime();
             let hasFieldMismatch = false;
 
             // Check field mismatches
@@ -216,9 +219,12 @@ export class ReconciliationEngine {
               reasons.push(`BaseLeadTimeDays mismatch: Sanity ${projected.baseLeadTimeDays}, DB ${dbRow.baseLeadTimeDays}`);
             }
 
-            if (isStale) {
+            if (isMetadataIncomplete) {
+              status = "METADATA_INCOMPLETE";
+              reasons.unshift("Product observability metadata is incomplete (sanityUpdatedAt or lastSyncedAt is NULL)");
+            } else if (isStale) {
               status = "STALE";
-              reasons.unshift(dbSanityUpdatedAt ? "Sanity timestamp is newer than DB sanityUpdatedAt" : "DB sanityUpdatedAt is null while Sanity has a valid timestamp");
+              reasons.unshift("Sanity/DB freshness divergence detected");
             } else if (hasFieldMismatch) {
               status = "FIELD_MISMATCH";
             } else {
@@ -239,6 +245,7 @@ export class ReconciliationEngine {
 
         switch (status) {
           case "IN_SYNC": report.summary.inSync++; break;
+          case "METADATA_INCOMPLETE": report.summary.metadataIncomplete++; break;
           case "STALE": report.summary.stale++; break;
           case "FIELD_MISMATCH": report.summary.fieldMismatch++; break;
           case "MISSING_IN_DB": report.summary.missingInDb++; break;

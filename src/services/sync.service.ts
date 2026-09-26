@@ -72,7 +72,7 @@ export class SyncService {
       throw error;
     }
 
-    if (!sanityProduct || !sanityProduct.slug) {
+    if (sanityProduct === null) {
       logger.info({ sanityId: canonicalSanityId }, "First query absent. Performing confirmation query to mitigate stale-result race.");
       
       let confirmationProduct = null;
@@ -83,7 +83,7 @@ export class SyncService {
         throw error;
       }
 
-      if (!confirmationProduct || !confirmationProduct.slug) {
+      if (confirmationProduct === null) {
         logger.info({ sanityId: canonicalSanityId }, "Product confirmed absent in Sanity. Archiving.");
         const lastSyncedAt = new Date();
         const archiveResult = await ProductRepository.archiveProductBySanityId(canonicalSanityId, lastSyncedAt);
@@ -92,6 +92,12 @@ export class SyncService {
 
       logger.info({ sanityId: canonicalSanityId }, "Race mitigated: Product was republished before archive. Proceeding with upsert.");
       sanityProduct = confirmationProduct;
+    }
+
+    if (!sanityProduct.slug) {
+      const errorMsg = "Malformed product data from Sanity: missing slug";
+      logger.error({ sanityId: canonicalSanityId }, errorMsg);
+      throw new Error(errorMsg);
     }
 
     // 3A. SUCCESS + FOUND
