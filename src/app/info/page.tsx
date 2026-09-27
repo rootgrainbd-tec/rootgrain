@@ -25,7 +25,7 @@ async function getGeneralCard() {
 }
 
 async function getFounders() {
-  const query = `*[_type == "personalCard" && isActive == true] | order(fullName asc) {
+  const query = `*[_type == "personalCard" && isActive == true] | order(coalesce(displayOrder, 9999) asc, fullName asc) {
     "currentSlug": slug.current,
     fullName,
     preferredName,

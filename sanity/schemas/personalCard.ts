@@ -8,6 +8,12 @@ export default defineType({
   icon: UserIcon,
   fields: [
     defineField({
+      name: 'displayOrder',
+      title: 'Display Order',
+      type: 'number',
+      description: 'Controls the order of appearance on the General Card (e.g. 1 for first, 2 for second). Profiles without an order will appear at the end.',
+    }),
+    defineField({
       name: 'isActive',
       title: 'Active Status',
       type: 'boolean',
