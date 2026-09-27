@@ -24,6 +24,18 @@ async function getGeneralCard() {
   return client.fetch(query);
 }
 
+async function getFounders() {
+  const query = `*[_type == "personalCard" && isActive == true] | order(fullName asc) {
+    "currentSlug": slug.current,
+    fullName,
+    preferredName,
+    designation,
+    "photoUrl": profilePhoto.asset->url,
+    shortIntroduction
+  }`;
+  return client.fetch(query);
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const card = await getGeneralCard();
   if (!card) return {};
@@ -43,7 +55,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function GeneralCardPage() {
-  const card = await getGeneralCard();
+  const [card, founders] = await Promise.all([
+    getGeneralCard(),
+    getFounders()
+  ]);
 
   if (!card) {
     notFound();
@@ -62,6 +77,7 @@ export default async function GeneralCardPage() {
     facebookUrl: card.facebook,
     linkedinUrl: card.linkedin,
     officeAddress: card.businessAddress,
+    founders: founders,
   };
 
   return <DigitalCardView type="general" data={mappedData} />;
