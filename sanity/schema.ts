@@ -11,6 +11,8 @@ import workshop from './schemas/workshop'
 import siteSettings from './schemas/siteSettings'
 import subscriber from './schemas/subscriber'
 import styledText from './schemas/styledText'
+import personalCard from './schemas/personalCard'
+import generalCard from './schemas/generalCard'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -26,5 +28,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     workshop,
     siteSettings,
     subscriber,
+    personalCard,
+    generalCard,
   ],
 }

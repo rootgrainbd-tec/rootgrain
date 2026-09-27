@@ -9,6 +9,7 @@ import {
   ThListIcon,
   ComponentIcon,
   UserIcon,
+  LinkIcon,
 } from '@sanity/icons'
 
 export const structure: StructureResolver = (S) =>
@@ -74,6 +75,25 @@ export const structure: StructureResolver = (S) =>
             .title('Marketing')
             .items([
               S.documentTypeListItem('subscriber').title('Subscribers').icon(EnvelopeIcon),
+            ])
+        ),
+      S.listItem()
+        .title('Digital Cards')
+        .icon(LinkIcon)
+        .child(
+          S.list()
+            .title('Digital Cards')
+            .items([
+              S.listItem()
+                .title('General Card')
+                .id('generalCard')
+                .icon(BlockElementIcon)
+                .child(
+                  S.document()
+                    .schemaType('generalCard')
+                    .documentId('generalCard')
+                ),
+              S.documentTypeListItem('personalCard').title('Personal Cards').icon(UserIcon),
             ])
         ),
       S.divider(),

@@ -15,6 +15,23 @@ function getIpKey(req: NextRequest): string {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const hostname = req.headers.get("host") || "";
+
+  // Rewrite for Digital Business Card subdomain
+  if (
+    hostname === "info.rootgrain.bd" ||
+    hostname === "info.rootgrain.com" ||
+    hostname.startsWith("info.localhost")
+  ) {
+    if (!pathname.startsWith("/api") && !pathname.startsWith("/_next")) {
+      const url = req.nextUrl.clone();
+      // Only rewrite if it's not already prefixed to avoid double rewrite
+      if (!pathname.startsWith("/info")) {
+        url.pathname = `/info${pathname === "/" ? "" : pathname}`;
+        return NextResponse.rewrite(url);
+      }
+    }
+  }
   
   let category: RateLimitCategory | null = null;
   let requireL2Auth = false;
