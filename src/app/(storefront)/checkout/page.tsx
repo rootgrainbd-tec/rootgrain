@@ -33,6 +33,21 @@ export default function CheckoutPage() {
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<any>(null);
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+  const [hasFiredInitCheckout, setHasFiredInitCheckout] = useState(false);
+  
+  useEffect(() => {
+    if (items.length > 0 && !hasFiredInitCheckout && typeof window !== "undefined" && (window as any).fbq) {
+      const sub = items.reduce((acc: any, item: any) => acc + item.price * item.quantity, 0);
+      const numItems = items.reduce((acc: any, item: any) => acc + item.quantity, 0);
+      (window as any).fbq('track', 'InitiateCheckout', {
+        value: sub,
+        currency: 'BDT',
+        content_ids: items.map((i: any) => i.id),
+        num_items: numItems
+      });
+      setHasFiredInitCheckout(true);
+    }
+  }, [items, hasFiredInitCheckout]);
   
   useEffect(() => {
     if (items.length === 0) return;

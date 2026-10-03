@@ -84,6 +84,17 @@ export function ProductActions({ product, whatsappNumber, baseLeadTimeDays, addi
       quantity: 1,
     });
     
+    // Meta Pixel: AddToCart
+    if (typeof window !== "undefined" && (window as any).fbq) {
+      (window as any).fbq('track', 'AddToCart', {
+        content_name: product.name,
+        content_ids: [product.id],
+        content_type: 'product',
+        value: product.price,
+        currency: 'BDT'
+      });
+    }
+    
     toast.success("Added to cart!");
   };
 

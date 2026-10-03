@@ -2,6 +2,7 @@ import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { verifySuccessToken } from "@/lib/capability-token";
+import { PurchaseTracker } from "@/components/checkout/PurchaseTracker";
 
 export default function CheckoutSuccessPage({
   searchParams,
@@ -13,15 +14,18 @@ export default function CheckoutSuccessPage({
 
   let advanceRequired = 0;
   let isMtoOrder = false;
+  let total = 0;
 
   const payload = verifySuccessToken(token);
   if (payload && payload.orderNumber === orderNumber) {
     advanceRequired = payload.requiredAdvance;
     isMtoOrder = payload.isMtoOrder;
+    total = payload.total || 0;
   }
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4">
+      {orderNumber && total > 0 && <PurchaseTracker orderNumber={orderNumber} total={total} />}
       <div className="max-w-md w-full text-center space-y-6 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
         <div className="flex justify-center">
           <CheckCircle2 className="w-16 h-16 text-green-500" />

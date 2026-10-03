@@ -58,7 +58,7 @@ export function verifyGuestTrackingToken(
  * Signs a short-lived payload containing order confirmation data.
  * Useful for passing data safely to a success redirect without a database roundtrip.
  */
-export function signSuccessToken(payload: { orderNumber: string, requiredAdvance: number, isMtoOrder: boolean }): string {
+export function signSuccessToken(payload: { orderNumber: string, requiredAdvance: number, isMtoOrder: boolean, total?: number }): string {
   const data = Buffer.from(JSON.stringify({ ...payload, exp: Date.now() + 15 * 60 * 1000 })).toString('base64url');
   const signature = crypto.createHmac('sha256', process.env.NEXTAUTH_SECRET || 'fallback-secret')
     .update(data)
@@ -70,7 +70,7 @@ export function signSuccessToken(payload: { orderNumber: string, requiredAdvance
  * Verifies and decodes a signed success token.
  * Returns null if invalid or expired.
  */
-export function verifySuccessToken(token: string | null | undefined): { orderNumber: string, requiredAdvance: number, isMtoOrder: boolean } | null {
+export function verifySuccessToken(token: string | null | undefined): { orderNumber: string, requiredAdvance: number, isMtoOrder: boolean, total?: number } | null {
   if (!token) return null;
   const parts = token.split('.');
   if (parts.length !== 2) return null;

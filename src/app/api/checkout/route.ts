@@ -28,7 +28,8 @@ export async function POST(request: Request) {
     const token = signSuccessToken({
       orderNumber: order.orderNumber,
       requiredAdvance: order.requiredAdvance,
-      isMtoOrder: order.isMtoOrder
+      isMtoOrder: order.isMtoOrder,
+      total: order.total
     });
 
     return successResponse({ orderId: order.id, orderNumber: order.orderNumber, token });
