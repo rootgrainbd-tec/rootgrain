@@ -22,11 +22,15 @@ export async function generateInvoicePDF(snapshot: InvoiceSnapshot, templateVers
       doc.moveDown(2);
 
       // Invoice Info
-      const invoiceTitle = snapshot.invoiceType === "FINAL" ? 'FINAL INVOICE' : 'INVOICE';
+      const invoiceTitle = snapshot.invoiceType === "FINAL" ? 'FINAL INVOICE' : 'ADVANCE INVOICE';
       doc.fontSize(20).fillColor('black').text(invoiceTitle, { underline: true });
       doc.moveDown();
       doc.fontSize(12).text(`Type: ${snapshot.invoiceType} Invoice`);
       
+      if (snapshot.orderNumber) {
+        doc.text(`Order: ${snapshot.orderNumber}`);
+      }
+
       if (snapshot.issuedAt) {
         doc.text(`Date: ${new Date(snapshot.issuedAt).toLocaleDateString()}`);
       } else {
@@ -68,29 +72,60 @@ export async function generateInvoicePDF(snapshot: InvoiceSnapshot, templateVers
       (snapshot.items || []).forEach((item: any) => {
         doc.text(item.productName || item.name || 'Item', 50, yPosition, { width: 300 });
         doc.text(item.quantity?.toString() || '1', 350, yPosition, { width: 50, align: 'right' });
-        const itemTotal = item.total || (item.price * item.quantity);
-        doc.text(`Tk ${itemTotal?.toLocaleString() || '0'}`, 400, yPosition, { width: 100, align: 'right' });
+        const itemTotal = typeof item.total === 'number'
+          ? item.total
+          : ((Number(item.unitPrice || item.price || 0)) * Number(item.quantity || 1));
+        doc.text(`৳${itemTotal.toLocaleString()}`, 400, yPosition, { width: 100, align: 'right' });
         yPosition += 20;
       });
 
       const footerLineY = yPosition + 10;
       doc.moveTo(50, footerLineY).lineTo(500, footerLineY).stroke();
 
-      // Totals
+      // Totals with breakdown
       yPosition = footerLineY + 15;
+      doc.font('Helvetica').fontSize(12);
+
+      if (typeof snapshot.subtotal === 'number') {
+        doc.text('Subtotal:', 300, yPosition, { width: 100, align: 'right' });
+        doc.text(`৳${snapshot.subtotal.toLocaleString()}`, 400, yPosition, { width: 100, align: 'right' });
+        yPosition += 18;
+      }
+
+      if (typeof snapshot.shippingCost === 'number') {
+        doc.text('Shipping:', 300, yPosition, { width: 100, align: 'right' });
+        doc.text(`৳${snapshot.shippingCost.toLocaleString()}`, 400, yPosition, { width: 100, align: 'right' });
+        yPosition += 18;
+      }
+
+      if (typeof snapshot.discountAmount === 'number' && snapshot.discountAmount > 0) {
+        doc.fillColor('#2e7d32').text('Discount:', 300, yPosition, { width: 100, align: 'right' });
+        doc.text(`-৳${snapshot.discountAmount.toLocaleString()}`, 400, yPosition, { width: 100, align: 'right' });
+        doc.fillColor('black');
+        yPosition += 18;
+      }
+
       doc.font('Helvetica-Bold').fontSize(14);
       doc.text('Total:', 300, yPosition, { width: 100, align: 'right' });
-      doc.text(`Tk ${snapshot.orderTotal?.toLocaleString() || '0'}`, 400, yPosition, { width: 100, align: 'right' });
+      doc.text(`৳${snapshot.orderTotal?.toLocaleString() || '0'}`, 400, yPosition, { width: 100, align: 'right' });
 
       // Advance / Balance
       yPosition += 30;
       doc.font('Helvetica-Oblique').fontSize(12);
-      if (snapshot.invoiceType === "FINAL" && snapshot.validPaidAtIssuance !== undefined && snapshot.balanceDueAtIssuance !== undefined) {
-        doc.fillColor('#2e7d32').text(`Valid Paid: Tk ${snapshot.validPaidAtIssuance.toLocaleString()}`, 50, yPosition);
+      if (snapshot.invoiceType === "FINAL") {
+        if (
+          typeof snapshot.validPaidAtIssuance !== 'number' ||
+          !Number.isFinite(snapshot.validPaidAtIssuance) ||
+          typeof snapshot.balanceDueAtIssuance !== 'number' ||
+          !Number.isFinite(snapshot.balanceDueAtIssuance)
+        ) {
+          throw new Error("Final invoice requires explicit validPaidAtIssuance and balanceDueAtIssuance settlement fields (finite numbers)");
+        }
+        doc.fillColor('#2e7d32').text(`Valid Paid: ৳${snapshot.validPaidAtIssuance.toLocaleString()}`, 50, yPosition);
         yPosition += 20;
-        doc.fillColor('#d32f2f').text(`Balance Due: Tk ${snapshot.balanceDueAtIssuance.toLocaleString()}`, 50, yPosition);
+        doc.fillColor('#d32f2f').text(`Balance Due: ৳${snapshot.balanceDueAtIssuance.toLocaleString()}`, 50, yPosition);
       } else {
-        doc.fillColor('#5D4037').text(`Required Advance: Tk ${snapshot.requiredAdvance?.toLocaleString() || '0'}`, 50, yPosition);
+        doc.fillColor('#5D4037').text(`Required Advance: ৳${snapshot.requiredAdvance?.toLocaleString() || '0'}`, 50, yPosition);
       }
 
       // Footer Message

@@ -38,6 +38,10 @@ export type InvoiceSnapshot = {
   issuedAt: string;
   referenceIdentity?: string;
   branding: DocumentBrandingSnapshot;
+  subtotal?: number;
+  shippingCost?: number;
+  discountAmount?: number;
+  orderNumber?: string;
 };
 
 export type ReceiptSnapshot = {

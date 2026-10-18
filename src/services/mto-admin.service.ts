@@ -6,6 +6,7 @@ import { logger } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 import { inngest } from "@/inngest/client";
 import { getSiteConfig } from "@/data/site-config";
+import { buildInvoiceSnapshot } from "@/lib/documentSnapshot";
 
 export class MtoAdminService {
   /**
@@ -52,41 +53,11 @@ export class MtoAdminService {
       const referenceIdentity = `INV-${order.orderNumber}-${sequence}`;
 
       const siteConfig = await getSiteConfig();
-      
-      const rawShipping = order.shippingAddress as any;
-      const shippingAddressSnapshot = rawShipping ? {
-        name: String(rawShipping.name || ""),
-        address: String(rawShipping.address || ""),
-        apartment: rawShipping.apartment ? String(rawShipping.apartment) : null,
-        city: String(rawShipping.city || ""),
-        postalCode: String(rawShipping.postalCode || ""),
-        phone: String(rawShipping.phone || ""),
-      } : null;
 
-      const itemsSnapshot = Array.isArray(order.items) ? order.items.map((item: any) => ({
-        productId: item.productId ? String(item.productId) : null,
-        productName: String(item.productName || item.name || "Unknown"),
-        customSpecification: item.customSpecification ? String(item.customSpecification) : null,
-        quantity: Number(item.quantity || 1),
-        unitPrice: Number(item.unitPrice || item.price || 0),
-        total: Number(item.total || (Number(item.quantity || 1) * Number(item.unitPrice || item.price || 0))),
-      })) : [];
-
-      const invoiceSnapshot = {
+      const invoiceSnapshot = buildInvoiceSnapshot(order, siteConfig, {
         invoiceType: "ADVANCE",
-        orderTotal: order.total,
-        requiredAdvance: order.requiredAdvance,
-        shippingAddress: shippingAddressSnapshot,
-        items: itemsSnapshot,
-        customerEmail: order.customerEmail ? String(order.customerEmail) : "",
-        issuedAt: new Date().toISOString(),
-        branding: {
-          companyName: siteConfig.name,
-          address: siteConfig.address,
-          email: siteConfig.support.email,
-          phone: siteConfig.support.phone.display,
-        }
-      };
+        referenceIdentity,
+      });
 
       const invoice = await tx.orderDocument.create({
         data: {
@@ -558,43 +529,13 @@ export class MtoAdminService {
       const referenceIdentity = `FINV-${order.orderNumber}-${sequence}`;
 
       const siteConfig = await getSiteConfig();
-      
-      const rawShipping = order.shippingAddress as any;
-      const shippingAddressSnapshot = rawShipping ? {
-        name: String(rawShipping.name || ""),
-        address: String(rawShipping.address || ""),
-        apartment: rawShipping.apartment ? String(rawShipping.apartment) : null,
-        city: String(rawShipping.city || ""),
-        postalCode: String(rawShipping.postalCode || ""),
-        phone: String(rawShipping.phone || ""),
-      } : null;
 
-      const itemsSnapshot = Array.isArray(order.items) ? order.items.map((item: any) => ({
-        productId: item.productId ? String(item.productId) : null,
-        productName: String(item.productName || item.name || "Unknown"),
-        customSpecification: item.customSpecification ? String(item.customSpecification) : null,
-        quantity: Number(item.quantity || 1),
-        unitPrice: Number(item.unitPrice || item.price || 0),
-        total: Number(item.total || (Number(item.quantity || 1) * Number(item.unitPrice || item.price || 0))),
-      })) : [];
-
-      const invoiceSnapshot = {
+      const invoiceSnapshot = buildInvoiceSnapshot(order, siteConfig, {
         invoiceType: "FINAL",
-        orderTotal: order.total,
-        requiredAdvance: order.requiredAdvance,
+        referenceIdentity,
         validPaidAtIssuance,
         balanceDueAtIssuance,
-        shippingAddress: shippingAddressSnapshot,
-        items: itemsSnapshot,
-        customerEmail: order.customerEmail ? String(order.customerEmail) : "",
-        issuedAt: new Date().toISOString(),
-        branding: {
-          companyName: siteConfig.name,
-          address: siteConfig.address,
-          email: siteConfig.support.email,
-          phone: siteConfig.support.phone.display,
-        }
-      };
+      });
 
       // 7. Create Document
       const invoice = await tx.orderDocument.create({

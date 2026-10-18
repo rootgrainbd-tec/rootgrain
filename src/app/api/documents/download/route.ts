@@ -31,7 +31,8 @@ export async function GET(request: Request) {
       return new NextResponse("Not Found", { status: 404 });
     }
 
-    if (document.documentType !== "FINAL_INVOICE") {
+    const allowedDocumentTypes = ["INVOICE", "FINAL_INVOICE"];
+    if (!allowedDocumentTypes.includes(document.documentType)) {
       return new NextResponse("Not Found", { status: 404 });
     }
 
