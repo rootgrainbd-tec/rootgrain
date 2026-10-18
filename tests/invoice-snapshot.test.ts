@@ -4,7 +4,8 @@ import {
   buildShippingAddressSnapshot,
   buildInvoiceItemsSnapshot,
 } from "@/lib/documentSnapshot";
-import { generateInvoicePDF } from "@/lib/pdfGenerator";
+import { generateInvoicePDF, generateReceiptPDF, formatCurrencyBDT } from "@/lib/pdfGenerator";
+import { extractPDFText } from "./helpers/pdfTestUtils";
 
 const mockSiteConfig = {
   name: "RootGrain",
@@ -487,4 +488,165 @@ describe("generateInvoicePDF end-to-end with snapshot", () => {
     ).rejects.toThrow("Final invoice requires explicit validPaidAtIssuance and balanceDueAtIssuance settlement fields");
   });
 });
+
+describe("formatCurrencyBDT centralized currency formatter", () => {
+  it("should format known integer amounts with ৳ symbol and en-BD separators", () => {
+    expect(formatCurrencyBDT(30040)).toBe("৳30,040");
+    expect(formatCurrencyBDT(29990)).toBe("৳29,990");
+    expect(formatCurrencyBDT(50)).toBe("৳50");
+    expect(formatCurrencyBDT(6008)).toBe("৳6,008");
+    expect(formatCurrencyBDT(1000000)).toBe("৳1,000,000");
+  });
+
+  it("should preserve legitimate zero values", () => {
+    expect(formatCurrencyBDT(0)).toBe("৳0");
+  });
+
+  it("should format decimal amounts correctly when provided", () => {
+    expect(formatCurrencyBDT(30040.5)).toBe("৳30,040.5");
+    expect(formatCurrencyBDT(99.99)).toBe("৳99.99");
+  });
+
+  it("should fail safely on non-finite or invalid inputs rather than silently becoming zero", () => {
+    expect(() => formatCurrencyBDT(NaN)).toThrow("Invalid monetary amount");
+    expect(() => formatCurrencyBDT(Infinity)).toThrow("Invalid monetary amount");
+    expect(() => formatCurrencyBDT(-Infinity)).toThrow("Invalid monetary amount");
+    expect(() => formatCurrencyBDT(null as any)).toThrow("Invalid monetary amount");
+    expect(() => formatCurrencyBDT(undefined as any)).toThrow("Invalid monetary amount");
+    expect(() => formatCurrencyBDT("30040" as any)).toThrow("Invalid monetary amount");
+  });
+});
+
+describe("PDFKit Unicode & TrueType Font Embedding Regression Tests", () => {
+  it("should correctly render ৳ (U+09F3) and all monetary fields in an ADVANCE invoice without mojibake", async () => {
+    const advanceSnapshot = buildInvoiceSnapshot(
+      {
+        ...mockOrder,
+        total: 30040,
+        subtotal: 29990,
+        shippingCost: 50,
+        discountAmount: 0,
+        requiredAdvance: 6008,
+      },
+      mockSiteConfig,
+      {
+        invoiceType: "ADVANCE",
+        referenceIdentity: "INV-RG-20261018-991567-1",
+      }
+    );
+
+    const pdfBuffer = await generateInvoicePDF(advanceSnapshot, "1.0");
+    expect(Buffer.isBuffer(pdfBuffer)).toBe(true);
+
+    const { fullText, hasToUnicodeCMap, fontSubsets, hasMojibake } = extractPDFText(pdfBuffer);
+
+    // 1. Font embedding assertions
+    expect(hasToUnicodeCMap).toBe(true);
+    expect(fontSubsets.some((f) => f.includes("HindSiliguri"))).toBe(true);
+
+    // 2. Absence of corrupted characters
+    expect(hasMojibake).toBe(false);
+    expect(fullText).not.toContain("Ÿ");
+    expect(fullText).not.toContain("Ý");
+    expect(fullText).not.toContain("Ã");
+    expect(fullText).not.toContain("\uFFFD"); // Replacement character 
+
+    // 3. Exact monetary fields presence with ৳ (U+09F3)
+    expect(fullText).toContain("৳29,990"); // Item total & Subtotal
+    expect(fullText).toContain("৳50");     // Shipping cost
+    expect(fullText).toContain("৳30,040"); // Total
+    expect(fullText).toContain("৳6,008");  // Required Advance
+
+    // 4. Customer and item metadata integrity
+    expect(fullText).toContain("RootVana Sculpted Center Table");
+    expect(fullText).toContain("Bilash");
+    expect(fullText).toContain("RG-20261018-991567");
+    expect(fullText).toContain("INV-RG-20261018-991567-1");
+  });
+
+  it("should correctly render zero-valued shipping and active discounts", async () => {
+    const promoOrder = {
+      ...mockOrder,
+      subtotal: 30040,
+      shippingCost: 0,      // Free shipping
+      discountAmount: 500,  // Active promo
+      total: 29540,
+      requiredAdvance: 5908,
+    };
+
+    const snapshot = buildInvoiceSnapshot(promoOrder, mockSiteConfig, {
+      invoiceType: "ADVANCE",
+      referenceIdentity: "INV-RG-20261018-PROMO-1",
+    });
+
+    const pdfBuffer = await generateInvoicePDF(snapshot, "1.0");
+    const { fullText, hasMojibake } = extractPDFText(pdfBuffer);
+
+    expect(hasMojibake).toBe(false);
+    expect(fullText).toContain("৳0");     // Zero shipping
+    expect(fullText).toContain("-৳500");  // Formatted discount
+    expect(fullText).toContain("৳29,540"); // Adjusted total
+    expect(fullText).toContain("৳5,908"); // Adjusted required advance
+  });
+
+  it("should correctly render FINAL invoice with settlement fields and no mojibake", async () => {
+    const finalSnapshot = buildInvoiceSnapshot(mockOrder, mockSiteConfig, {
+      invoiceType: "FINAL",
+      referenceIdentity: "FINV-RG-20261018-991567-1",
+      validPaidAtIssuance: 6008,
+      balanceDueAtIssuance: 24032,
+    });
+
+    const pdfBuffer = await generateInvoicePDF(finalSnapshot, "1.0");
+    const { fullText, hasToUnicodeCMap, hasMojibake } = extractPDFText(pdfBuffer);
+
+    expect(hasToUnicodeCMap).toBe(true);
+    expect(hasMojibake).toBe(false);
+    expect(fullText).toContain("FINAL INVOICE");
+    expect(fullText).toContain("Valid Paid: ৳6,008");
+    expect(fullText).toContain("Balance Due: ৳24,032");
+    expect(fullText).toContain("৳30,040");
+  });
+
+  it("should correctly render PAYMENT RECEIPT with ৳ symbol and no mojibake", async () => {
+    const receiptSnapshot = {
+      branding: mockSiteConfig as any,
+      referenceIdentity: "REC-RG-20261018-991567-1",
+      linkedInvoiceReference: "INV-RG-20261018-991567-1",
+      customerName: "Bilash",
+      type: "ADVANCE",
+      method: "bKash",
+      amount: 6008,
+      reference: "TRX-991567-BKASH",
+      paidAt: "2026-10-18T10:00:00.000Z",
+    };
+
+    const pdfBuffer = await generateReceiptPDF(receiptSnapshot as any, "1.0");
+    const { fullText, hasToUnicodeCMap, hasMojibake } = extractPDFText(pdfBuffer);
+
+    expect(hasToUnicodeCMap).toBe(true);
+    expect(hasMojibake).toBe(false);
+    expect(fullText).toContain("PAYMENT RECEIPT");
+    expect(fullText).toContain("৳6,008");
+    expect(fullText).not.toContain("Tk 6008");
+    expect(fullText).not.toContain("Ÿ");
+    expect(fullText).not.toContain("Ã");
+  });
+
+  it("should fail safely when orderTotal or requiredAdvance are non-finite in ADVANCE invoice", async () => {
+    const malformedOrder = {
+      ...mockOrder,
+      total: NaN,
+    };
+    const snapshot1 = buildInvoiceSnapshot(malformedOrder, mockSiteConfig);
+    // Overwrite to simulate non-finite or corrupted snapshot
+    (snapshot1 as any).orderTotal = NaN;
+    await expect(generateInvoicePDF(snapshot1, "1.0")).rejects.toThrow("Invoice requires a finite numeric orderTotal");
+
+    const snapshot2 = buildInvoiceSnapshot(mockOrder, mockSiteConfig);
+    (snapshot2 as any).requiredAdvance = Infinity;
+    await expect(generateInvoicePDF(snapshot2, "1.0")).rejects.toThrow("Advance invoice requires a finite numeric requiredAdvance");
+  });
+});
+
 
