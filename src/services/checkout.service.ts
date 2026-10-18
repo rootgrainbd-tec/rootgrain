@@ -23,6 +23,7 @@ import {
 import { IdempotencyOwnerType } from "@prisma/client";
 import { inngest } from "@/inngest/client";
 import { getSiteConfig } from "@/data/site-config";
+import { buildInvoiceSnapshot } from "@/lib/documentSnapshot";
 
 export function generateOrderNumber() {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -215,24 +216,19 @@ export class CheckoutService {
       const orderEvent = await appendOrderEvent(tx, newOrder.id, "ORDER_PLACED", {}, actor);
       const outbox = await scheduleNotification(tx, newOrder.id, orderEvent.id, "ORDER_CONFIRMATION", "EMAIL");
 
-      // Generate invoice document using pre-fetched siteConfig
-      const invoiceSnapshot = {
-        amount: total,
-        customerName: address.name || "Customer",
-        branding: {
-          companyName: siteConfig.name,
-          address: siteConfig.address,
-          email: siteConfig.support.email,
-          phone: siteConfig.support.phone.display,
-        }
-      };
+      // Generate invoice document using shared snapshot builder
+      const referenceIdentity = `INV-${newOrder.orderNumber}-1`;
+      const invoiceSnapshot = buildInvoiceSnapshot(newOrder, siteConfig, {
+        invoiceType: "ADVANCE",
+        referenceIdentity,
+      });
 
       const invoiceDoc = await tx.orderDocument.create({
         data: {
           orderId: newOrder.id,
           documentType: "INVOICE",
-          referenceIdentity: `INV-${newOrder.orderNumber}-1`,
-          snapshot: invoiceSnapshot,
+          referenceIdentity,
+          snapshot: invoiceSnapshot as any,
           templateVersion: "1.0",
           createdBy: "SYSTEM"
         }
@@ -419,24 +415,19 @@ export class CheckoutService {
       
       const outbox = await scheduleNotification(tx, newOrder.id, orderEvent.id, "ORDER_CONFIRMATION", "EMAIL");
 
-      // Generate invoice document using pre-fetched siteConfig
-      const invoiceSnapshot = {
-        amount: total,
-        customerName: address.name || "Customer",
-        branding: {
-          companyName: siteConfig.name,
-          address: siteConfig.address,
-          email: siteConfig.support.email,
-          phone: siteConfig.support.phone.display,
-        }
-      };
+      // Generate invoice document using shared snapshot builder
+      const referenceIdentity = `INV-${newOrder.orderNumber}-1`;
+      const invoiceSnapshot = buildInvoiceSnapshot(newOrder, siteConfig, {
+        invoiceType: "ADVANCE",
+        referenceIdentity,
+      });
 
       const invoiceDoc = await tx.orderDocument.create({
         data: {
           orderId: newOrder.id,
           documentType: "INVOICE",
-          referenceIdentity: `INV-${newOrder.orderNumber}-1`,
-          snapshot: invoiceSnapshot,
+          referenceIdentity,
+          snapshot: invoiceSnapshot as any,
           templateVersion: "1.0",
           createdBy: "SYSTEM"
         }

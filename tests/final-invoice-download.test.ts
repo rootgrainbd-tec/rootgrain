@@ -116,17 +116,64 @@ describe("Final Invoice Download API", () => {
     expect(res.status).toBe(401);
   });
 
-  it("4. Wrong document type -> 404", async () => {
+  it("4a. Owner + valid Advance Invoice (INVOICE) -> 302", async () => {
     await prisma.orderDocument.create({
       data: {
         id: mockDocId,
         orderId: mockOrderId,
         documentType: "INVOICE",
-        referenceIdentity: "INV-TEST-4",
+        referenceIdentity: "INV-TEST-4A",
         snapshot: {},
         templateVersion: "v1",
         createdBy: "system",
-        storageKey: "test/key.pdf"
+        storageKey: "test/key-advance.pdf"
+      }
+    });
+
+    vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: mockUserId } } as any);
+    mockGetSignedUrl.mockResolvedValueOnce("https://signed.url/advance");
+
+    const req = makeRequest(mockDocId);
+    const res = await GET(req);
+
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe("https://signed.url/advance");
+    expect(mockGetSignedUrl).toHaveBeenCalledWith("test/key-advance.pdf");
+  });
+
+  it("4b. Non-owner + valid Advance Invoice (INVOICE) -> 404 (IDOR)", async () => {
+    await prisma.orderDocument.create({
+      data: {
+        id: mockDocId,
+        orderId: mockOrderId,
+        documentType: "INVOICE",
+        referenceIdentity: "INV-TEST-4B",
+        snapshot: {},
+        templateVersion: "v1",
+        createdBy: "system",
+        storageKey: "test/key-advance.pdf"
+      }
+    });
+
+    vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: mockOtherUserId } } as any);
+    const req = makeRequest(mockDocId);
+    const res = await GET(req);
+
+    expect(res.status).toBe(404);
+    expect(mockGetSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it("4c. Unsupported document type (PAYMENT_RECEIPT) -> 404", async () => {
+    await prisma.orderDocument.create({
+      data: {
+        id: mockDocId,
+        orderId: mockOrderId,
+        documentType: "PAYMENT_RECEIPT",
+        referenceIdentity: "RCT-TEST-4C",
+        snapshot: {},
+        templateVersion: "v1",
+        createdBy: "system",
+        storageKey: "test/key-receipt.pdf"
       }
     });
 
