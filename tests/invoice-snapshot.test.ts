@@ -811,5 +811,138 @@ describe("PDFKit Unicode & TrueType Font Embedding Regression Tests", () => {
   });
 });
 
+describe("Document Footer Placement & Single-Page Layout Regression Tests", () => {
+  it("should render target invoice INV-RG-20261018-991567-1 as exactly one page with both footer lines on page 1", async () => {
+    const targetSnapshot = buildInvoiceSnapshot(
+      {
+        ...mockOrder,
+        orderNumber: "RG-20261018-991567",
+        total: 30040,
+        subtotal: 29990,
+        shippingCost: 50,
+        discountAmount: 0,
+        requiredAdvance: 6008,
+        shippingAddress: {
+          name: "bilash",
+          email: "bilash7@gmail.com",
+          phone: "01917389253",
+          district: "Netrokona",
+          street: "darsana",
+          postCode: "",
+        },
+        items: [
+          {
+            productId: "prod-table-1",
+            productName: "RootVana Sculpted Center Table",
+            quantity: 1,
+            unitPrice: 29990,
+            total: 29990,
+          },
+        ],
+      },
+      {
+        ...mockSiteConfig,
+        name: "RootGrain",
+        address: { line1: "Mujibnagar road, Rail Bazar, Darsana, Chuadanga", line2: "" },
+      },
+      {
+        invoiceType: "ADVANCE",
+        referenceIdentity: "INV-RG-20261018-991567-1",
+      }
+    );
+
+    const pdfBuffer = await generateInvoicePDF(targetSnapshot, "1.0");
+    const pdfString = pdfBuffer.toString("latin1");
+    const pageMatches = pdfString.match(/\/Type\s*\/Page\b/g);
+
+    // 1. Must be strictly 1 page (no footer overflow)
+    expect(pageMatches?.length).toBe(1);
+
+    // 2. Both footer lines must be present in the extracted text
+    const { fullText, hasMojibake } = extractPDFText(pdfBuffer);
+    expect(hasMojibake).toBe(false);
+    expect(fullText).toContain("Thank you for choosing RootGrain!");
+    expect(fullText).toContain("Template Version: 1.0");
+
+    // 3. Financial integrity and document identity
+    expect(fullText).toContain("INV-RG-20261018-991567-1");
+    expect(fullText).toContain("RG-20261018-991567");
+    expect(fullText).toContain("৳30,040");
+    expect(fullText).toContain("৳6,008");
+  });
+
+  it("should handle longer multi-item invoice without footer overlap or clipping", async () => {
+    const longOrder = {
+      ...mockOrder,
+      items: [
+        {
+          productId: "prod-item-1",
+          productName: "RootVana Artisanal Handcrafted Center Table - Solid Seasoned Teak Wood with Natural Finish",
+          quantity: 1,
+          unitPrice: 29990,
+          total: 29990,
+        },
+        {
+          productId: "prod-item-2",
+          productName: "Rova Minimalist Dining Chair - Moisture Resistant Fabric Upholstered",
+          quantity: 2,
+          unitPrice: 9500,
+          total: 19000,
+        },
+        {
+          productId: "prod-item-3",
+          productName: "Solid Mahogany Accent Side Table with Concealed Drawer",
+          quantity: 1,
+          unitPrice: 12020,
+          total: 12020,
+        },
+      ],
+      subtotal: 61010,
+      shippingCost: 50,
+      total: 61060,
+      requiredAdvance: 12212,
+    };
+
+    const snapshot = buildInvoiceSnapshot(longOrder, mockSiteConfig, {
+      invoiceType: "ADVANCE",
+      referenceIdentity: "INV-RG-20261018-MULTI-1",
+    });
+
+    const pdfBuffer = await generateInvoicePDF(snapshot, "1.0");
+    const { fullText, hasMojibake } = extractPDFText(pdfBuffer);
+
+    expect(hasMojibake).toBe(false);
+    expect(fullText).toContain("Thank you for choosing");
+    expect(fullText).toContain("Template Version: 1.0");
+    expect(fullText).toContain("৳61,060");
+    expect(fullText).toContain("৳12,212");
+  });
+
+  it("should anchor payment receipt footer cleanly without triggering an extra page", async () => {
+    const receiptSnapshot = {
+      branding: mockSiteConfig as any,
+      referenceIdentity: "REC-RG-20261018-991567-1",
+      linkedInvoiceReference: "INV-RG-20261018-991567-1",
+      customerName: "Bilash",
+      type: "ADVANCE",
+      method: "bKash",
+      amount: 6008,
+      reference: "TRX-991567-BKASH",
+      paidAt: "2026-10-18T10:00:00.000Z",
+    };
+
+    const pdfBuffer = await generateReceiptPDF(receiptSnapshot as any, "1.0");
+    const pdfString = pdfBuffer.toString("latin1");
+    const pageMatches = pdfString.match(/\/Type\s*\/Page\b/g);
+
+    expect(pageMatches?.length).toBe(1);
+
+    const { fullText, hasMojibake } = extractPDFText(pdfBuffer);
+    expect(hasMojibake).toBe(false);
+    expect(fullText).toContain("Thank you for your payment!");
+    expect(fullText).toContain("Template Version: 1.0");
+  });
+});
+
 
 

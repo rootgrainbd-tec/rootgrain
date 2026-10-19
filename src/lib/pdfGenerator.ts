@@ -56,6 +56,41 @@ export function formatCurrencyBDT(amount: number): string {
   return `৳${amount.toLocaleString('en-BD')}`;
 }
 
+/**
+ * Renders an anchored document footer with safe margin protection.
+ * Anchors footer to the bottom of the page while ensuring it cannot overlap preceding content.
+ * If content extends into the footer zone, a new page is cleanly created.
+ */
+function renderDocumentFooter(
+  doc: PDFKit.PDFDocument,
+  message: string,
+  templateVersion: string
+): void {
+  const footerHeight = 32;
+  const bottomMargin = doc.page.margins.bottom || 50;
+  const leftMargin = doc.page.margins.left || 50;
+  const rightMargin = doc.page.margins.right || 50;
+  const contentWidth = doc.page.width - leftMargin - rightMargin;
+  const anchoredY = doc.page.height - bottomMargin - footerHeight;
+
+  // If previous content is too close to the anchored footer, push to next page to prevent collision
+  if (doc.y + 15 > anchoredY) {
+    doc.addPage();
+  }
+
+  const targetY = doc.page.height - bottomMargin - footerHeight;
+
+  doc.font('HindSiliguri').fontSize(10).fillColor('gray');
+  doc.text(message, leftMargin, targetY, {
+    width: contentWidth,
+    align: 'center',
+  });
+  doc.fontSize(8).text(`Template Version: ${templateVersion}`, leftMargin, targetY + 14, {
+    width: contentWidth,
+    align: 'center',
+  });
+}
+
 export async function generateInvoicePDF(snapshot: InvoiceSnapshot, templateVersion: string): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     try {
@@ -225,11 +260,8 @@ export async function generateInvoicePDF(snapshot: InvoiceSnapshot, templateVers
         doc.fillColor('#5D4037').text(`Required Advance: ${formatCurrencyBDT(snapshot.requiredAdvance)}`, 50, yPosition);
       }
 
-      // Footer Message
-      doc.moveDown(4);
-      doc.font('HindSiliguri').fontSize(10).fillColor('gray');
-      doc.text(`Thank you for choosing ${snapshot.branding.companyName}!`, { align: 'center' });
-      doc.fontSize(8).text(`Template Version: ${templateVersion}`, { align: 'center' });
+      // Anchored Footer Message
+      renderDocumentFooter(doc, `Thank you for choosing ${snapshot.branding.companyName}!`, templateVersion);
 
       doc.end();
     } catch (error) {
@@ -309,11 +341,8 @@ export async function generateReceiptPDF(snapshot: ReceiptSnapshot, templateVers
       const footerLineY = yPosition + 10;
       doc.moveTo(50, footerLineY).lineTo(500, footerLineY).stroke();
 
-      // Footer Message
-      doc.moveDown(4);
-      doc.font('HindSiliguri').fontSize(10).fillColor('gray');
-      doc.text(`Thank you for your payment!`, { align: 'center' });
-      doc.fontSize(8).text(`Template Version: ${templateVersion}`, { align: 'center' });
+      // Anchored Footer Message
+      renderDocumentFooter(doc, `Thank you for your payment!`, templateVersion);
 
       doc.end();
     } catch (error) {
