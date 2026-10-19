@@ -21,6 +21,7 @@ export interface CandidateDescriptor {
   currentActiveStorageKey: string | null;
   currentActiveChecksum: string | null;
   candidateStorageKey: string;
+  candidateSignedUrl?: string;
   candidateChecksum: string;
   candidateSize: number;
   stagedAt: string;
@@ -149,6 +150,8 @@ export class DocumentStagingService {
       contentType: "application/pdf",
     });
 
+    const candidateSignedUrl = await storage.getSignedUrl(candidateStorageKey, 600);
+
     logger.info(
       {
         adminId,
@@ -169,6 +172,7 @@ export class DocumentStagingService {
       currentActiveStorageKey: doc.storageKey,
       currentActiveChecksum: doc.checksum,
       candidateStorageKey,
+      candidateSignedUrl,
       candidateChecksum: checksum,
       candidateSize: pdfBuffer.length,
       stagedAt: new Date().toISOString(),

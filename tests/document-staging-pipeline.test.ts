@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { POST as stagePOST } from "../src/app/api/admin/documents/stage/route";
+import { POST as stagePOST, GET as stageGET } from "../src/app/api/admin/documents/stage/route";
 import { POST as promotePOST } from "../src/app/api/admin/documents/promote/route";
 import prisma from "../src/lib/prisma";
 import { getServerSession } from "next-auth";
@@ -243,6 +243,27 @@ describe("Document Candidate Staging and Promotion Pipeline - Security & Correct
       // Invariant: active DB pointer is NOT modified during staging
       expect(prisma.orderDocument.update).not.toHaveBeenCalled();
       expect(prisma.orderDocument.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("8b. Stage GET: Rejects non-admin or unauthenticated inspection requests with 401/403", async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce(null);
+      const req = new Request("http://localhost/api/admin/documents/stage?candidateStorageKey=production/documents/invoice/staged/order-991567/INV-1_abc.pdf");
+      const res = await stageGET(req);
+      expect(res.status).toBe(401);
+    });
+
+    it("8c. Stage GET: Streams binary candidate PDF when download=true is requested by authorized admin", async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce(mockAdminSession as any);
+      const testKey = "production/documents/invoice/staged/order-991567/INV-RG-20261018-991567-1_abc12345.pdf";
+      mockStorage.exists.mockResolvedValueOnce(true);
+      mockStorage.download.mockResolvedValueOnce(Buffer.from("%PDF-1.4 Mock Streamed Staged Candidate Content"));
+
+      const req = new Request(`http://localhost/api/admin/documents/stage?candidateStorageKey=${encodeURIComponent(testKey)}&download=true`);
+      const res = await stageGET(req);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("Content-Type")).toBe("application/pdf");
+      const buf = await res.arrayBuffer();
+      expect(buf.byteLength).toBeGreaterThan(10);
     });
   });
 

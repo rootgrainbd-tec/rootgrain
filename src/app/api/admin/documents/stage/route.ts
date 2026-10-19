@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { DocumentStagingService } from "@/services/document-staging.service";
+import { getStorageAdapter } from "@/lib/infrastructure/storage";
 import { logger } from "@/lib/logger";
 
 /**
@@ -74,6 +75,57 @@ export async function POST(req: Request) {
     if (error.message?.includes("not found")) {
       return NextResponse.json({ error: "NOT_FOUND", message: error.message }, { status: 404 });
     }
+    return NextResponse.json({ error: "INTERNAL_ERROR", message: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+/**
+ * GET /api/admin/documents/stage
+ * 
+ * Securely retrieves an authorized pre-signed URL or directly streams the staged candidate PDF
+ * for administrative inspection and verification prior to promotion.
+ */
+export async function GET(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "UNAUTHORIZED", message: "Authentication required" }, { status: 401 });
+    }
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "FORBIDDEN", message: "Admin role required" }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const candidateStorageKey = searchParams.get("candidateStorageKey");
+
+    if (!candidateStorageKey || !candidateStorageKey.includes("/staged/") || !candidateStorageKey.endsWith(".pdf")) {
+      return NextResponse.json(
+        { error: "INVALID_REQUEST", message: "candidateStorageKey required and must reside within the /staged/ namespace" },
+        { status: 400 }
+      );
+    }
+
+    const storage = getStorageAdapter();
+    const exists = await storage.exists(candidateStorageKey);
+    if (!exists) {
+      return NextResponse.json({ error: "NOT_FOUND", message: "Staged candidate blob not found" }, { status: 404 });
+    }
+
+    if (searchParams.get("download") === "true") {
+      const buffer = await storage.download(candidateStorageKey);
+      return new NextResponse(buffer as any, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${candidateStorageKey.split("/").pop()}"`,
+        },
+      });
+    }
+
+    const signedUrl = await storage.getSignedUrl(candidateStorageKey, 600);
+    return NextResponse.json({ success: true, candidateSignedUrl: signedUrl }, { status: 200 });
+  } catch (error: any) {
+    logger.error({ err: error.message }, "Failed in candidate inspection GET route");
     return NextResponse.json({ error: "INTERNAL_ERROR", message: "Internal Server Error" }, { status: 500 });
   }
 }
