@@ -4,7 +4,7 @@ import {
   buildShippingAddressSnapshot,
   buildInvoiceItemsSnapshot,
 } from "@/lib/documentSnapshot";
-import { generateInvoicePDF, generateReceiptPDF, formatCurrencyBDT } from "@/lib/pdfGenerator";
+import { generateInvoicePDF, generateReceiptPDF, formatCurrencyBDT, resolveFontPath } from "@/lib/pdfGenerator";
 import { extractPDFText } from "./helpers/pdfTestUtils";
 
 const mockSiteConfig = {
@@ -647,6 +647,169 @@ describe("PDFKit Unicode & TrueType Font Embedding Regression Tests", () => {
     (snapshot2 as any).requiredAdvance = Infinity;
     await expect(generateInvoicePDF(snapshot2, "1.0")).rejects.toThrow("Advance invoice requires a finite numeric requiredAdvance");
   });
+
+  it("should correctly render customer and product details in Bengali Unicode text without mojibake", async () => {
+    const bengaliOrder = {
+      ...mockOrder,
+      orderNumber: "RG-20261018-991567",
+      shippingAddress: {
+        name: "মো: বিলাশ হোসেন",
+        email: "bilash@example.bd",
+        phone: "০১৭১২৩৪৫৬৭৮",
+        street: "১২৩ বীর উত্তম সি.আর. দত্ত রোড, হাতিরপুল",
+        district: "ঢাকা",
+        postCode: "১২০৫",
+      },
+      items: [
+        {
+          productId: "prod-bengali-1",
+          productName: "রুটভানা স্কাল্পটেড সেন্টার টেবিল - সলিড সেগুন কাঠ",
+          quantity: 1,
+          unitPrice: 29990,
+          total: 29990,
+        },
+      ],
+      subtotal: 29990,
+      shippingCost: 50,
+      discountAmount: 0,
+      total: 30040,
+      requiredAdvance: 6008,
+    };
+
+    const bengaliConfig = {
+      ...mockSiteConfig,
+      name: "রুটগ্রেন ফার্নিচার",
+      address: { line1: "১২৩ মেইন রোড", line2: "ঢাকা" },
+    };
+
+    const snapshot = buildInvoiceSnapshot(bengaliOrder, bengaliConfig, {
+      invoiceType: "ADVANCE",
+      referenceIdentity: "INV-RG-20261018-991567-1",
+    });
+
+    const pdfBuffer = await generateInvoicePDF(snapshot, "1.0");
+    expect(Buffer.isBuffer(pdfBuffer)).toBe(true);
+
+    const { fullText, hasToUnicodeCMap, hasMojibake, fontSubsets } = extractPDFText(pdfBuffer);
+
+    expect(hasToUnicodeCMap).toBe(true);
+    expect(hasMojibake).toBe(false);
+    expect(fontSubsets.some((f) => f.includes("HindSiliguri"))).toBe(true);
+
+    // 1. Technical character mapping & encoding fidelity
+    expect(hasToUnicodeCMap).toBe(true);
+    expect(hasMojibake).toBe(false);
+    expect(fontSubsets.some((f) => f.includes("HindSiliguri"))).toBe(true);
+
+    // Verify all non-ASCII characters belong to genuine Bengali Unicode block (\u0980-\u09FF)
+    const nonAsciiChars = fullText.replace(/[\x00-\x7F]/g, "");
+    expect(nonAsciiChars.length).toBeGreaterThan(0);
+    for (const char of nonAsciiChars) {
+      const code = char.charCodeAt(0);
+      expect(code >= 0x0980 && code <= 0x09FF).toBe(true);
+    }
+
+    // 2. Exact currency formatting with ৳ and numerals
+    expect(fullText).toContain("৳29,990");
+    expect(fullText).toContain("৳50");
+    expect(fullText).toContain("৳30,040");
+    expect(fullText).toContain("৳6,008");
+
+    // 3. Documented OpenType visual glyph layout in PDF content streams
+    // (In PDFKit without Tagged PDF /ActualText trees, CMap reflects shaped visual glyph layout)
+    expect(fullText).toContain("ঢাকা");
+    expect(fullText).toContain("েমা: িবলাশ েহােসন");
+    expect(fullText).toContain("রুটভানা স্কাল্পেটড েসন্টার েটিবল");
+  });
+
+  it("should dynamically wrap long item names without row overlapping or text collision", async () => {
+    const multiItemOrder = {
+      ...mockOrder,
+      items: [
+        {
+          productId: "item-long-1",
+          productName: "RootVana Artisanal Handcrafted Center Table - Extra Long Title That Wraps Onto Multiple Lines In The PDF Layout Without Causing Any Row Overlap",
+          quantity: 2,
+          unitPrice: 14000,
+          total: 28000,
+        },
+        {
+          productId: "item-short-2",
+          productName: "Classic Teak Dining Chair",
+          quantity: 1,
+          unitPrice: 1990,
+          total: 1990,
+        },
+      ],
+      subtotal: 29990,
+      shippingCost: 50,
+      total: 30040,
+      requiredAdvance: 6008,
+    };
+
+    const snapshot = buildInvoiceSnapshot(multiItemOrder, mockSiteConfig, {
+      invoiceType: "ADVANCE",
+      referenceIdentity: "INV-RG-20261018-WRAP-1",
+    });
+
+    const pdfBuffer = await generateInvoicePDF(snapshot, "1.0");
+    const { fullText, hasMojibake } = extractPDFText(pdfBuffer);
+
+    expect(hasMojibake).toBe(false);
+    expect(fullText).toContain("RootVana Artisanal Handcrafted Center Table");
+    expect(fullText).toContain("Classic Teak Dining Chair");
+    expect(fullText).toContain("৳28,000");
+    expect(fullText).toContain("৳1,990");
+    expect(fullText).toContain("৳30,040");
+  });
+
+  it("should handle multi-page overflow cleanly when an invoice has numerous line items", async () => {
+    const manyItems = Array.from({ length: 12 }, (_, i) => ({
+      productId: `prod-multi-${i + 1}`,
+      productName: `Custom Woodcrafted Furniture Item #${i + 1} with Detailed Description and Care Package`,
+      quantity: 1,
+      unitPrice: 2000,
+      total: 2000,
+    }));
+
+    const overflowOrder = {
+      ...mockOrder,
+      items: manyItems,
+      subtotal: 24000,
+      shippingCost: 500,
+      total: 24500,
+      requiredAdvance: 4900,
+    };
+
+    const snapshot = buildInvoiceSnapshot(overflowOrder, mockSiteConfig, {
+      invoiceType: "ADVANCE",
+      referenceIdentity: "INV-RG-20261018-PAGES-1",
+    });
+
+    const pdfBuffer = await generateInvoicePDF(snapshot, "1.0");
+    expect(pdfBuffer.length).toBeGreaterThan(10000);
+
+    const { fullText, hasMojibake } = extractPDFText(pdfBuffer);
+    expect(hasMojibake).toBe(false);
+    expect(fullText).toContain("Item #1");
+    expect(fullText).toContain("Item #12");
+    expect(fullText).toContain("৳24,500");
+    expect(fullText).toContain("৳4,900");
+  });
+
+  it("should fail closed with a descriptive error when required font asset is missing", () => {
+    expect(() => resolveFontPath("NonExistentFont-12345.ttf")).toThrow("Font file NonExistentFont-12345.ttf not found in any expected location.");
+  });
+
+  it("should resolve existing Hind Siliguri TrueType fonts from valid candidate paths", () => {
+    const regularPath = resolveFontPath("HindSiliguri-Regular.ttf");
+    const boldPath = resolveFontPath("HindSiliguri-Bold.ttf");
+    expect(regularPath).toBeTruthy();
+    expect(boldPath).toBeTruthy();
+    expect(regularPath).toMatch(/HindSiliguri-Regular\.ttf$/);
+    expect(boldPath).toMatch(/HindSiliguri-Bold\.ttf$/);
+  });
 });
+
 
 

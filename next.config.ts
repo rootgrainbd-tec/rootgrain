@@ -7,8 +7,8 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ['pdfkit'],
   outputFileTracingIncludes: {
-    '/api/**/*': ['./src/assets/fonts/**/*', './node_modules/pdfkit/js/data/**/*'],
-    '/api/checkout': ['./src/assets/fonts/**/*', './node_modules/pdfkit/js/data/**/*'],
+    '/api/**/*': ['./src/assets/fonts/**/*', './public/fonts/**/*', './node_modules/pdfkit/js/data/**/*'],
+    '/api/checkout': ['./src/assets/fonts/**/*', './public/fonts/**/*', './node_modules/pdfkit/js/data/**/*'],
   },
   images: {
     formats: ["image/avif", "image/webp"],

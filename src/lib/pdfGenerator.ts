@@ -6,7 +6,7 @@ import { InvoiceSnapshot, InvoiceItemSnapshot, ReceiptSnapshot } from "@/types/d
 let regularFontBuffer: Buffer | null = null;
 let boldFontBuffer: Buffer | null = null;
 
-function resolveFontPath(filename: string): string {
+export function resolveFontPath(filename: string): string {
   const candidates = [
     path.join(/*turbopackIgnore: true*/ process.cwd(), 'src/assets/fonts', filename),
     path.join(/*turbopackIgnore: true*/ process.cwd(), 'public/fonts', filename),
@@ -128,16 +128,33 @@ export async function generateInvoicePDF(snapshot: InvoiceSnapshot, templateVers
       doc.font('HindSiliguri');
 
       (snapshot.items || []).forEach((item: InvoiceItemSnapshot) => {
-        doc.text(item.productName || 'Item', 50, yPosition, { width: 300 });
+        const itemText = item.productName || 'Item';
+        const nameHeight = doc.heightOfString(itemText, { width: 300 });
+        const rowHeight = Math.max(20, Math.ceil(nameHeight) + 4);
+
+        if (yPosition + rowHeight > doc.page.height - 180) {
+          doc.addPage();
+          yPosition = 50;
+          doc.font('HindSiliguri-Bold');
+          doc.text('Item', 50, yPosition);
+          doc.text('Qty', 350, yPosition, { width: 50, align: 'right' });
+          doc.text('Price', 400, yPosition, { width: 100, align: 'right' });
+          yPosition += 15;
+          doc.moveTo(50, yPosition).lineTo(500, yPosition).stroke();
+          yPosition += 10;
+          doc.font('HindSiliguri');
+        }
+
+        doc.text(itemText, 50, yPosition, { width: 300 });
         doc.text(item.quantity?.toString() || '1', 350, yPosition, { width: 50, align: 'right' });
         const rawTotal = typeof item.total === 'number'
           ? item.total
           : ((Number(item.unitPrice || 0)) * Number(item.quantity || 1));
         if (!Number.isFinite(rawTotal)) {
-          throw new Error(`Invalid item total for product "${item.productName || 'Item'}"`);
+          throw new Error(`Invalid item total for product "${itemText}"`);
         }
         doc.text(formatCurrencyBDT(rawTotal), 400, yPosition, { width: 100, align: 'right' });
-        yPosition += 20;
+        yPosition += rowHeight;
       });
 
       const footerLineY = yPosition + 10;
@@ -145,6 +162,10 @@ export async function generateInvoicePDF(snapshot: InvoiceSnapshot, templateVers
 
       // Totals with breakdown
       yPosition = footerLineY + 15;
+      if (yPosition > doc.page.height - 160) {
+        doc.addPage();
+        yPosition = 50;
+      }
       doc.font('HindSiliguri').fontSize(12);
 
       if (typeof snapshot.subtotal === 'number') {

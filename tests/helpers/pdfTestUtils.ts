@@ -53,9 +53,9 @@ export function extractPDFText(pdfBuffer: Buffer): PDFExtractionResult {
       let m: RegExpExecArray | null;
       while ((m = bfrangeArr.exec(block)) !== null) {
         const start = parseInt(m[1], 16);
-        const hexList = m[3].trim().match(/<([0-9a-fA-F]+)>/g) || [];
+        const hexList = m[3].trim().match(/<([0-9a-fA-F\s]+)>/g) || [];
         hexList.forEach((tag, idx) => {
-          const hex = tag.replace(/[<>]/g, "");
+          const hex = tag.replace(/[<>\s]/g, "");
           const chars: string[] = [];
           for (let i = 0; i < hex.length; i += 4) {
             chars.push(String.fromCharCode(parseInt(hex.substring(i, i + 4), 16)));
@@ -126,7 +126,7 @@ export function extractPDFText(pdfBuffer: Buffer): PDFExtractionResult {
     const fontDictMatch = /\/Font\s*<<([\s\S]*?)>>/.exec(dict);
     if (fontDictMatch) {
       const fontEntries = fontDictMatch[1];
-      const entryRegex = /\/([a-zA-Z0-9]+)\s+(\d+)\s+0\s+R/g;
+      const entryRegex = /\/([a-zA-Z0-9_+-]+)\s+(\d+)\s+0\s+R/g;
       let e: RegExpExecArray | null;
       while ((e = entryRegex.exec(fontEntries)) !== null) {
         const alias = "/" + e[1];
@@ -145,7 +145,7 @@ export function extractPDFText(pdfBuffer: Buffer): PDFExtractionResult {
     if (!stream || !stream.includes("BT")) continue;
 
     let currentCMap: Map<number, string> | null = null;
-    const cmdRegex = /(\/F\d+)\s+[\d.]+\s+Tf|\[([\s\S]*?)\]\s*TJ|(?:\(([\s\S]*?)\)|<([0-9a-fA-F]+)>)\s*Tj/g;
+    const cmdRegex = /(\/[a-zA-Z0-9_+-]+)\s+[\d.]+\s+Tf|\[([\s\S]*?)\]\s*TJ|(?:\(([\s\S]*?)\)|<([0-9a-fA-F]+)>)\s*Tj/g;
     let cmd: RegExpExecArray | null;
     while ((cmd = cmdRegex.exec(stream)) !== null) {
       if (cmd[1]) {
@@ -173,7 +173,9 @@ export function extractPDFText(pdfBuffer: Buffer): PDFExtractionResult {
             text += tok[2];
           }
         }
-        if (text.trim()) extractedLines.push(text.trim());
+        if (text.trim()) {
+          extractedLines.push(text.trim());
+        }
       } else if (cmd[4]) {
         // <hex> Tj
         const hex = cmd[4];
