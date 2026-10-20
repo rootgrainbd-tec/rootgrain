@@ -149,7 +149,10 @@ export async function renderOrderConfirmation(order: any, config: SiteConfig): P
   const advanceRequired = resolveAuthoritativeAdvance(order);
   const baseUrl = config.url;
 
-  let trackButtonHtml = `<a href="${baseUrl}/track?orderNumber=${order.orderNumber}" class="btn" style="margin-right: 10px;">Track Order</a>`;
+  const encodedOrder = encodeURIComponent(order.orderNumber);
+  const invoiceUrl = `${baseUrl}/checkout/invoice?order=${encodedOrder}`;
+
+  let trackButtonHtml = `<a href="${baseUrl}/track?orderNumber=${encodedOrder}" class="btn" style="margin-right: 10px;">Track Order</a>`;
 
   const content = `
     <h2>Thank you for your order!</h2>
@@ -165,7 +168,7 @@ export async function renderOrderConfirmation(order: any, config: SiteConfig): P
           <td style="text-align: right; padding: 5px 0;">৳${order.subtotal.toLocaleString()}</td>
         </tr>
         <tr>
-          <td style="padding: 5px 0; color: #555;">Shipping:</td>
+          <td style="padding: 5px 0; color: #555;">Delivery Charge:</td>
           <td style="text-align: right; padding: 5px 0;">৳${order.shippingCost.toLocaleString()}</td>
         </tr>
         ${order.discountAmount > 0 ? `
@@ -185,8 +188,10 @@ export async function renderOrderConfirmation(order: any, config: SiteConfig): P
     </div>
 
     <p>Our representative will contact you shortly to confirm the advance payment details. Once the advance is received, production will begin.</p>
+    <p>Your official invoice has been attached to this email as a PDF. You can also view or print your invoice online at: <a href="${invoiceUrl}" style="color: ${EmailTheme.primary}; font-weight: bold;">${invoiceUrl}</a></p>
     
     <div style="text-align: center;">
+      <a href="${invoiceUrl}" class="btn" style="margin-right: 10px;">View Invoice</a>
       ${trackButtonHtml}
       <a href="${baseUrl}" class="btn">Visit Website</a>
     </div>
@@ -246,19 +251,24 @@ export class CommunicationService {
     subject: string;
     html: string;
     attachments?: Array<{ filename: string; content: Buffer }>;
+    outboxId?: string;
   }) {
     const config = await getFreshSiteConfig();
     const sender = await getEmailSender(config);
     const resend = getResendClient();
 
-    const result = await resend.emails.send({
-      from: sender,
-      ...(config.support?.email && { replyTo: config.support.email }),
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
-      attachments: options.attachments,
-    });
+    const result = await resend.emails.send(
+      {
+        from: sender,
+        ...(config.support?.email && { replyTo: config.support.email }),
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        attachments: options.attachments,
+        headers: options.outboxId ? { 'X-Entity-Ref-ID': options.outboxId } : undefined,
+      },
+      options.outboxId ? { idempotencyKey: options.outboxId } : undefined
+    );
     
     if (result.error) {
         throw new Error(result.error.message);

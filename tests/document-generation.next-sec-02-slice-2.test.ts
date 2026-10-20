@@ -27,6 +27,7 @@ vi.mock("@/lib/prisma", () => {
       },
       notificationOutbox: {
         create: vi.fn(),
+        findFirst: vi.fn(),
       },
       paymentRecord: {
         create: vi.fn(),
@@ -147,7 +148,13 @@ describe("Phase 9 Slice 2 - Document Generation", () => {
         id: "doc-1",
         orderId: "ord-1",
         referenceIdentity: "INV-1001-1",
-        snapshot: { invoiceType: "ADVANCE", branding: { companyName: "Test", address: {} }, items: [] },
+        snapshot: { 
+          invoiceType: "ADVANCE", 
+          orderTotal: 1000,
+          requiredAdvance: 200,
+          branding: { companyName: "Test", address: {} }, 
+          items: [] 
+        },
         templateVersion: "1.0",
         storageKey: null
       });

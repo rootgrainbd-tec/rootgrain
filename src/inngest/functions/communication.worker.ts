@@ -4,6 +4,7 @@ import { getStorageAdapter } from "@/lib/infrastructure/storage";
 import { CommunicationService, renderOrderConfirmation, renderPaymentReceipt, renderFinalInvoiceAvailable } from "@/services/communication.service";
 import { getSiteConfig } from "@/data/site-config";
 import { NotificationOutboxStatus } from "@prisma/client";
+import { generateInvoicePDF, generateReceiptPDF } from "@/lib/pdfGenerator";
 
 export class DocumentNotReadyError extends Error {
   constructor(message: string) {
@@ -21,15 +22,22 @@ export const communicationWorker = inngest.createFunction(
   async ({ event, step }) => {
     const { outboxId } = event.data;
 
-    // Step 1: Load and Claim Outbox
+    // Step 1: Load and Claim Outbox with Lease / Stale Recovery Concurrency Control
     const claimed = await step.run("load-and-claim-outbox", async () => {
+      const STALE_LEASE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
+      const staleThreshold = new Date(Date.now() - STALE_LEASE_THRESHOLD_MS);
+
       const updateResult = await prisma.notificationOutbox.updateMany({
         where: { 
           id: outboxId, 
-          status: { in: [NotificationOutboxStatus.PENDING, NotificationOutboxStatus.FAILED] } 
+          OR: [
+            { status: { in: [NotificationOutboxStatus.PENDING, NotificationOutboxStatus.FAILED] } },
+            { status: NotificationOutboxStatus.PROCESSING, updatedAt: { lt: staleThreshold } }
+          ]
         },
         data: { 
           status: NotificationOutboxStatus.PROCESSING, 
+          attempts: { increment: 1 },
           updatedAt: new Date() 
         }
       });
@@ -37,7 +45,7 @@ export const communicationWorker = inngest.createFunction(
     });
 
     if (!claimed) {
-      return { message: "Outbox already claimed or sent" };
+      return { message: "Outbox already claimed, processing, or sent", skipped: true };
     }
 
     try {
@@ -69,7 +77,7 @@ export const communicationWorker = inngest.createFunction(
         documentType = "FINAL_INVOICE";
       }
 
-      // Step 3: Fetch Private Blob if Document is Required
+      // Step 3: Fetch Private Blob or Generate from Authoritative Snapshot
       if (documentType) {
         const docBuffer = await step.run("fetch-private-blob", async () => {
           const document = await prisma.orderDocument.findFirst({
@@ -78,18 +86,30 @@ export const communicationWorker = inngest.createFunction(
           });
 
           if (!document) {
-            // For ORDER_CONFIRMATION, if there is no INVOICE, we might skip the invoice attachment 
-            // or we throw DocumentNotReadyError if strict. The plan says "If storageKey is null... DocumentNotReadyError".
-            // If the document record itself doesn't exist, we must wait for it to be created.
-            throw new DocumentNotReadyError(`Required document ${documentType} not found for order ${order.id}`);
+            throw new Error(`Required document ${documentType} not found for order ${order.id}`);
           }
 
-          if (!document.storageKey) {
-            throw new DocumentNotReadyError(`Document ${document.id} is not yet generated (storageKey is null)`);
+          // If canonical storageKey exists, download from storage adapter
+          if (document.storageKey) {
+            try {
+              const storage = getStorageAdapter();
+              return await storage.download(document.storageKey);
+            } catch (err: any) {
+              console.warn(`Storage download failed for ${document.storageKey}, falling back to snapshot render:`, err?.message);
+            }
           }
 
-          const storage = getStorageAdapter();
-          return await storage.download(document.storageKey);
+          // Authoritative in-memory generation fallback from the immutable snapshot
+          // Ensures identical PDF bytes/layout and eliminates race condition if document upload is pending
+          if (document.snapshot) {
+            if (documentType === "INVOICE" || documentType === "FINAL_INVOICE") {
+              return await generateInvoicePDF(document.snapshot as any, document.templateVersion);
+            } else if (documentType === "PAYMENT_RECEIPT") {
+              return await generateReceiptPDF(document.snapshot as any, document.templateVersion);
+            }
+          }
+
+          throw new Error(`Document ${document.id} has neither storageKey nor valid snapshot to generate PDF`);
         });
 
         if (docBuffer) {
@@ -112,23 +132,37 @@ export const communicationWorker = inngest.createFunction(
         throw new Error(`Unsupported notification type: ${outbox.notificationType}`);
       });
 
-      // Step 5: Dispatch to Resend
+      // Step 5: Validate recipient & Dispatch to Resend
       const customerEmail = (order.shippingAddress as any)?.email;
-      if (!customerEmail) {
-        throw new Error("No customer email found in shipping address");
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!customerEmail || typeof customerEmail !== 'string' || !emailRegex.test(customerEmail.trim())) {
+        await prisma.notificationOutbox.update({
+          where: { id: outboxId },
+          data: {
+            status: NotificationOutboxStatus.FAILED,
+            lastError: "PERMANENT_VALIDATION_ERROR: Missing or invalid customer email address in shipping address",
+            updatedAt: new Date()
+          }
+        });
+        return { success: false, error: "Permanent validation error: invalid customer email address", nonRetryable: true };
       }
 
       await step.run("dispatch-to-resend", async () => {
+        const filename = documentType === "INVOICE" 
+          ? `Invoice_${order.orderNumber}.pdf` 
+          : `${documentType}_${order.orderNumber}.pdf`;
+
         const attachments = pdfBuffer && documentType ? [{
-          filename: `${documentType}_${order.orderNumber}.pdf`,
+          filename,
           content: pdfBuffer
         }] : undefined;
 
         await CommunicationService.sendEmailWithAttachment({
-          to: customerEmail,
+          to: customerEmail.trim(),
           subject: emailContent.subject,
           html: emailContent.html,
-          attachments
+          attachments,
+          outboxId: outbox.id
         });
       });
 
@@ -139,7 +173,8 @@ export const communicationWorker = inngest.createFunction(
           data: { 
             status: NotificationOutboxStatus.SENT, 
             processedAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            lastError: null
           }
         });
       });
@@ -147,17 +182,19 @@ export const communicationWorker = inngest.createFunction(
       return { success: true };
 
     } catch (error: any) {
-      if (error.name === "DocumentNotReadyError") {
-        // Retryable error - revert to PENDING so it can be retried properly, or leave as PROCESSING
-        // and throw so Inngest retries the step. Leaving it as PROCESSING means Inngest will retry the function.
-        // Actually we should just throw, Inngest will retry.
-        throw error;
+      // Record failure on outbox with safe error logging (no secrets or customer PII)
+      try {
+        await prisma.notificationOutbox.update({
+          where: { id: outboxId },
+          data: {
+            status: NotificationOutboxStatus.FAILED,
+            lastError: (error?.message || String(error)).slice(0, 500),
+            updatedAt: new Date()
+          }
+        });
+      } catch (dbErr) {
+        // Ignore DB update error during error propagation
       }
-
-      // Mark as FAILED for non-retryable or unexpected errors that slip through the step retries
-      // Wait, Inngest will retry the whole function if a step throws. 
-      // To strictly mark as FAILED on final exhaustion, we would use an on-failure handler.
-      // But we can also just throw the error to let Inngest handle retries.
       throw error;
     }
   }

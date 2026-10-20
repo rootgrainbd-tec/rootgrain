@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { generateInvoicePDF, generateReceiptPDF } from "@/lib/pdfGenerator";
 import { getStorageAdapter } from "@/lib/infrastructure/storage";
 import crypto from "crypto";
+import { NotificationOutboxStatus } from "@prisma/client";
 
 export const generateDocument = inngest.createFunction(
   { id: "generate-document", retries: 3, triggers: [{ event: "document/generation.requested" }] },
@@ -80,6 +81,25 @@ export const generateDocument = inngest.createFunction(
       if (updateResult.count === 0) {
         // Document was already updated concurrently or manual intervention occurred
         console.warn(`Idempotent skip: OrderDocument ${orderDocumentId} already has a storageKey`);
+      }
+    });
+
+    // Step 7: Resume any pending or waiting email notification for this order
+    await step.run("resume-pending-communication", async () => {
+      if (!prisma.notificationOutbox || typeof prisma.notificationOutbox.findFirst !== "function") return;
+      const pendingOutbox = await prisma.notificationOutbox.findFirst({
+        where: {
+          orderId: document.orderId,
+          status: { in: [NotificationOutboxStatus.PENDING, NotificationOutboxStatus.FAILED] }
+        },
+        orderBy: { createdAt: "desc" }
+      });
+
+      if (pendingOutbox) {
+        await inngest.send({
+          name: "communication/email.requested",
+          data: { outboxId: pendingOutbox.id }
+        });
       }
     });
 
